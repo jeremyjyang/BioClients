@@ -30,7 +30,7 @@ from ..util import rest_utils
 #
 API_HOST='webservice.thebiogrid.org'
 API_BASE_PATH=''
-API_KEY="1210fb3b661cb8a826ccbd1755cbe18f"
+API_KEY="==SEE $HOME/.biogrid.yaml=="
 #
 ##############################################################################
 def ListOrganisms(base_url, api_key, fout):

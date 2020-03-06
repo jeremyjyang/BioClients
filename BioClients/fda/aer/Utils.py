@@ -7,8 +7,8 @@
 ### combination is explanatory.
 ###
 ###
-### My API key: iZwIm6FZBh2jmzWW3gOuV9cIZzmpYo33Icfxl4SA
-### My email: jeremyjyang@gmail.com
+### My API key: ==SEE $HOME/.fda.yaml==
+### My email: ==SEE $HOME/.fda.yaml==
 ### 
 ### Query params:
 ###   search	(e.g. search=patient.drug.drugindication:"multiple+myeloma")

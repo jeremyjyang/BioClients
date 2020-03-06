@@ -16,7 +16,7 @@ from ... import fda
 #
 API_HOST='api.fda.gov'
 API_BASE_PATH='/drug/event.json'
-API_KEY='iZwIm6FZBh2jmzWW3gOuV9cIZzmpYo33Icfxl4SA'
+API_KEY='==SEE $HOME/.fda.yaml=='
 
 NMAX=100
 
