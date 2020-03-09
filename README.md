@@ -1,13 +1,15 @@
 # BioClients
 
 Python package for access to online biomedical resources,
-usually via REST APIs.
+usually via REST APIs. Modules generally include
+`Client.py` for command-line use and `Utils.py` for
+integration into other code.
 
 ## Dependencies
 
 * Python3
 
-## Resources
+## Modules
 
 * Biogrid
 * Diseaseontology
