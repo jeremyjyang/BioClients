@@ -1,81 +1,102 @@
 #!/usr/bin/env python3
-#############################################################################
-### http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/ReactomeRESTFulAPI.html
-### Note: URLs are case sensitive!
-#############################################################################
+"""
+Reactome REST API utilities.
+https://reactome.org/ContentService/
+https://reactome.org/ContentService/data/pathways/top/9606
+"""
 import sys,os,re,json,time,logging
 #
 from ..util import rest_utils
 #
-try:
-  from rdkit import Chem
-except Exception as e:
-  logging.error("RDKit not available.")
 #
 OFMTS={'XML':'application/xml','JSON':'application/json'}
 #
 HEADERS={'Content-type':'text/plain','Accept':OFMTS['JSON']}
 #
 ##############################################################################
+def ListToplevelPathways(base_url, fout):
+  n_out=0;
+  species="9606";
+  try:
+    rval = rest_utils.GetURL(base_url+'/data/pathways/top/%s'%(species), parse_json=True)
+  except Exception as e:
+    logging.error('%s'%(e))
+  pathways = rval
+  tags = None;
+  for pathway in pathways:
+    if not tags:
+      tags = pathway.keys()
+      fout.write('\t'.join(tags)+'\n')
+    vals = [str(pathway[tag]) if tag in pathway else '' for tag in tags]
+    fout.write('\t'.join(vals)+'\n')
+    n_out+=1
+  logging.info('Top-level pathways: %d'%n_out)
+
+##############################################################################
 def ListDiseases(base_url, fout):
   n_out=0;
   try:
-    rval=rest_utils.GetURL(base_url+'/getDiseases')
+    rval = rest_utils.GetURL(base_url+'/getDiseases')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','displayName','definition','schemaClass']
   fout.write('\t'.join(tags)+'\n')
   for line in rval.splitlines():
-    idval, doid = re.split(r'\t',line)
-    disease = GetDisease(base_url,idval)
+    idval, doid = re.split(r'\t', line)
+    disease = GetDisease(base_url, idval)
     vals=[]
     for tag in tags:
-      vals.append(disease[tag] if disease.has_key(tag) else '')
+      vals.append(disease[tag] if tag in disease else '')
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
   logging.info('diseases: %d'%n_out)
 
 ##############################################################################
-def ListProteins(base_url,fout):
+def ListProteins(base_url, fout):
   n_out=0;
   try:
-    rval=rest_utils.GetURL(base_url+'/getUniProtRefSeqs')
+    rval = rest_utils.GetURL(base_url+'/getUniProtRefSeqs')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','species','name','displayName','description','definition','schemaClass']
   fout.write('\t'.join(tags)+'\n')
   for line in rval.splitlines():
-    idval, uniprot = re.split(r'\t',line)
-    protein = GetProtein(base_url,idval)
+    idval, uniprot = re.split(r'\t', line)
+    protein = GetProtein(base_url, idval)
     vals=[]
     for tag in tags:
-      vals.append(protein[tag] if protein.has_key(tag) else '')
+      vals.append(protein[tag] if tag in protein else '')
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
   logging.info('proteins: %d'%n_out)
 
 ##############################################################################
 def ListCompounds(base_url, fout):
+  try:
+    from rdkit import Chem
+  except Exception as e:
+    logging.error("RDKit not installed.")
+    return
   n_out=0;
   try:
-    rval=rest_utils.GetURL(base_url+'/getReferenceMolecules')
+    rval = rest_utils.GetURL(base_url+'/getReferenceMolecules')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','name','displayName','formula','schemaClass']
   fout.write('\t'.join(tags+['smiles'])+'\n')
   for line in rval.splitlines():
-    idval, chebi = re.split(r'\t',line)
-    compound = GetCompound(base_url,idval)
+    idval, chebi = re.split(r'\t', line)
+    compound = GetCompound(base_url, idval)
     vals=[]
     if (type(compound['name']) is types.ListType):
       compound['name']= compound['name'][0]
     for tag in tags:
-      vals.append(compound[tag] if compound.has_key(tag) else '')
-    mdlstr = compound['atomicConnectivity'] if (compound and compound.has_key('atomicConnectivity')) else ''
+      vals.append(compound[tag] if tag in compound else '')
+    mdlstr = compound['atomicConnectivity'] if (compound and 'atomicConnectivity' in compound) else ''
     smiles=''
     if mdlstr:
       #logging.info('DEBUG: mdlstr="%s"'%mdlstr)
-      mdlstr = re.sub(r'\\n','\n',mdlstr)
+      mdlstr = re.sub(r'\\n', '\n', mdlstr)
       try:
         mol = Chem.MolFromMolBlock(mdlstr)
         smiles = Chem.MolToSmiles(mol)
@@ -108,8 +129,8 @@ def PathwaysForEntities(base_url, ids, fout):
   n_all=0; n_out=0; n_err=0;
   d=('ID='+(','.join(ids))) ##plain text POST body, e.g. "ID=170075,176374,68557"
 
-  rval=rest_utils.PostURL(base_url+'/pathwaysForEntities',data=d,headers=HEADERS,parse_json=True)
-  #fout.write(json.dumps(rval,sort_keys=True,indent=2)+'\n')
+  rval=rest_utils.PostURL(base_url+'/pathwaysForEntities', data=d, headers=HEADERS, parse_json=True)
+  #fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   pathways = rval
   tags=[];
@@ -121,24 +142,22 @@ def PathwaysForEntities(base_url, ids, fout):
 
     vals=[];
     for tag in tags:
-      vals.append(csv_utils.ToStringForCSV(pathway[tag]) if pathway.has_key(tag) else '')
-    vals.append(csv_utils.ToStringForCSV(pathway['stableIdentifier']['dbId']))
-    vals.append(csv_utils.ToStringForCSV(pathway['stableIdentifier']['displayName']))
+      vals.append(pathway[tag] if tag in pathway else '')
+    vals.append(pathway['stableIdentifier']['dbId'])
+    vals.append(pathway['stableIdentifier']['displayName'])
 
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
 
-  logging.info('n_all: %d'%n_all)
-  logging.info('n_out: %d'%n_out)
-  logging.info('n_err: %d'%n_err)
+  logging.info('n_all: %d; n_out: %d; n_err: %d'%(n_all, n_out, n_err))
 
 ##############################################################################
-def PathwaysForGenes(base_url,ids,fout):
+def PathwaysForGenes(base_url, ids, fout):
   n_all=0; n_out=0; n_err=0;
   d=(','.join(ids)) ##plain text POST body
 
-  rval=rest_utils.PostURL(base_url+'/queryHitPathways',data=d,headers=HEADERS,parse_json=True)
-  #fout.write(json.dumps(rval,sort_keys=True,indent=2)+'\n')
+  rval=rest_utils.PostURL(base_url+'/queryHitPathways', data=d, headers=HEADERS, parse_json=True)
+  #fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   pathways = rval
   tags=[];
@@ -150,22 +169,20 @@ def PathwaysForGenes(base_url,ids,fout):
 
     vals=[];
     for tag in tags:
-      vals.append(csv_utils.ToStringForCSV(pathway[tag]) if pathway.has_key(tag) else '')
-    vals.append(csv_utils.ToStringForCSV(pathway['stableIdentifier']['dbId']))
-    vals.append(csv_utils.ToStringForCSV(pathway['stableIdentifier']['displayName']))
+      vals.append(pathway[tag] if tag in pathway else '')
+    vals.append(pathway['stableIdentifier']['dbId'])
+    vals.append(pathway['stableIdentifier']['displayName'])
 
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
 
-  logging.info('n_all: %d'%n_all)
-  logging.info('n_out: %d'%n_out)
-  logging.info('n_err: %d'%n_err)
+  logging.info('n_all: %d; n_out: %d; n_err: %d'%(n_all, n_out, n_err))
 
 ##############################################################################
-def PathwayParticipants(base_url,id_query,fout):
+def PathwayParticipants(base_url, id_query, fout):
   n_all=0; n_out=0; n_err=0;
-  rval=rest_utils.GetURL(base_url+'/pathwayParticipants/%s'%(id_query),parse_json=True)
-  fout.write(json.dumps(rval,sort_keys=True,indent=2)+'\n')
+  rval = rest_utils.GetURL(base_url+'/pathwayParticipants/%s'%(id_query), parse_json=True)
+  fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   if not (rval and type(rval) is types.ListType):
     return
@@ -179,13 +196,11 @@ def PathwayParticipants(base_url,id_query,fout):
 
     vals=[];
     for tag in tags:
-      vals.append(csv_utils.ToStringForCSV(part[tag]) if part.has_key(tag) else '')
+      vals.append(part[tag] if tag in part else '')
 
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
 
-  logging.info('n_all: %d'%n_all)
-  logging.info('n_out: %d'%n_out)
-  logging.info('n_err: %d'%n_err)
+  logging.info('n_all: %d; n_out: %d; n_err: %d'%(n_all, n_out, n_err))
 
 ##############################################################################

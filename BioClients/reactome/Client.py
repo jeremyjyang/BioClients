@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-#############################################################################
-### reactome_query.py
-### 
-### http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/ReactomeRESTFulAPI.html
-### Note: URLs are case sensitive!
-#############################################################################
+"""
+Client for Reactome REST API.
+https://reactome.org/ContentService/
+https://reactome.org/ContentService/data/pathways/top/9606
+"""
 import sys,os,re,argparse,time,json,logging
 #
 from .. import reactome
 #
-API_HOST='reactomews.oicr.on.ca:8080'
-API_BASE_PATH='/ReactomeRESTfulAPI/RESTfulWS'
+API_HOST='reactome.org'
+API_BASE_PATH='/ContentService'
 #
 #
 ##############################################################################
@@ -18,7 +17,7 @@ if __name__=='__main__':
 
   parser = argparse.ArgumentParser(
         description='Reactome (www.reactome.org) REST API client utility',
-        epilog='''\
+        epilog="""\
 Example IDs:
 	109581 (Pathway),
 	57033 (EntityWithAccessionedSequence);
@@ -36,8 +35,8 @@ Classes:
 	PhysicalEntity:SimpleEntity [2668],
 	Publication,
 	Taxon:Species
-''')
-  ops = ['list_diseases', 'list_proteins', 'list_compounds', 'get_entity', 'get_pathwaysforgenes', 'get_pathwaysforentities', 'get_pathwayparticipants']
+""")
+  ops = ['list_diseases', 'list_ToplevelPathways', 'list_proteins', 'list_compounds', 'get_entity', 'get_pathwaysforgenes', 'get_pathwaysforentities', 'get_pathwayparticipants']
   parser.add_argument("op",choices=ops,help='operation')
   parser.add_argument("--ids", dest="ids", help="IDs, comma-separated")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
@@ -54,10 +53,9 @@ Classes:
   base_url='https://'+args.api_host+args.api_base_path
 
   if args.ofile:
-    fout=open(args.ofile,"w")
-    if not fout: parser.error('cannot open outfile: %s'%args.ofile)
+    fout = open(args.ofile,"w")
   else:
-    fout=sys.stdout
+    fout = sys.stdout
 
   t0=time.time()
 
@@ -84,6 +82,9 @@ Classes:
   elif args.op == "list_proteins":
     reactome.Utils.ListProteins(base_url, fout)
 
+  elif args.op == "list_ToplevelPathways":
+    reactome.Utils.ListToplevelPathways(base_url, fout)
+
   elif args.op == "list_compounds":
     reactome.Utils.ListCompounds(base_url, fout)
 
@@ -98,8 +99,5 @@ Classes:
 
   else:
     parser.error("No operation specified.")
-
-  if ofile:
-    fout.close()
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))

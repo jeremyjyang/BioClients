@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-	humanbase_query.py - access to HumanBase REST API.
+	Client to HumanBase REST API.
 	Genome-scale Integrated Analysis of gene Networks in Tissues
 	GIANT has moved to HumanBase (http://hb.flatironinstitute.org/).
 	GIANT tissue networks integrate 987 genome-scale datasets, encompassing
@@ -136,14 +136,13 @@ def GetFuncNetEvidence(base_url, tissue, source, target, fout):
   for datatype in datatypes:
     logging.info('datatype: %s (weight=%s)'%(datatype['name'],datatype['weight']))
  
-
 ##############################################################################
 if __name__=='__main__':
   FN_SIZE=50; FN_PRIOR=0.1; FN_MIN=0.0; 
-  epilog='''\
+  epilog="""\
 	--get_funcnet: functional network for tissue, 1+ gene[s];
 	--get_evidence: FN evidence for tissue, 2 genes
-'''
+"""
 
   parser = argparse.ArgumentParser(description='HumanBase API client; functional genomic networks', epilog=epilog)
   ops=['list_terms', 'list_datasets', 'list_datatypes', 'get_funcnet', 'get_evidence']
@@ -163,13 +162,12 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  BASE_URL='https://'+args.api_host+args.api_base_path
+  BASE_URL = 'https://'+args.api_host+args.api_base_path
 
   if args.ofile:
-    fout=open(args.ofile,"w+")
-    if not fout: parser.error('failed to open output file: %s'%args.ofile)
+    fout = open(args.ofile, "w+")
   else:
-    fout=sys.stdout
+    fout = sys.stdout
 
   if args.genes:
     genes=re.split(r'[,\s]+', arg.genes.strip())
@@ -196,5 +194,5 @@ if __name__=='__main__':
     #GetFuncNetEvidence(BASE_URL, args.tissue, genes[0], genes[1], fout)
 
   else:
-    parser.error('no operation specified.')
+    parser.error('Invalid operation: %s'%args.op)
 

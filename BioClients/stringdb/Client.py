@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-##############################################################################
-### stringdb_query.py - utility for STRING Db REST API.
+"""
+Utility for STRING Db REST API.
+
+STRING = Search Tool for the Retrieval of Interacting Genes/Proteins
+
+See: http://string-db.org/help/api/
+
+http://[database]/[access]/[format]/[request]?[parameter]=[value]
+
+database:
+string-db.org
+string.embl.de
+stitch.embl.de
+"""
 ###
-### STRING = Search Tool for the Retrieval of Interacting Genes/Proteins
-##############################################################################
-### See: http://string-db.org/help/api/
-###
-### http://[database]/[access]/[format]/[request]?[parameter]=[value]
-###
-### database:
-###   string-db.org
-###   string.embl.de
-###   stitch.embl.de
-##############################################################################
 import sys,os,re,json,argparse,time,logging
 import urllib,urllib.request,urllib.parse
 #
@@ -70,7 +71,7 @@ def GetPPIEnrichment(base_url, pids, species, minscore, fout):
 
 ##############################################################################
 def GetNetwork(base_url, pid, species, minscore, netflavor, fout):
-  '''Format: PNG image.'''
+  """Format: PNG image."""
   url=base_url+'/tsv/network?identifier=%s'%(pid)
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
@@ -90,7 +91,7 @@ def GetNetworkImage(base_url, pid, species, minscore, netflavor, imgfmt, fout):
 
 ##############################################################################
 def GetInteractors(base_url, pids, species, minscore, fout):
-  '''2018: May be deprecated since 2015.'''
+  """2018: May be deprecated since 2015."""
   url=base_url+'/tsv/interactors'
   if len(pids)==1:
     url+=('?identifier=%s'%pids[0])
@@ -104,7 +105,7 @@ def GetInteractors(base_url, pids, species, minscore, fout):
 
 ##############################################################################
 def GetActions(base_url, pids, species, minscore, fout):
-  '''2018: May be deprecated since 2015.'''
+  """2018: May be deprecated since 2015."""
   url=base_url+'/tsv/actions'
   if len(pids)==1:
     url+=('?identifier=%s'%pids[0])
@@ -118,7 +119,7 @@ def GetActions(base_url, pids, species, minscore, fout):
 
 ##############################################################################
 def GetAbstracts(base_url, pids, species, fout):
-  '''2018: May be deprecated since 2015.'''
+  """2018: May be deprecated since 2015."""
   url=base_url+'/tsv/abstracts'
   if len(pids)==1:
     url+=('?identifier=%s'%pids[0])
@@ -133,12 +134,12 @@ def GetAbstracts(base_url, pids, species, fout):
 if __name__=='__main__':
   parser = argparse.ArgumentParser(
         description='STRING-DB REST API client utility',
-        epilog='''\
+        epilog="""\
 Example protein IDs: DRD1 DRD1_HUMAN DRD2 DRD2_HUMAN ;
 Example species: 9606 (human, via taxon identifiers, http://www.uniprot.org/taxonomy) ;
 Image formats: PNG PNG_highres SVG ;
 MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
-''')
+""")
   ops = ['getIds', 'getInteractionPartners',
 	'getNetwork', 'getNetworkImage',
 	'getEnrichment', 'getPPIEnrichment',
@@ -171,12 +172,12 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
       if not line: break
       pids.append(line.strip())
   elif args.ids:
-    pids = re.split(r'\s*,\s*',args.ids.strip())
+    pids = re.split(r'\s*,\s*', args.ids.strip())
   elif args.id:
     pids=[args.id]
 
   if args.ofile:
-    fout=open(args.ofile,"w+")
+    fout=open(args.ofile, "w+")
     if not fout: parser.error('failed to open output file: %s'%args.ofile)
   else:
     fout=sys.stdout
@@ -185,43 +186,43 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
 
   if args.op == 'getIds':
     if not pids: parser.error('PID[s] required.')
-    GetIds(base_url,pids,fout)
+    GetIds(base_url, pids, fout)
 
   elif args.op == 'getInteractors':
     if not pids: parser.error('PID[s] required.')
-    GetInteractors(base_url,pids,args.species,args.minscore,fout)
+    GetInteractors(base_url, pids, args.species, args.minscore, fout)
 
   elif args.op == 'getInteractionPartners':
     if not pids: parser.error('PID[s] required.')
-    GetInteractionPartners(base_url,pids,args.species,args.minscore,fout)
+    GetInteractionPartners(base_url, pids, args.species, args.minscore, fout)
 
   elif args.op == 'getActions':
     if not pids: parser.error('PID[s] required.')
-    GetActions(base_url,pids,args.species,args.minscore,fout)
+    GetActions(base_url, pids, args.species, args.minscore, fout)
 
   elif args.op == 'getEnrichment':
     if not len(pids)>1: parser.error('PIDs (2+) required.')
-    GetEnrichment(base_url,pids,args.species,args.minscore,fout)
+    GetEnrichment(base_url, pids, args.species, args.minscore, fout)
 
   elif args.op == 'getPPIEnrichment':
     if not len(pids)>1: parser.error('PIDs (2+) required.')
-    GetPPIEnrichment(base_url,pids,args.species,args.minscore,fout)
+    GetPPIEnrichment(base_url, pids, args.species, args.minscore, fout)
 
   elif args.op == 'getAbstracts':
     if not pids: parser.error('PID[s] required.')
-    GetAbstracts(base_url,pids,args.species,fout)
+    GetAbstracts(base_url, pids, args.species, fout)
 
   elif args.op == 'getNetwork':
     if not pids: parser.error('PID required.')
-    GetNetwork(base_url,pids[0],args.species,args.minscore,args.netflavor,fout)
+    GetNetwork(base_url, pids[0], args.species, args.minscore, args.netflavor, fout)
 
   elif args.op == 'getNetworkImage':
     if not pids: parser.error('PID required.')
     if not args.ofile: parser.error('--o OUTFILE required.')
     fout.close()
-    fout=open(args.ofile,"wb+") #binary
+    fout = open(args.ofile, "wb+") #binary
     if not fout: parser.error('failed to open output file: %s'%args.ofile)
-    GetNetworkImage(base_url,pids[0],args.species,args.minscore,args.netflavor,args.imgfmt,fout)
+    GetNetworkImage(base_url, pids[0], args.species, args.minscore, args.netflavor, args.imgfmt, fout)
 
   else:
     parser.print_help()
