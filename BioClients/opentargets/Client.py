@@ -14,8 +14,8 @@ import sys,os,re,argparse,json,csv,logging
 import opentargets
 
 #############################################################################
-def SearchTargetAssociations(otclient, ids, minscore, skip, nmax, fout):
-  csvWriter = csv.writer(fout, delimiter='\t', quotechar='"', quoting=csv.QUOTE_NONNUMERIC)
+def SearchAssociations(otclient, ids, idtype, minscore, skip, nmax, fout):
+  csvWriter = csv.writer(fout, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
   tags=None;
   i_tgt=0; n_assn=0; n_tgt_found=0;
   for id_this in ids:
@@ -23,7 +23,10 @@ def SearchTargetAssociations(otclient, ids, minscore, skip, nmax, fout):
     if i_tgt<=skip: continue
     logging.debug('%s:'%id_this)
     try:
-      assns = otclient.get_associations_for_target(id_this)
+      if idtype=="disease":
+        assns = otclient.get_associations_for_disease(id_this)
+      else:
+        assns = otclient.get_associations_for_target(id_this)
     except Exception as e:
       if e.args:
         logging.error(str(e.args))
@@ -76,11 +79,18 @@ def SearchTargetAssociations(otclient, ids, minscore, skip, nmax, fout):
 
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description='OpenTargets REST API client utility')
-  ops = ['searchTargetAssociations', 'searchDiseaseAssociations', 'getEvidence']
+  IDTYPES = ["gene", "disease"]
+  epilog = """Examples:
+Gene IDs: ENSG00000163914, ENSG00000072110;
+Disease IDs: EFO_0002630, EFO_1001473, HP_0011446, HP_0100543, EFO_0002508 ;
+Search terms: prostate, alzheimer, lymphoma
+"""
+  parser = argparse.ArgumentParser(description='OpenTargets REST API client utility', epilog=epilog)
+  ops = ['searchAssociations', 'getEvidence']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input file, gene or disease IDs")
-  parser.add_argument("--ids", help="either: target ID, gene symbol or ENSEMBL, or disease ID, EFO symbol (comma-separated)")
+  parser.add_argument("--ids", help="(1) target ID, gene symbol or ENSEMBL; (2) disease ID, EFO_ID; or (3) search term (comma-separated)")
+  parser.add_argument("--idtype", choices=IDTYPES, default="disease")
   parser.add_argument("--minscore", type=float, help="minimum overall association score")
   parser.add_argument("--nmax", type=int, default=0, help="max results")
   parser.add_argument("--skip", type=int, default=0, help="skip results")
@@ -112,17 +122,11 @@ if __name__=='__main__':
 
   logging.debug(otclient.get_stats().info)
 
-  if args.op=='searchTargetAssociations':
+  if args.op=='searchAssociations':
     if not ids:
       parser.error('--i or --ids required.')
       parser.print_help()
-    SearchTargetAssociations(otclient, ids, args.minscore, args.skip, args.nmax, fout)
-
-  elif args.op=='searchDiseaseAssociations':
-    if not ids:
-      parser.error('--i or --ids required.')
-      parser.print_help()
-    SearchDiseaseAssociations(otclient, ids, args.minscore, args.skip, args.nmax, fout)
+    SearchAssociations(otclient, ids, args.idtype, args.minscore, args.skip, args.nmax, fout)
 
   elif args.op=='getEvidence':
     if not ids:
@@ -131,5 +135,5 @@ if __name__=='__main__':
     #Target2Disease_Evidence(otclient, tid, args.did, fout)
 
   else:
-    parser.print_help()
+    parser.error('Invalid operation: %s'%args.op)
 
