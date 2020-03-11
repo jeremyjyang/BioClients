@@ -6,10 +6,11 @@
 # http://opentargets.readthedocs.io/
 # https://docs.targetvalidation.org/programmatic-access/python-client
 # https://docs.targetvalidation.org/programmatic-access/rest-api
+# https://docs.targetvalidation.org/data-sources/genetic-associations
 # https://platform-api.opentargets.io/v3/platform
 # https://platform-api.opentargets.io/v3/platform/docs/swagger-ui
 #############################################################################
-import sys,os,re,argparse,json,csv,logging
+import sys,os,re,time,argparse,json,csv,logging
 
 import opentargets
 
@@ -17,10 +18,10 @@ import opentargets
 def SearchAssociations(otclient, ids, idtype, minscore, skip, nmax, fout):
   csvWriter = csv.writer(fout, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
   tags=None;
-  i_tgt=0; n_assn=0; n_tgt_found=0;
+  n_id=0; n_assn=0; n_id_found=0;
   for id_this in ids:
-    i_tgt+=1
-    if i_tgt<=skip: continue
+    n_id+=1
+    if n_id<=skip: continue
     logging.debug('%s:'%id_this)
     try:
       if idtype=="disease":
@@ -28,11 +29,10 @@ def SearchAssociations(otclient, ids, idtype, minscore, skip, nmax, fout):
       else:
         assns = otclient.get_associations_for_target(id_this)
     except Exception as e:
-      if e.args:
-        logging.error(str(e.args))
-      assns=[]
+      logging.error(str(e))
+      continue
     if assns:
-      n_tgt_found+=1
+      n_id_found+=1
     for assn in assns:
       logging.debug(json.dumps(assn, sort_keys=True, indent=2))
       if not tags:
@@ -42,10 +42,10 @@ def SearchAssociations(otclient, ids, idtype, minscore, skip, nmax, fout):
         tags_evidence_count_sources = list(assn['evidence_count']['datasources'].keys())
         tags_evidence_count_types = list(assn['evidence_count']['datatypes'].keys())
         csvWriter.writerow(tags+
-		list(map(lambda t:'assn_score_source:%s'%t, tags_assn_score_sources))+
-		list(map(lambda t:'assn_score_type:%s'%t, tags_assn_score_types))+
-		list(map(lambda t:'evidence_count_source:%s'%t, tags_evidence_count_sources))+
-		list(map(lambda t:'evidence_count_type:%s'%t, tags_evidence_count_types)))
+		list(map(lambda t:'assn_score_source.%s'%t, tags_assn_score_sources))+
+		list(map(lambda t:'assn_score_type.%s'%t, tags_assn_score_types))+
+		list(map(lambda t:'evidence_count_source.%s'%t, tags_evidence_count_sources))+
+		list(map(lambda t:'evidence_count_type.%s'%t, tags_evidence_count_types)))
       assn_id = assn['id'] if 'id' in assn else ''
       is_direct = assn['is_direct'] if 'is_direct' in assn else ''
       target_id = assn['target']['id'] if 'target' in assn and 'id' in assn['target'] else ''
@@ -69,17 +69,14 @@ def SearchAssociations(otclient, ids, idtype, minscore, skip, nmax, fout):
           vals[i] = round(vals[i], 5)
       csvWriter.writerow(vals)
       n_assn+=1
-      #break #DEBUG
-    logging.debug('i_tgt=%d ; skip=%d ; nmax=%d'%(i_tgt, skip, nmax))
-    if nmax and i_tgt-skip>=nmax: break
-    if i_tgt%1000==0:
-      logging.info('i_tgt=%d; n_tgt = %d; n_tgt_found = %d ; n_assn = %d'%(i_tgt, i_tgt-skip, n_tgt_found, n_assn))
-
-  logging.info('n_tgt = %d; n_tgt_found = %d; n_assn = %d'%(i_tgt-skip, n_tgt_found, n_assn))
+    logging.debug('n_id=%d ; skip=%d ; nmax=%d'%(n_id, skip, nmax))
+    if nmax and n_id-skip>=nmax: break
+  logging.info('n_id = %d; n_id_found = %d; n_assn = %d'%(n_id-skip, n_id_found, n_assn))
 
 #############################################################################
 if __name__=='__main__':
   IDTYPES = ["gene", "disease"]
+  #SOURCES = ["cancer_gene_census", "chembl", "crispr", "europepmc", "eva", "eva_somatic", "expression_atlas", "gene2phenotype", "genomics_england", "gwas_catalog", "intogen", "ot_genetics_portal", "phenodigm", "phewas_catalog", "postgap", "progeny", "reactome", "slapenrich", "sysbio", "uniprot", "uniprot_literature", "uniprot_somatic"]
   epilog = """Examples:
 Gene IDs: ENSG00000163914, ENSG00000072110;
 Disease IDs: EFO_0002630, EFO_1001473, HP_0011446, HP_0100543, EFO_0002508 ;
@@ -91,6 +88,7 @@ Search terms: prostate, alzheimer, lymphoma
   parser.add_argument("--i", dest="ifile", help="input file, gene or disease IDs")
   parser.add_argument("--ids", help="(1) target ID, gene symbol or ENSEMBL; (2) disease ID, EFO_ID; or (3) search term (comma-separated)")
   parser.add_argument("--idtype", choices=IDTYPES, default="disease")
+  #parser.add_argument("--source", choices=SOURCES)
   parser.add_argument("--minscore", type=float, help="minimum overall association score")
   parser.add_argument("--nmax", type=int, default=0, help="max results")
   parser.add_argument("--skip", type=int, default=0, help="skip results")
@@ -98,6 +96,8 @@ Search terms: prostate, alzheimer, lymphoma
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
 
   args = parser.parse_args()
+
+  t0 = time.time()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
@@ -136,4 +136,6 @@ Search terms: prostate, alzheimer, lymphoma
 
   else:
     parser.error('Invalid operation: %s'%args.op)
+
+  logging.info("Elapsed: %s"%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
 
