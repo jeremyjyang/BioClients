@@ -17,6 +17,7 @@ integration into other code.
 * DNorm
 * Ensembl
 * FDA
+* GWASCatalog
 * HUGO
 * Humanbase
 * OMIM
