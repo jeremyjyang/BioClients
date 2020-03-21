@@ -25,7 +25,7 @@ Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 '''
 #############################################################################
 import sys,os,time,argparse,logging,hashlib
-import string,re,json
+import string,re,json,yaml
 
 from .. import brenda
 
@@ -80,8 +80,17 @@ Ki is concentration of substrate for half-max enzyme inhibition.
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
   parser.add_argument("--api_user", help="API username")
   parser.add_argument("--api_key", help="API key")
+  parser.add_argument("--param_file", default=os.environ['HOME']+"/.brenda.yaml")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
+
+  params={};
+  with open(args.param_file, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  api_user = args.api_user if args.api_user else params['user_name'] if 'user_name' in params else ''
+  api_key = args.api_key if args.api_key else params['user_key'] if 'user_key' in params else ''
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
@@ -89,7 +98,7 @@ Ki is concentration of substrate for half-max enzyme inhibition.
 
   SOAP_CLIENT = brenda.Utils.SoapAPIClient(API_BASE_URL)
 
-  API_PARAMS = args.api_user+","+hashlib.sha256(args.api_key).hexdigest()
+  API_PARAMS = api_user+","+hashlib.sha256(api_key).hexdigest()
 
   organism = None if args.organism.lower()=='all' else args.organism
 
