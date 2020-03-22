@@ -18,6 +18,7 @@ integration into other code.
 * DNorm
 * Ensembl
 * FDA
+* ___TO DO: GeneOntology___ (<http://api.geneontology.org/api>)
 * GWASCatalog
 * HUGO
 * Humanbase
