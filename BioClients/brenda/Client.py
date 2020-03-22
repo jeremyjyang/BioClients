@@ -36,33 +36,41 @@ API_BASE_PATH = "/soap"
 if __name__=='__main__':
   epilog='''\
 OPERATIONS:
-get = get record;
-get_names = get enzyme names;
-get_systematicname = get systematic enzyme name;
-get_organism = get organism;
-get_sequence = get sequence;
-get_pdb = get PDB code;
-get_ligands = get ligands code;
-get_inhibitors = get enzyme inhibitors;
-get_activators = get enzyme activating cpds;
-get_kivalues = get enzyme Ki values;
-get_kmvalues = get enzyme Km values;
-get_references = get references;
-get_inhibitordata = get inhibitor data (CSV);
-get_sequencedata = get sequence data (CSV);
-get_liganddata = get ligand data (CSV);
-get_referencedata = get reference data (CSV);
-list_all = list all ECNs (for specified organism);
-list_fromsynonyms = list ECNs linked to synonyms;
-list_frominhibitors = list ECNs linked to inhibitors;
-list_fromactivators = list ECNs linked to activating cpds;
-list_fromkivalues = list ECNs linked to Ki values;
-list_fromkmvalues = list ECNs linked to Km values;
-list_organisms = list all organisms;
+    get = get record;
+    get_names = get enzyme names;
+    get_systematicname = get systematic enzyme name;
+    get_organism = get organism;
+    get_sequence = get sequence;
+    get_pdb = get PDB code;
+    get_ligands = get ligands code;
+    get_inhibitors = get enzyme inhibitors;
+    get_activators = get enzyme activating cpds;
+    get_kivalues = get enzyme Ki values;
+    get_kmvalues = get enzyme Km values;
+    get_references = get references;
+    get_inhibitordata = get inhibitor data (CSV);
+    get_sequencedata = get sequence data (CSV);
+    get_liganddata = get ligand data (CSV);
+    get_referencedata = get reference data (CSV);
+    list_all = list all ECNs (for specified organism);
+    list_fromsynonyms = list ECNs linked to synonyms;
+    list_frominhibitors = list ECNs linked to inhibitors;
+    list_fromactivators = list ECNs linked to activating cpds;
+    list_fromkivalues = list ECNs linked to Ki values;
+    list_fromkmvalues = list ECNs linked to Km values;
+    list_organisms = list all organisms;
 Notes:
-"get*" operations (require --ecn or --ifile).;
-Km is concentration of substrate for half-max enzyme velocity, where velocity is rate of reaction product formation.;
-Ki is concentration of substrate for half-max enzyme inhibition.
+    "get*" operations (require --ecn or --ifile).;
+    Km is concentration of substrate for half-max enzyme velocity, where velocity is rate of reaction product formation.;
+    Ki is concentration of substrate for half-max enzyme inhibition.;
+Example ECNs:
+    1.9.3.1,
+    1.14.99.1
+    ;
+Example Organisms:
+    Homo sapiens,
+    Mus musculus
+    ;
 '''
   IDTYPE='ecn';
   ORGANISM='Homo sapiens';
@@ -94,11 +102,12 @@ Ki is concentration of substrate for half-max enzyme inhibition.
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  API_BASE_URL='https://'+args.api_host+args.api_base_path
+  API_BASE_URL='http://'+args.api_host+args.api_base_path
+  #API_BASE_URL='https://'+args.api_host+args.api_base_path
 
   SOAP_CLIENT = brenda.Utils.SoapAPIClient(API_BASE_URL)
 
-  API_PARAMS = api_user+","+hashlib.sha256(api_key).hexdigest()
+  API_PARAMS = api_user+","+hashlib.sha256(api_key.encode("utf-8")).hexdigest()
 
   organism = None if args.organism.lower()=='all' else args.organism
 
@@ -128,9 +137,7 @@ Ki is concentration of substrate for half-max enzyme inhibition.
   if args.op[:4]=="get_" and not ecns: parser.error("Operation %s requires --ecns or --ifile."%args.op)
 
   if args.op=="get":
-    rstr = brenda.Utils.GetECN(SOAP_CLIENT, API_PARAMS, ecns)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetECN(SOAP_CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_inhibitordata":
     brenda.Utils.GetInhibitorData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
@@ -145,95 +152,58 @@ Ki is concentration of substrate for half-max enzyme inhibition.
     brenda.Utils.GetReferenceData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_names":
-    rstr = brenda.Utils.GetNames(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results=brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetNames(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_systematicname":
-    rstr = brenda.Utils.GetSystematicName(SOAP_CLIENT, API_PARAMS, ecn)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetSystematicName(SOAP_CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_organism":
-    rstr = brenda.Utils.GetOrganism(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetOrganism(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_sequence":
-    rstr = brenda.Utils.GetSequence(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetSequence(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_pdb":
-    rstr = brenda.Utils.GetPdb(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetPdb(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kivalues":
-    rstr = brenda.Utils.GetKiValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    #logging.debug('rstr="%s"'%rstr)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetKiValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kmvalues":
-    rstr = brenda.Utils.GetKmValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results=brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetKmValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_inhibitors":
-    rstr = brenda.Utils.GetInhibitors(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetInhibitors(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_activators":
-    rstr = brenda.Utils.GetActivators(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetActivators(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_ligands":
-    rstr = brenda.Utils.GetLigands(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetLigands(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_references":
-    rstr = brenda.Utils.GetReferences(SOAP_CLIENT, API_PARAMS, ecns, args.organism)
-    results = brenda.Utils.ParseResultDictString(rstr)
-    brenda.Utils.OutputResultsDict(results, fout)
+    brenda.Utils.GetReferences(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="list_all":
-    rstr = brenda.Utils.ListECNumbers(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbers(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromsynonyms":
-    rstr = brenda.Utils.ListECNumbersFromSynonyms(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbersFromSynonyms(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_frominhibitors":
-    rstr = brenda.Utils.ListECNumbersFromInhibitors(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbersFromInhibitors(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromactivators":
-    rstr = brenda.Utils.ListECNumbersFromActivators(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbersFromActivators(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkivalues":
-    rstr = brenda.Utils.ListECNumbersFromKiValue(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbersFromKiValue(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkmvalues":
-    rstr = brenda.Utils.ListECNumbersFromKmValue(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListECNumbersFromKmValue(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_organisms":
-    rstr = brenda.Utils.ListOrganisms(SOAP_CLIENT, API_PARAMS)
-    results = brenda.Utils.ParseResultListString(rstr)
-    brenda.Utils.OutputResultsList(results, fout)
+    brenda.Utils.ListOrganisms(SOAP_CLIENT, API_PARAMS, fout)
 
   elif args.op=="test":
     brenda.Utils.Test1(API_BASE_URL)

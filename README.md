@@ -12,6 +12,7 @@ integration into other code.
 ## Modules
 
 * Biogrid
+* BRENDA
 * Diseaseontology
 * Disgenet
 * DNorm

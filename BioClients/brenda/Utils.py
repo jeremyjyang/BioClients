@@ -39,38 +39,52 @@ def SoapAPIClient(base_url):
   return client
 
 #############################################################################
-def ListECNumbers(client, api_params):
+def ListECNumbers(client, api_params, fout):
   '''We think this gets all EC numbers.  But maybe not. 6549 on Jan 7 2015.'''
-  return client.getEcNumbersFromEcNumber(api_params)
+  rstr = client.getEcNumbersFromEcNumber(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to synonyms.  (5000+ hits but not all.)
-def ListECNumbersFromSynonyms(client, api_params):
-  return client.getEcNumbersFromSynonyms(api_params)
+def ListECNumbersFromSynonyms(client, api_params, fout):
+  rstr = client.getEcNumbersFromSynonyms(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to inhibitors.
-def ListECNumbersFromInhibitors(client, api_params):
-  return client.getEcNumbersFromInhibitors(api_params)
+def ListECNumbersFromInhibitors(client, api_params, fout):
+  rstr = client.getEcNumbersFromInhibitors(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to activators.
-def ListECNumbersFromActivators(client, api_params):
-  return client.getEcNumbersFromActivatingCompound(api_params)
+def ListECNumbersFromActivators(client, api_params, fout):
+  rstr = client.getEcNumbersFromActivatingCompound(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to Ki value.
-def ListECNumbersFromKiValue(client, api_params):
-  return client.getEcNumbersFromKiValue(api_params)
+def ListECNumbersFromKiValue(client, api_params, fout):
+  rstr = client.getEcNumbersFromKiValue(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to Km value.
-def ListECNumbersFromKmValue(client, api_params):
-  return client.getEcNumbersFromKmValue(api_params)
+def ListECNumbersFromKmValue(client, api_params, fout):
+  rstr = client.getEcNumbersFromKmValue(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
-def ListOrganisms(client, api_params):
-  return client.getOrganismsFromOrganism(api_params)
+def ListOrganisms(client, api_params, fout):
+  rstr = client.getOrganismsFromOrganism(api_params)
+  results = brenda.Utils.ParseResultListString(rstr)
+  OutputResultsList(results, fout)
 
 #############################################################################
 def GetInhibitorData(client, api_params, ecns, organism, fout):
@@ -255,8 +269,13 @@ def GetReferenceData(client, api_params, ecns, organism, fout):
   logging.info('input ECNs: %d ; output rows: %d'%(n_in, n_out))
 
 #############################################################################
-def GetECN(client, api_params, ecn):
-  return client.getEcNumber(api_params+',ecNumber*%s'%ecn)
+def GetECN(client, api_params, ecns, fout):
+  for ecn in ecns:
+    arg = ('%s,ecNumber*%s'%(api_params,ecn))
+    logging.debug("arg=%s"%arg)
+    rstr = client.getEcNumber(arg)
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
 def QueryString(ecn, organism):
@@ -265,55 +284,88 @@ def QueryString(ecn, organism):
   return qstr
 
 #############################################################################
-def GetNames(client, api_params, ecn, organism):
-  return client.getEnzymeNames(api_params+','+QueryString(ecn, organism))
+def GetNames(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getEnzymeNames(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetSystematicName(client, api_params, ecn):
+def GetSystematicName(client, api_params, ecns, fout):
   '''Organism param not allowed.'''
-  qstr = ('ecNumber*%s'%(ecn))
-  logging.debug(qstr)
-  return client.getSystematicName(api_params+','+qstr)
+  for ecn in ecns:
+    qstr = ('ecNumber*%s'%(ecn))
+    logging.debug(qstr)
+    rstr = client.getSystematicName(api_params+','+qstr)
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetOrganism(client, api_params, ecn, organism):
-  return client.getOrganism(api_params+','+QueryString(ecn, organism))
+def GetOrganism(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getOrganism(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetSequence(client, api_params, ecn, organism):
+def GetSequence(client, api_params, ecns, organism, fout):
   '''Supposedly also accepts uniprot param.  How?'''
-  return client.getSequence(api_params+','+QueryString(ecn, organism))
+  for ecn in ecns:
+    rstr = client.getSequence(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetPdb(client, api_params, ecn, organism):
-  return client.getPdb(api_params+','+QueryString(ecn, organism))
+def GetPdb(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getPdb(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetKiValues(client, api_params, ecn, organism):
-  return client.getKiValue(api_params+','+QueryString(ecn, organism))
+def GetKiValues(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getKiValue(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetKmValues(client, api_params, ecn, organism):
-  return client.getKmValue(api_params+','+QueryString(ecn, organism))
+def GetKmValues(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getKmValue(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetInhibitors(client, api_params, ecn, organism):
-  return client.getInhibitors(api_params+','+QueryString(ecn, organism))
+def GetInhibitors(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getInhibitors(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetActivators(client, api_params, ecn, organism):
-  return client.getActivatingCompound(api_params+','+QueryString(ecn, organism))
+def GetActivators(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getActivatingCompound(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetLigands(client, api_params, ecn, organism):
-  return client.getLigands(api_params+','+QueryString(ecn, organism))
+def GetLigands(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    rstr = client.getLigands(api_params+','+QueryString(ecn, organism))
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
-def GetReferences(client, api_params, ecn, organism):
-  qstr = ('ecNumber*%s%s'%(ecn, ('#organism*%s'%organism) if organism else ''))
-  qstr+=('#textmining*0') #manually-annotated entries only
-  logging.debug(qstr)
-  return client.getReference(api_params+','+qstr)
+def GetReferences(client, api_params, ecns, organism, fout):
+  for ecn in ecns:
+    qstr = ('ecNumber*%s%s'%(ecn, ('#organism*%s'%organism) if organism else ''))
+    qstr+=('#textmining*0') #manually-annotated entries only
+    logging.debug(qstr)
+    rstr = client.getReference(api_params+','+qstr)
+    results = ParseResultDictString(rstr)
+    OutputResultsDict(results, fout)
 
 #############################################################################
 def ParseResultDictString(rstr):
