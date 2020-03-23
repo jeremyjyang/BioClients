@@ -24,19 +24,29 @@ Ref:	BRENDA in 2015: exciting developments in its 25th year of existence.
 Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 '''
 #############################################################################
-import sys,os,time,string,re,json,logging
+import sys,os,time,string,re,json,logging,zeep
 
 from ..util import rest_utils
 
-# pip3 install SOAPpy-py3
-
-#from SOAPpy import WSDL ## for extracting URL of endpoint from WSDL file
-from SOAPpy import SOAPProxy
+#############################################################################
+def SoapAPIClient(wsdl_url):
+  client = zeep.Client(wsdl_url)
+  return client
 
 #############################################################################
-def SoapAPIClient(base_url):
-  client = SOAPProxy(base_url+"/brenda_server.php")
-  return client
+def Test(client, api_params):
+  params = tuple(api_params+["ecNumber*1.1.1.1", "organism*Homo sapiens", "kmValue*", "kmValueMaximum*", "substrate*", "commentary*", "ligandStructureId*", "literature*"])
+  resultString = client.service.getKmValue(*params)
+  print(resultString)
+
+#############################################################################
+def GetECN(client, api_params, ecns, fout):
+  for ecn in ecns:
+    params = tuple(api_params+["ecNumber*%s"%ecn])
+    #results = client.service.getEcNumber(*params)
+    results = client.service.getEcNumbersFromEcNumber(*params)
+    logging.debug("type(results) = %s"%type(results))
+    print(str(results))
 
 #############################################################################
 def ListECNumbers(client, api_params, fout):
@@ -269,15 +279,6 @@ def GetReferenceData(client, api_params, ecns, organism, fout):
   logging.info('input ECNs: %d ; output rows: %d'%(n_in, n_out))
 
 #############################################################################
-def GetECN(client, api_params, ecns, fout):
-  for ecn in ecns:
-    arg = ('%s,ecNumber*%s'%(api_params,ecn))
-    logging.debug("arg=%s"%arg)
-    rstr = client.getEcNumber(arg)
-    results = ParseResultDictString(rstr)
-    OutputResultsDict(results, fout)
-
-#############################################################################
 def QueryString(ecn, organism):
   qstr = ('ecNumber*%s%s'%(ecn, ('#organism*%s'%organism) if organism else ''))
   logging.debug(qstr)
@@ -388,14 +389,6 @@ def ParseResultDictString(rstr):
 def ParseResultListString(rstr):
   results =  re.split(r'!', rstr)
   return results
-
-#############################################################################
-#def Test1(base_url):
-#  logging.info('1) Usage with WSDL (for extracting the URL of the endpoint)')
-#  wsdl = base_url+"/brenda.wsdl"
-#  client = WSDL.Proxy(wsdl)
-#  resultString = client.getKmValue(api_params+','+"ecNumber*1.1.1.1#organism*Homo sapiens")
-#  print(resultString)
 
 #############################################################################
 #def OutputResultsDict(results, fout):

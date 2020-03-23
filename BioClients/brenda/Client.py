@@ -23,14 +23,17 @@ Ref:	BRENDA in 2015: exciting developments in its 25th year of existence.
 
 Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 '''
+
 #############################################################################
-import sys,os,time,argparse,logging,hashlib
+import sys,os,os.path,time,argparse,logging,hashlib
 import string,re,json,yaml
 
 from .. import brenda
 
 API_HOST = "www.brenda-enzymes.org"
 API_BASE_PATH = "/soap"
+
+API_WSDL_URL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
 
 #############################################################################
 if __name__=='__main__':
@@ -76,7 +79,7 @@ Example Organisms:
   ORGANISM='Homo sapiens';
 
   parser = argparse.ArgumentParser(description='BRENDA API client', epilog=epilog)
-  ops = [ 'get', 'get_names', 'get_systematicname', 'get_organism', 'get_sequence', 'get_pdb', 'get_ligands', 'get_inhibitors', 'get_activators', 'get_kivalues', 'get_kmvalues', 'get_references', 'get_inhibitordata', 'get_sequencedata', 'get_liganddata', 'get_referencedata', 'list_all', 'list_fromsynonyms', 'list_frominhibitors', 'list_fromactivators', 'list_fromkivalues', 'list_fromkmvalues', 'list_organisms']
+  ops = ['test', 'get', 'get_names', 'get_systematicname', 'get_organism', 'get_sequence', 'get_pdb', 'get_ligands', 'get_inhibitors', 'get_activators', 'get_kivalues', 'get_kmvalues', 'get_references', 'get_inhibitordata', 'get_sequencedata', 'get_liganddata', 'get_referencedata', 'list_all', 'list_fromsynonyms', 'list_frominhibitors', 'list_fromactivators', 'list_fromkivalues', 'list_fromkmvalues', 'list_organisms']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input file of ECNs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
@@ -86,6 +89,7 @@ Example Organisms:
   parser.add_argument("--skip", type=int, default=0, help="skip 1st NSKIP ECNs")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_wsdl_url", default=API_WSDL_URL)
   parser.add_argument("--api_user", help="API username")
   parser.add_argument("--api_key", help="API key")
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.brenda.yaml")
@@ -93,10 +97,11 @@ Example Organisms:
   args = parser.parse_args()
 
   params={};
-  with open(args.param_file, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
+  if os.path.exists(args.param_file):
+    with open(args.param_file, 'r') as fh:
+      for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+        for k,v in param.items():
+          params[k] = v
   api_user = args.api_user if args.api_user else params['user_name'] if 'user_name' in params else ''
   api_key = args.api_key if args.api_key else params['user_key'] if 'user_key' in params else ''
 
@@ -105,9 +110,12 @@ Example Organisms:
   API_BASE_URL='http://'+args.api_host+args.api_base_path
   #API_BASE_URL='https://'+args.api_host+args.api_base_path
 
-  SOAP_CLIENT = brenda.Utils.SoapAPIClient(API_BASE_URL)
+  CLIENT = brenda.Utils.SoapAPIClient(args.api_wsdl_url)
+  if not CLIENT:
+    logging.error("SOAP Client instantiation failed.")
 
-  API_PARAMS = api_user+","+hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+  password = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+  API_PARAMS = [api_user, password]
 
   organism = None if args.organism.lower()=='all' else args.organism
 
@@ -137,76 +145,76 @@ Example Organisms:
   if args.op[:4]=="get_" and not ecns: parser.error("Operation %s requires --ecns or --ifile."%args.op)
 
   if args.op=="get":
-    brenda.Utils.GetECN(SOAP_CLIENT, API_PARAMS, ecns, fout)
+    brenda.Utils.GetECN(CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_inhibitordata":
-    brenda.Utils.GetInhibitorData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetInhibitorData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_sequencedata":
-    brenda.Utils.GetSequenceData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetSequenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_liganddata":
-    brenda.Utils.GetLigandData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetLigandData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_referencedata":
-    brenda.Utils.GetReferenceData(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetReferenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_names":
-    brenda.Utils.GetNames(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetNames(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_systematicname":
-    brenda.Utils.GetSystematicName(SOAP_CLIENT, API_PARAMS, ecns, fout)
+    brenda.Utils.GetSystematicName(CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_organism":
-    brenda.Utils.GetOrganism(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetOrganism(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_sequence":
-    brenda.Utils.GetSequence(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetSequence(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_pdb":
-    brenda.Utils.GetPdb(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetPdb(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kivalues":
-    brenda.Utils.GetKiValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetKiValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kmvalues":
-    brenda.Utils.GetKmValues(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetKmValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_inhibitors":
-    brenda.Utils.GetInhibitors(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetInhibitors(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_activators":
-    brenda.Utils.GetActivators(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetActivators(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_ligands":
-    brenda.Utils.GetLigands(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetLigands(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_references":
-    brenda.Utils.GetReferences(SOAP_CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.Utils.GetReferences(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="list_all":
-    brenda.Utils.ListECNumbers(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbers(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromsynonyms":
-    brenda.Utils.ListECNumbersFromSynonyms(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbersFromSynonyms(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_frominhibitors":
-    brenda.Utils.ListECNumbersFromInhibitors(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbersFromInhibitors(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromactivators":
-    brenda.Utils.ListECNumbersFromActivators(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbersFromActivators(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkivalues":
-    brenda.Utils.ListECNumbersFromKiValue(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbersFromKiValue(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkmvalues":
-    brenda.Utils.ListECNumbersFromKmValue(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListECNumbersFromKmValue(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_organisms":
-    brenda.Utils.ListOrganisms(SOAP_CLIENT, API_PARAMS, fout)
+    brenda.Utils.ListOrganisms(CLIENT, API_PARAMS, fout)
 
   elif args.op=="test":
-    brenda.Utils.Test1(API_BASE_URL)
+    brenda.Utils.Test(CLIENT, API_PARAMS)
 
   else:
     parser.error("Invalid operation: %s"%args.op)
