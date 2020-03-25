@@ -26,6 +26,7 @@ integration into other code.
 * OMIM
 * OpenTargets
 * PDB
+* PubChem
 * Reactome
 * RxNorm
 * STRINGDB
@@ -68,3 +69,33 @@ optional arguments:
 
 Example protein IDs: DRD1 DRD1_HUMAN DRD2 DRD2_HUMAN ; Example species: 9606 (human, via taxon identifiers, http://www.uniprot.org/taxonomy) ; Image formats: PNG PNG_highres SVG ; MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
 ```
+
+##  UMLS
+
+From the NIH National Library of Medicine (NLM).
+
+* Registration is required for both browser and API access.  See
+<https://www.nlm.nih.gov/research/umls/>. To use
+[umls_utils.py](python/umls_utils.py), create `~/.umls.yaml` with
+format:
+
+```
+API_KEY: "===REPLACE-WITH-KEY-HERE==="
+```
+
+##  RxNorm
+
+From the NIH National Library of Medicine (NLM).
+
+* <https://www.nlm.nih.gov/research/umls/rxnorm/>
+
+##  MeSH
+
+From the NIH National Library of Medicine (NLM).
+
+* <https://meshb.nlm.nih.gov/>
+
+## `PubChem`: REST, SOAP, FTP clients etc.
+
+Tools for obtaining and processing PubChem data.
+
