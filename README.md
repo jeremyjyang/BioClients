@@ -22,11 +22,14 @@ integration into other code.
 * GWASCatalog
 * HUGO
 * Humanbase
+* MeSH \(XML utils only\)
 * OMIM
 * OpenTargets
 * PDB
 * Reactome
+* RxNorm
 * STRINGDB
+* UMLS
 * UniProt
 
 ## Usage
