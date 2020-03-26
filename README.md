@@ -13,6 +13,7 @@ integration into other code.
 
 * Biogrid
 * BRENDA
+* ChEMBL
 * Diseaseontology
 * Disgenet
 * DNorm
@@ -95,7 +96,14 @@ From the NIH National Library of Medicine (NLM).
 
 * <https://meshb.nlm.nih.gov/>
 
-## `PubChem`: REST, SOAP, FTP clients etc.
+## PubChem
 
-Tools for obtaining and processing PubChem data.
+Tools for obtaining and processing PubChem data (REST, SOAP, FTP).
 
+## ChEMBL
+
+Tools for obtaining and processing ChEMBL data.
+
+* https://www.ebi.ac.uk/chembl/
+* https://chembl.gitbook.io/chembl-interface-documentation/web-services
+* https://chembl.gitbook.io/chembl-interface-documentation/downloads
