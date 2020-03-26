@@ -1,74 +1,46 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #############################################################################
-### pubchem_ftp_query.py - 
-### 
 ### For accessing files via FTP site; ftp://ftp.ncbi.nlm.nih.gov/pubchem/
-### 
-### Jeremy J Yang
-### 14 Feb 2017
 #############################################################################
-import sys,os,re,time,getopt
-import urllib,urllib2,tempfile
+import sys,os,re,time,argparse,logging
 
 from ... import pubchem
 
-PROG=os.path.basename(sys.argv[0])
-
-FTPURL='ftp://ftp.ncbi.nlm.nih.gov/pubchem'
+FTP_URL='ftp://ftp.ncbi.nlm.nih.gov/pubchem'
 POLL_WAIT=10
 MAX_WAIT=600
 
 #############################################################################
 if __name__=='__main__':
-  def ErrorExit(msg):
-    print >>sys.stderr,msg
-    sys.exit(1)
+  parser = argparse.ArgumentParser(description="access PubChem FTP site")
+  parser.add_argument("--ftp_get", help="path of file")
+  parser.add_argument("--ftp_ls", help="path of dir")
+  parser.add_argument("--ftp_url", default=FTP_URL)
+  parser.add_argument("--skip", type=int, default=0)
+  parser.add_argument("--nmax", type=int, default=0)
+  parser.add_argument("--ftp_ntries", type=int, default=20, help="max tries per ftp-get")
+  parser.add_argument("--sdf2smi", action="store_true", help="convert SDF to SMILES")
+  parser.add_argument("--o", dest="ofile", help="output file")
+  parser.add_argument("-v", "--verbose", default=0, action="count")
+  args = parser.parse_args()
 
-  usage='''
-  %(PROG)s - access PubChem FTP site
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  required (one of):
-  --ftpget fpath ...... path of file
-  --ftpls dpath ....... path of dir
+  if not (args.ftp_get or args.ftp_ls):
+    parser.error("--ftp_get or --ftp_ls required.")
 
-  options:
-  --o OFILE ........... 
-  --ftp_ntries N ...... max tries per ftp-get
-  --sdf2smi ........... convert SDF to SMILES
-  --[v]v .............. [very] verbose
-  --h ................. this help
-'''%{'PROG':PROG}
+  if args.ofile:
+    fout = open(args.ofile, "w")
+  else:
+    fout = sys.stdout
 
-  ifile=None; ofile=None; verbose=0; skip=0; nmax=0; ftp_ntries=20;
-  gzip=False; ftpget=None; ftpls=None;
-  sdf2smi=False;
-  opts,pargs = getopt.getopt(sys.argv[1:],'',['h','v','vv','i=','ftp_ntries=',
-  'ftpget=','ftpls=','o=','sdf2smi','gz','gzip','skip=','nmax=','n='])
-  if not opts: ErrorExit(usage)
-  for (opt,val) in opts:
-    if opt=='--h': ErrorExit(usage)
-    elif opt=='--i': ifile=val
-    elif opt=='--ftpget': ftpget=val
-    elif opt=='--ftpls': ftpls=val
-    elif opt=='--o': ofile=val
-    elif opt=='--nmax': nmax=int(val)
-    elif opt=='--ftp_ntries': ftp_ntries=int(val)
-    elif opt=='--skip': skip=int(val)
-    elif opt=='--sdf2smi': sdf2smi=True
-    elif opt=='--vv': verbose=2
-    elif opt=='--v': verbose=1
-    else: ErrorExit('Illegal option: %s'%val)
-
-
-  if ftpget:
-    if not ofile: ErrorExit('-o required with -get.')
-    url=("%s%s"%(FTPURL,ftpget))
-    fout=file(ofile,'w')
-    if sdf2smi:
-      nbytes = pubchem.ftp.Utils.GetUrlSDF2SMI(url,fout,ntries=20,poll_wait=10,verbose=verbose)
+  if args.ftp_get:
+    url=("%s%s"%(args.ftp_url, args.ftp_get))
+    if args.sdf2smi:
+      nbytes = pubchem.ftp.Utils.GetUrlSDF2SMI(url, fout, ntries=args.ftp_ntries, poll_wait=10)
     else:
-      nbytes = pubchem.ftp.Utils.GetUrl(url,fout,ntries=20,poll_wait=10,verbose=verbose)
-    print >>sys.stderr, "%s: bytes: %.2fMB"%(PROG,nbytes/1e6)
-  elif ftpls!=None:
-    url=("%s%s"%(FTPURL,ftpls))
-    pubchem.ftp.Utils.GetUrl(url,sys.stdout,ntries=20,poll_wait=10,verbose=verbose)
+      nbytes = pubchem.ftp.Utils.GetUrl(url, fout, ntries=args.ftp_ntries, poll_wait=10)
+    logging.info("bytes: %.2fMB"%(nbytes/1e6))
+  elif args.ftp_ls:
+    url=("%s%s"%(args.ftp_url, args.ftp_ls))
+    pubchem.ftp.Utils.GetUrl(url, fout, ntries=args.ftp_ntries, poll_wait=10)
