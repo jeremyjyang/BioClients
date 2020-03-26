@@ -11,28 +11,7 @@ integration into other code.
 
 ## Modules
 
-* Biogrid
-* BRENDA
-* ChEMBL
-* Diseaseontology
-* Disgenet
-* DNorm
-* Ensembl
-* FDA
-* GeneOntology
-* GWASCatalog
-* HUGO
-* Humanbase
-* MeSH \(XML utils only\)
-* OMIM
-* OpenTargets
-* PDB
-* PubChem
-* Reactome
-* RxNorm
-* STRINGDB
-* UMLS
-* UniProt
+`Biogrid`, `BRENDA`, `ChEMBL`, `Diseaseontology`, `Disgenet`, `DNorm`, `Ensembl`, `FDA`, `GeneOntology`, `GWASCatalog`, `HUGO`, `Humanbase`, `MeSH`, `OMIM`, `OpenTargets`, `PDB`, `PubChem`, `Reactome`, `RxNorm`, `STRINGDB`, `UMLS`, `UniProt`
 
 ## Usage
 
@@ -77,7 +56,7 @@ From the NIH National Library of Medicine (NLM).
 
 * Registration is required for both browser and API access.  See
 <https://www.nlm.nih.gov/research/umls/>. To use
-[umls_utils.py](python/umls_utils.py), create `~/.umls.yaml` with
+[BioClients.umls.Client](BioClients/umls/Client.py), create `~/.umls.yaml` with
 format:
 
 ```
@@ -93,6 +72,7 @@ From the NIH National Library of Medicine (NLM).
 ##  MeSH
 
 From the NIH National Library of Medicine (NLM).
+Currently XML processing tools only.
 
 * <https://meshb.nlm.nih.gov/>
 
