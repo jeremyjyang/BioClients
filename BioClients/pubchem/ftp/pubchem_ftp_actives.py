@@ -44,15 +44,12 @@
 ###    [ ] output compound ids with activity stats on one line
 ###    [ ] fix  --out_all_stats
 #############################################################################
-### Jeremy Yang
-###  8 Jul 2010
-#############################################################################
 import os,sys,re,getopt,gzip,tempfile
 try:
   import gdbm
 except:
   import dbm as gdbm
-import pubchem_ftp_utils
+from ... import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 DATADIR="/home/data/pubchem/bioassay/csv/data"
@@ -258,7 +255,7 @@ if __name__=='__main__':
       print >>sys.stderr, 'ERROR: could not open %s'%(fpath)
       continue
     ftxt=f.read()
-    sids_this=pubchem_ftp_utils.ExtractOutcomes(ftxt,sidset,use_cids)
+    sids_this=pubchem.ftp.Utils.ExtractOutcomes(ftxt,sidset,use_cids)
     n_active=0; n_inactive=0; n_inconclusive=0; n_unspecified=0; n_discrepant=0;
     for sid in sids_this.keys():
 
@@ -269,10 +266,10 @@ if __name__=='__main__':
       outcome=sids_this[sid]['outcome']
 
       sids_db['%d_%d'%(sid,aid)]=('%d'%outcome)
-      aids_this=pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)])
+      aids_this=pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)])
       if aid not in aids_this:
         aids_this.append(aid)
-      sids_db['%d'%(sid)]=pubchem_ftp_utils.Ints2Str(aids_this)
+      sids_db['%d'%(sid)]=pubchem.ftp.Utils.Ints2Str(aids_this)
 
       n_datapoints_total+=1
       if outcome==2: n_active+=1
@@ -296,7 +293,7 @@ if __name__=='__main__':
   for sid in sids_list:
     sid_is_active=False
 
-    for aid in pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)]):
+    for aid in pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)]):
       if sids_db['%d_%d'%(sid,aid)]=='2':
         sids_active.append(sid)
         sid_is_active=True
@@ -325,10 +322,10 @@ if __name__=='__main__':
       if inc_aids:
         aids=[]
 
-        for aid in pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)]):
+        for aid in pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)]):
           if sids_db['%d_%d'%(sid,aid)]=='2': aids.append(aid)
 
-        f.write('\t%d\t%s'%(len(aids),pubchem_ftp_utils.Ints2Str(aids)))
+        f.write('\t%d\t%s'%(len(aids),pubchem.ftp.Utils.Ints2Str(aids)))
       f.write('\n')
     f.close()
 
@@ -342,10 +339,10 @@ if __name__=='__main__':
       if inc_aids:
         aids=[]
 
-        for aid in pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)]):
+        for aid in pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)]):
           if sids_db['%d_%d'%(sid,aid)]=='1': aids.append(aid)
 
-        f.write('\t%d\t%s'%(len(aids),pubchem_ftp_utils.Ints2Str(aids)))
+        f.write('\t%d\t%s'%(len(aids),pubchem.ftp.Utils.Ints2Str(aids)))
       f.write('\n')
     f.close()
 
@@ -400,9 +397,9 @@ if __name__=='__main__':
       f.write('%d'%sid)
       if inc_aids:
 
-        aids=pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)])
+        aids=pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)])
 
-        f.write('\t%d\t%s'%(len(aids),pubchem_ftp_utils.Ints2Str(aids)))
+        f.write('\t%d\t%s'%(len(aids),pubchem.ftp.Utils.Ints2Str(aids)))
       f.write('\n')
     f.close()
 
@@ -415,7 +412,7 @@ if __name__=='__main__':
     f.write('id,n_inactive,n_active,n_inconclusive,n_unspecified\n')
     for sid in sids_all:
       nact,nina,ninc,nuns = 0,0,0,0
-      for aid in pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)]):
+      for aid in pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)]):
         if sids_db['%d_%d'%(sid,aid)]=='1': nina+=1
         elif sids_db['%d_%d'%(sid,aid)]=='2': nact+=1
         elif sids_db['%d_%d'%(sid,aid)]=='3': ninc+=1

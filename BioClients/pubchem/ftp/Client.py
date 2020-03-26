@@ -10,7 +10,7 @@
 import sys,os,re,time,getopt
 import urllib,urllib2,tempfile
 
-import pubchem_ftp_utils
+from ... import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 
@@ -65,10 +65,10 @@ if __name__=='__main__':
     url=("%s%s"%(FTPURL,ftpget))
     fout=file(ofile,'w')
     if sdf2smi:
-      nbytes = pubchem_ftp_utils.GetUrlSDF2SMI(url,fout,ntries=20,poll_wait=10,verbose=verbose)
+      nbytes = pubchem.ftp.Utils.GetUrlSDF2SMI(url,fout,ntries=20,poll_wait=10,verbose=verbose)
     else:
-      nbytes = pubchem_ftp_utils.GetUrl(url,fout,ntries=20,poll_wait=10,verbose=verbose)
+      nbytes = pubchem.ftp.Utils.GetUrl(url,fout,ntries=20,poll_wait=10,verbose=verbose)
     print >>sys.stderr, "%s: bytes: %.2fMB"%(PROG,nbytes/1e6)
   elif ftpls!=None:
     url=("%s%s"%(FTPURL,ftpls))
-    pubchem_ftp_utils.GetUrl(url,sys.stdout,ntries=20,poll_wait=10,verbose=verbose)
+    pubchem.ftp.Utils.GetUrl(url,sys.stdout,ntries=20,poll_wait=10,verbose=verbose)

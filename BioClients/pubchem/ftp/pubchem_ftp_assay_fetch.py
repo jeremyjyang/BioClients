@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 #############################################################################
 ### pubchem_assay_fetch.py - from input AIDs, fetch full dataset
-### 
-### 
-### Jeremy J Yang
-###  14 Feb 2017
 #############################################################################
 import os,sys,re,time,getopt,gzip,zipfile
 
-import pubchem_ftp_utils
+from ... import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 
@@ -37,7 +33,7 @@ def ExtractSIDs(fpath_csv_gz):
     return []
   ftxt=f.read()
   f.close()
-  sids_this=pubchem_ftp_utils.ExtractOutcomes(ftxt,None,False)
+  sids_this=pubchem.ftp.Utils.ExtractOutcomes(ftxt,None,False)
   return sids_this
 
 #############################################################################

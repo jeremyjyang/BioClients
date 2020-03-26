@@ -2,11 +2,6 @@
 #############################################################################
 ### pubchem_assaysim.py - assay similarity based on activity profiles
 ### from PubChem CSV assay file[s]
-###
-###  
-#############################################################################
-### Jeremy Yang
-### 10 Apr 2012
 #############################################################################
 import os,sys,re,getopt,gzip,zipfile,tempfile
 #try:
@@ -14,7 +9,7 @@ import os,sys,re,getopt,gzip,zipfile,tempfile
 #except:
 #  import dbm as gdbm
 
-import pubchem_ftp_utils
+from ... import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 DATADIR="/home/data/pubchem/bioassay/csv/data"
@@ -148,9 +143,9 @@ if __name__=='__main__':
   n_datapoints_total=0
   use_cids=False;
 
-  sidsA=pubchem_ftp_utils.ExtractOutcomes(csvA,sidset,use_cids)
+  sidsA=pubchem.ftp.Utils.ExtractOutcomes(csvA,sidset,use_cids)
 
-  sidsB=pubchem_ftp_utils.ExtractOutcomes(csvB,sidset,use_cids)
+  sidsB=pubchem.ftp.Utils.ExtractOutcomes(csvB,sidset,use_cids)
 
   print >>sys.stderr, '\t  aidA, SIDs total: %3d'%(len(sidsA.keys()))
   print >>sys.stderr, '\t  aidB, SIDs total: %3d'%(len(sidsB.keys()))

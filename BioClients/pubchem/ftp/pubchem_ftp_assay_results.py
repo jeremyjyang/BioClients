@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 #############################################################################
 ### pubchem_ftp_assay_results.py - input AID, SIDs, output CSV outcomes.
-### 
-### 
-### Jeremy J Yang
-###  14 Feb 2017
 #############################################################################
 import os,sys,re,time,getopt,gzip,zipfile,tempfile,shutil
 
-import pubchem_ftp_utils
+from ... import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 
@@ -144,7 +140,7 @@ if __name__=='__main__':
           fin=gzip.open(fpath)
         except:
           print >>sys.stderr, 'ERROR: could not open %s'%(fpath)
-        pubchem_ftp_utils.ExtractResults(fin,aid,sids,fout,verbose)
+        pubchem.ftp.Utils.ExtractResults(fin,aid,sids,fout,verbose)
         fin.close()
         break
     if verbose and not is_found:

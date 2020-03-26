@@ -16,13 +16,9 @@
 #############################################################################
 ### OUTCOME_CODES = { 'inactive':1, 'active':2, 'inconclusive':3, 'unspecified':4, 'probe':5 }
 #############################################################################
-### Jeremy Yang
-### 24 Jun 2014
-#############################################################################
 import os,sys,re,getopt,time
 
-import time_utils
-import pubchem_utils
+from .. import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 #
@@ -140,13 +136,13 @@ options:
     if nskip>0 and n_mol<=nskip:
       continue
 
-    mol_found = pubchem_utils.GetCpdAssayData(BASE_URI,cid,aidset,fout,verbose)
+    mol_found = pubchem.Utils.GetCpdAssayData(BASE_URI,cid,aidset,fout,verbose)
 
     n_cid_notfound += 0 if mol_found else 1
 
     if 0==(n_mol%100):
       if nskip>0: print >>sys.stderr, ("n = %d ;"%(n_mol-nskip)),
-      print >>sys.stderr, ("n_mol = %d ; elapsed time: %s\t[%s]"%(n_mol,time_utils.NiceTime(time.time()-t0),time.asctime()))
+      print >>sys.stderr, ("n_mol = %d ; elapsed time: %s\t[%s]"%(n_mol, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))), time.asctime()))
     if nmax>0 and n_mol-nskip>=nmax:
       break
 
@@ -155,6 +151,6 @@ options:
   print >>sys.stderr, 'AID count: %d'%(len(aidset))
   print >>sys.stderr, 'CID count: %d'%(len(cids))
   print >>sys.stderr, '%s: number of CIDs not found in any assay: %d'%(PROG,n_cid_notfound)
-  print >>sys.stderr, ("%s: total elapsed time: %s"%(PROG,time_utils.NiceTime(time.time()-t0)))
+  print >>sys.stderr, ("%s: total elapsed time: %s"%(PROG, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
   print >>sys.stderr, time.asctime()
 

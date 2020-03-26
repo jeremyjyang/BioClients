@@ -7,14 +7,10 @@
 ###
 ### ref: http://pubchem.ncbi.nlm.nih.gov/pug_rest/
 #############################################################################
-### Jeremy Yang
-###  7 Aug 2014
-#############################################################################
 import os,sys,re,getopt,time
 import csv,urllib2
 
-import time_utils
-import pubchem_utils
+from .. import pubchem
 
 #############################################################################
 def main():
@@ -92,8 +88,8 @@ def main():
 
     name,source = '',''
     try:
-      xmlstr = pubchem_utils.Aid2DescriptionXML(aid,verbose)
-      name,source = pubchem_utils.AssayXML2NameAndSource(xmlstr)
+      xmlstr = pubchem.Utils.Aid2DescriptionXML(aid,verbose)
+      name,source = pubchem.Utils.AssayXML2NameAndSource(xmlstr)
     except urllib2.HTTPError,e:
       if verbose:
         print >>sys.stderr, 'ERROR: [%d] REST request failed; response code = %d'%(aid,e.code)
@@ -112,7 +108,7 @@ def main():
     fout.write('%d,"%s","%s"\n'%(aid,name,source))
 
     if 0==(n_id%100):
-      print >>sys.stderr, ("n_id = %d ; elapsed time: %s\t[%s]"%(n_id,time_utils.NiceTime(time.time()-t0),time.asctime()))
+      print >>sys.stderr, ("n_id = %d ; elapsed time: %s\t[%s]"%(n_id, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))), time.asctime()))
     if n_id==nmax:
       break
 
@@ -125,7 +121,7 @@ def main():
   errcodes.sort()
   for code in errcodes:
     print >>sys.stderr, 'count, http error code %d: %3d'%(code,http_errs[code])
-  print >>sys.stderr, ("total elapsed time: %s"%(time_utils.NiceTime(time.time()-t0)))
+  print >>sys.stderr, ("total elapsed time: %s"%( (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
   print >>sys.stderr, time.asctime()
 
 #############################################################################

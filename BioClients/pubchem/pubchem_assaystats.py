@@ -28,13 +28,9 @@
 ### Problem: How can this find multiple SIDs for one CID?  PC REST API seems
 ### to disallow this possibility.
 #############################################################################
-### Jeremy Yang
-### 13 Aug 2014
-#############################################################################
 import os,sys,re,getopt,time
 
-import time_utils
-import pubchem_utils
+from .. import pubchem
 
 PROG=os.path.basename(sys.argv[0])
 #
@@ -129,8 +125,8 @@ options:
         continue
 
   if cid_query:
-    smiles=pubchem_utils.Cid2Smiles(BASE_URI,cid_query,0)
-    mol_found,mol_active,n_sam,n_sam_active = pubchem_utils.GetCpdAssayStats(BASE_URI,cid_query,smiles,aidset,sys.stderr,sys.stdout,aidhash,verbose)
+    smiles=pubchem.Utils.Cid2Smiles(BASE_URI,cid_query,0)
+    mol_found,mol_active,n_sam,n_sam_active = pubchem.Utils.GetCpdAssayStats(BASE_URI,cid_query,smiles,aidset,sys.stderr,sys.stdout,aidhash,verbose)
     sys.exit()
 
   if not (ifile_mol):
@@ -194,7 +190,7 @@ options:
     smiles=fields[0]
     cid=int(fields[1])
 
-    mol_found,mol_active,n_sam,n_sam_active = pubchem_utils.GetCpdAssayStats(BASE_URI,cid,smiles,aidset,fout_mol,fout_act,aidhash,verbose)
+    mol_found,mol_active,n_sam,n_sam_active = pubchem.Utils.GetCpdAssayStats(BASE_URI,cid,smiles,aidset,fout_mol,fout_act,aidhash,verbose)
     if mol_found:
       if mol_active:
         n_mol_active+=1
@@ -205,7 +201,7 @@ options:
 
     if 0==(n_mol%100):
       if nskip>0: print >>sys.stderr, ("n = %d ;"%(n_mol-nskip)),
-      print >>sys.stderr, ("n_mol = %d ; elapsed time: %s\t[%s]"%(n_mol,time_utils.NiceTime(time.time()-t0),time.asctime()))
+      print >>sys.stderr, ("n_mol = %d ; elapsed time: %s\t[%s]"%(n_mol, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))), time.asctime()))
     if nmax>0 and n_mol-nskip>=nmax:
       break
 
@@ -226,6 +222,6 @@ options:
   #errcodes.sort()
   #for code in errcodes:
   #  print >>sys.stderr, 'count, http error code %d: %3d'%(code,http_errs[code])
-  print >>sys.stderr, ("total elapsed time: %s"%(time_utils.NiceTime(time.time()-t0)))
+  print >>sys.stderr, ("total elapsed time: %s"%((time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
   print >>sys.stderr, time.asctime()
 

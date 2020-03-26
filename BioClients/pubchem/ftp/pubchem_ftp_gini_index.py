@@ -28,8 +28,8 @@ try:
 except:
   import dbm as gdbm
 
-import pubchem_ftp_utils
-import gini_utils
+from ... import pubchem
+from ...util import gini_utils
 
 PROG=os.path.basename(sys.argv[0])
 DATADIR="/pangolin_home/data/pubchem/bioassay/csv/data"
@@ -189,7 +189,7 @@ if __name__=='__main__':
       continue
     f=gzip.open(fpath)
     ftxt=f.read()
-    sids_this=pubchem_ftp_utils.ExtractOutcomes(ftxt,sidset,use_cids)
+    sids_this=pubchem.ftp.Utils.ExtractOutcomes(ftxt,sidset,use_cids)
     n_active=0; n_inactive=0; n_inconclusive=0; n_unspecified=0; n_discrepant=0;
     for sid in sids_this.keys():
 
@@ -200,10 +200,10 @@ if __name__=='__main__':
       outcome=sids_this[sid]['outcome']
 
       sids_db['%d_%d'%(sid,aid)]=('%d'%outcome)
-      aids_this=pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)])
+      aids_this=pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)])
       if aid not in aids_this:
         aids_this.append(aid)
-      sids_db['%d'%(sid)]=pubchem_ftp_utils.Ints2Str(aids_this)
+      sids_db['%d'%(sid)]=pubchem.ftp.Utils.Ints2Str(aids_this)
 
       n_datapoints_total+=1
       if outcome==2: n_active+=1
@@ -232,7 +232,7 @@ if __name__=='__main__':
   for sid in sids_list:
     if fout_raw:
       fout_raw.write('%d'%(sid))
-    aids_this=pubchem_ftp_utils.Str2Ints(sids_db['%d'%(sid)])
+    aids_this=pubchem.ftp.Utils.Str2Ints(sids_db['%d'%(sid)])
     if not aids_this:
       pass	#?
     scores=[]

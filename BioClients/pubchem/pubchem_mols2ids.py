@@ -15,8 +15,7 @@
 #############################################################################
 import os,sys,re,argparse,time,logging
 
-import time_utils
-import pubchem_utils
+from .. import pubchem
 
 API_HOST="pubchem.ncbi.nlm.nih.gov"
 API_BASE_PATH="/rest/pug"
@@ -83,9 +82,9 @@ def main():
 
     try:
       if args.ifmt == 'inchi':
-        cids=pubchem_utils.Inchi2Cids(BASE_URL, qry, args.verbose)
+        cids=pubchem.Utils.Inchi2Cids(BASE_URL, qry, args.verbose)
       else:
-        cids=pubchem_utils.Smi2Cids(BASE_URL, qry, args.verbose)
+        cids=pubchem.Utils.Smi2Cids(BASE_URL, qry, args.verbose)
     except Exception as e:
       logging.info('ERROR: REST request failed (%s): %s %s'%(e, qry, name))
       nmol_notfound+=1
@@ -101,7 +100,7 @@ def main():
       n_id_out+=n_id
 
     if nmol>0 and (nmol%100)==0:
-      logging.info(("nmol = %d ; elapsed time: %s\t[%s]"%(nmol, time_utils.NiceTime(time.time()-t0), time.asctime())))
+      logging.info(("nmol = %d ; elapsed time: %s\t[%s]"%(nmol, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))), time.asctime())))
     if nmol==args.nmax:
       break
 
@@ -111,7 +110,7 @@ def main():
   logging.info('mols not found: %d'%(nmol_notfound))
   logging.info('ids found: %d'%(n_id))
   logging.info('ids out: %d'%(n_id_out))
-  logging.info(("total elapsed time: %s"%(time_utils.NiceTime(time.time()-t0))))
+  logging.info(("total elapsed time: %s"%((time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))))))
 
 #############################################################################
 if __name__=='__main__':

@@ -4,14 +4,10 @@
 ### 
 ### ref: http://pubchem.ncbi.nlm.nih.gov/pug_rest/
 #############################################################################
-### Jeremy Yang
-### 10 Apr 2015
-#############################################################################
 import os,sys,re,getopt,time
 import csv,urllib2
 
-import time_utils
-import pubchem_utils
+from .. import pubchem
 
 #############################################################################
 def main():
@@ -143,14 +139,14 @@ def main():
     smi=None; sdf=None;
     if idtype=='SID':
       if fmt=='sdf':
-        sdf=pubchem_utils.Sid2SDF(BASE_URI,id_query,verbose)
+        sdf=pubchem.Utils.Sid2SDF(BASE_URI,id_query,verbose)
       else:
-        smi=pubchem_utils.Sid2Smiles(BASE_URI,id_query,verbose)
+        smi=pubchem.Utils.Sid2Smiles(BASE_URI,id_query,verbose)
     else:
       if fmt=='sdf':
-        sdf=pubchem_utils.Cid2SDF(BASE_URI,id_query,verbose)
+        sdf=pubchem.Utils.Cid2SDF(BASE_URI,id_query,verbose)
       else:
-        smi=pubchem_utils.Cid2Smiles(BASE_URI,id_query,verbose)
+        smi=pubchem.Utils.Cid2Smiles(BASE_URI,id_query,verbose)
 
     if fmt=='sdf':
       if not sdf:
@@ -168,14 +164,14 @@ def main():
         n_out+=1
 
     if 0==(n_id%100):
-      print >>sys.stderr, ("n_id = %d ; elapsed time: %s\t[%s]"%(n_id,time_utils.NiceTime(time.time()-t0),time.asctime()))
+      print >>sys.stderr, ("n_id = %d ; elapsed time: %s\t[%s]"%(n_id, (time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))), time.asctime()))
     if n_id==nmax:
       break
 
   fout.close()
   print >>sys.stderr, 'ids in: %d'%(n_id)
   print >>sys.stderr, 'mols out: %d'%(n_out)
-  print >>sys.stderr, ("total elapsed time: %s"%(time_utils.NiceTime(time.time()-t0)))
+  print >>sys.stderr, ("total elapsed time: %s"%((time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
   print >>sys.stderr, time.asctime()
 
 #############################################################################

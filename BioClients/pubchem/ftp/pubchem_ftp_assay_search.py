@@ -8,7 +8,7 @@ Jeremy J Yang
 import os,sys,re,time,getopt,gzip,zipfile
 import xml.dom.minidom
 
-import xml_utils
+from ..util import xml_utils
 
 PROG=os.path.basename(sys.argv[0])
 
