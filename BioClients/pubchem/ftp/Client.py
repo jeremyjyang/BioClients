@@ -12,7 +12,9 @@ MAX_WAIT=600
 
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description="access PubChem FTP site")
+  epilog="""
+FTP_URL: {0}""".format(FTP_URL)
+  parser = argparse.ArgumentParser(description="access PubChem FTP site", epilog=epilog)
   parser.add_argument("--ftp_get", help="path of file")
   parser.add_argument("--ftp_ls", help="path of dir")
   parser.add_argument("--ftp_url", default=FTP_URL)
