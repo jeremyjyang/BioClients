@@ -11,7 +11,7 @@ integration into other code.
 
 ## Modules
 
-`biogrid`, `brenda`, `chembl`, `diseaseontology`, `disgenet`, `dnorm`, `ensembl`, `fda`, `geneontology`, `gwascatalog`, `hugo`, `humanbase`, `icite`, `mesh`, `omim`, `opentargets`, `pdb`, `pubchem`, `pubmed`, `pubtator`, `reactome`, `rxnorm`, `stringdb`, `umls`, `uniprot`
+`biogrid`, `brenda`, `chembl`, `diseaseontology`, `disgenet`, `dnorm`, `ensembl`, `fda`, `geneontology`, `gwascatalog`, `hugo`, `humanbase`, `icite`, `lincs`, `mesh`, `omim`, `opentargets`, `pdb`, `pubchem`, `pubmed`, `pubtator`, `reactome`, `rxnorm`, `stringdb`, `umls`, `uniprot`
 
 ## Usage
 
