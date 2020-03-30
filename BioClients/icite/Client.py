@@ -6,30 +6,26 @@
 import sys,os,argparse,logging
 import urllib.request,json,re
 #
+from ..util import rest_utils
+
 #############################################################################
 def GetPmid(base_url, pmids, fout):
   n_out=0;
   tags=None;
   for pmid in pmids:
     url=base_url+'/%s'%pmid
-    f = urllib.request.urlopen(url)
-    rval=f.read()
-    if not rval:
+    pub = rest_utils.GetURL(url, parse_json=True)
+    if not pub:
       logging.info('not found: %s'%(pmid))
-      continue
-    rval=json.loads(rval.decode('utf-8'), encoding='utf-8')
-    pub = rval
     if not tags:
       tags = pub.keys()
       fout.write('\t'.join(tags)+'\n')
-
-    vals = [];
+    vals=[];
     for tag in tags:
-      val=(pub[tag] if pub.has_key(tag) else '')
+      val = (pub[tag] if tag in pub else '')
       vals.append(val)
     fout.write('\t'.join([str(vals) for val in vals])+'\n')
     n_out+=1
-
   logging.info('n_in = %d'%(len(pmids)))
   logging.info('n_out = %d'%(n_out))
 
@@ -43,34 +39,22 @@ def GetPmids(base_url, pmids, fout):
     pmids_this = pmids[n_in:n_in+nchunk]
     n_in += (nchunk if n_in+nchunk < len(pmids) else len(pmids)-n_in)
     url_this = base_url+'?pmids=%s'%(','.join(pmids_this))
-    f = urllib.request.urlopen(url_this)
-    rval = f.read()
-
+    rval = rest_utils.GetURL(url_this, parse_json=True)
     if not rval:
       break
-
-    rval = json.loads(rval.decode('utf-8'), encoding='utf-8')
-    logging.debug('rval="%s"'%rval.decode('utf-8'))
-
-    logging.info('%s'%url_this)
-
     url_self = rval['links']['self']
-    logging.debug('%s'%url_self)
-
     pubs = rval['data']
     for pub in pubs:
       if not tags:
         tags = list(pub.keys())
         tags.sort()
         fout.write('\t'.join(tags)+'\n')
-
       vals=[];
       for tag in tags:
         val = (pub[tag] if tag in pub else '')
         vals.append(val)
       fout.write('\t'.join([str(val) for val in vals])+'\n')
       n_out+=1
-
   logging.info('n_in = %d'%(len(pmids)))
   logging.info('n_out = %d'%(n_out))
 
@@ -82,7 +66,7 @@ if __name__=='__main__':
   parser = argparse.ArgumentParser(description='PubMed iCite REST API client utility', epilog='Publication metadata.')
   ops = ['get']
   parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", dest="pmids", help="PubMed IDs, comma-separated (ex:25533513)")
+  parser.add_argument("--ids", help="PubMed IDs, comma-separated (ex:25533513)")
   parser.add_argument("--i", dest="ifile", help="input file, PubMed IDs")
   parser.add_argument("--nmax", help="list: max to return")
   parser.add_argument("--year", help="list: year of publication")

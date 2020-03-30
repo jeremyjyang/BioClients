@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #############################################################################
-### Pubtator  REST API client
-###
+### Pubtator REST API client
 ### https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/tmTools/RESTfulAPIs.html
+### Formats: JSON, PubTator, BioC.
 #############################################################################
 ### NOTE that the API does NOT provide keyword search capability like
 ### webapp https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/PubTator/index.cgi
@@ -32,8 +32,8 @@ def GetAnnotations(base_url, mode, pmids, fout):
   n_assn=0; n_hit=0;
   fout.write('sourcedb\tsourceid\tbegin\tend\tobj_type\tobj\n')
   for pmid in pmids:
-    url=base_url+'/%s/%s/JSON'%(mode, pmid)
-    rval=rest_utils.GetURL(url, parse_json=True)
+    url = base_url+'/%s/%s/JSON'%(mode, pmid)
+    rval = rest_utils.GetURL(url, parse_json=True)
     if not rval:
       logging.info('not found: %s'%(pmid))
       continue
@@ -67,9 +67,9 @@ if __name__=='__main__':
 	description='Pubtator REST API client utility',
 	epilog='Reports PubMed NER annotations for specified PMID[s].')
   ops=['get_annotations']
-  modes = ['gene', 'chemical', 'bioconcept']
+  modes = ['Gene', 'Chemical', 'BioConcept']
   parser.add_argument("op", choices=ops, help="operation")
-  parser.add_argument("--mode", choices=modes, help='mode', default='bioconcept')
+  parser.add_argument("--mode", choices=modes, help='mode', default='BioConcept')
   parser.add_argument("--ids", help="PubMed IDs, comma-separated (ex:25533513)")
   parser.add_argument("--i", dest="ifile", help="input file, PubMed IDs")
   parser.add_argument("--nmax", help="list: max to return")

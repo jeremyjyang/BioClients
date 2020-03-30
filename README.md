@@ -87,3 +87,11 @@ Tools for obtaining and processing ChEMBL data.
 * https://www.ebi.ac.uk/chembl/
 * https://chembl.gitbook.io/chembl-interface-documentation/web-services
 * https://chembl.gitbook.io/chembl-interface-documentation/downloads
+
+# PubMed, PubTator, iCite
+
+PubMed and related NIH literature resources.
+
+* (PubMed)[https://pubmed.ncbi.nlm.nih.gov/]
+* (iCite)[https://icite.od.nih.gov/]
+* (PubTator)[https://www.ncbi.nlm.nih.gov/research/pubtator/]
