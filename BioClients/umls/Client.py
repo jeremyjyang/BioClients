@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+"""
+UMLS REST API client
+UTS = UMLS Technology Services
+"""
 #############################################################################
-### UMLS REST API client
-### UTS = UMLS Technology Services
-###
 ### https://documentation.uts.nlm.nih.gov/rest/home.html
 ### https://documentation.uts.nlm.nih.gov/rest/authentication.html
 ### https://documentation.uts.nlm.nih.gov/rest/concept/
@@ -125,16 +126,18 @@ if __name__=='__main__':
   parser.add_argument("--inputType", choices=inputTypes, default='atom')
   parser.add_argument("--returnIdType", choices=returnIdTypes, default='concept')
   parser.add_argument("--srcs", help='list of sources to include in response')
-  parser.add_argument("--umls_srcs_file", help="list of all UMLS sources")
+  #parser.add_argument("--umls_srcs_file", help="list of all UMLS sources")
   parser.add_argument("--searchQuery", help='string or code')
   parser.add_argument("--skip", default=0, type=int)
   parser.add_argument("--nmax", default=0, type=int)
-  parser.add_argument("--ver", default="current", help="API version")
+  parser.add_argument("--version", default="current", help="API version")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
   parser.add_argument("--api_auth_host", default=API_AUTH_HOST)
   parser.add_argument("--api_auth_endpoint", default=API_AUTH_ENDPOINT)
   parser.add_argument("--api_auth_service", default=API_AUTH_SERVICE)
+  parser.add_argument("--param_file", default=os.environ['HOME']+"/.umls.yaml")
+  parser.add_argument("--api_key", help="API key")
   parser.add_argument("-v", "--verbose", default=0, action="count")
 
   args = parser.parse_args()
@@ -149,22 +152,19 @@ if __name__=='__main__':
   else:
     fout = sys.stdout
 
-  with open(os.environ['HOME']+"/.umls.yaml", 'r') as stream:
-    try:
-      creds = yaml.safe_load(stream)
-      api_key = creds['API_KEY']
-    except Exception as e:
-      logging.error('Please add valid API_KEY to ~/.umls.yaml') 
+  params={};
+  if os.path.exists(args.param_file):
+    with open(args.param_file, 'r') as fh:
+      for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+        for k,v in param.items():
+          params[k] = v
+  api_key = args.api_key if args.api_key else params['API_KEY'] if 'API_KEY' in params else ''
+  if not api_key:
+    parser.error('Please specify valid API_KEY via --api_key or --param_file') 
 
   api_auth_url = 'https://'+args.api_auth_host+args.api_auth_endpoint
   auth = umls.Utils.Authentication(api_key, args.api_auth_service, api_auth_url, API_HEADERS)
   auth.setVerbosity(args.verbose)
-
-  srclist = umls.Utils.SourceList()
-  if args.umls_srcs_file:
-    srclist.initFromFile(args.umls_srcs_file)
-  else:
-    srclist.initFromApi(base_url, args.ver, auth)
 
   ids=[];
   if args.idfile:
@@ -180,23 +180,33 @@ if __name__=='__main__':
   elif args.id:
     ids.append(args.id)
 
-  if args.srcs:
-    for src in re.split(r'[,\s]',args.srcs.strip()):
-      if not srclist.has_src(src):
-        parser.error('Source "%s" not known.'%src)
+  srclist = umls.Utils.SourceList()
+  srclist.initFromApi(base_url, args.version, auth)
 
-  if args.op == 'getConcept':
-    umls.Utils.GetConcept(base_url, args.ver, args.idsrc, auth, ids, args.skip, args.nmax, fout)
+  if args.srcs:
+    for src in re.split(r'[,\s]+', args.srcs.strip()):
+      if not srclist.has_src(src):
+          parser.error('Source unknown: "%s"'%src)
+
+  if args.op == 'listSources':
+    fout.write("abbreviation\tshortName\tpreferredName\n")
+    for i,src in enumerate(srclist.sources):
+      abbr,name,prefname = src
+      fout.write('%s\t%s\t%s\n'%(abbr, name, prefname))
+    logging.info('n_src: %d'%len(srclist.sources))
+
+  elif args.op == 'getConcept':
+    umls.Utils.GetConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
 
   elif args.op == 'getRelations':
     if args.idsrc and args.idsrc!='CUI':
       parser.error('getRelations requires --idsrc CUI.')
-    umls.Utils.GetRelations(base_url, args.ver, auth, ids, args.skip, args.nmax, args.srcs, fout)
+    umls.Utils.GetRelations(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
   elif args.op == 'getAtoms':
     if args.idsrc and args.idsrc!='CUI':
       parser.error('getAtoms requires --idsrc CUI.')
-    umls.Utils.GetAtoms(base_url, args.ver, auth, ids, args.skip, args.nmax, args.srcs, fout)
+    umls.Utils.GetAtoms(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
   elif args.op == 'cui2Code':
     if args.idsrc and args.idsrc!='CUI':
@@ -205,11 +215,11 @@ if __name__=='__main__':
     for cui in ids:
       i_cui+=1
       fout.write('%d.\t%s:'%(i_cui,cui))
-      codes = umls.Utils.Cui2Code(base_url,args.ver,auth,cui,args.srcs,fout)
+      codes = umls.Utils.Cui2Code(base_url, args.version, auth, cui, args.srcs, fout)
       n_code_this=0;
       for src in sorted(codes.keys()):
         for i,atom in enumerate(sorted(list(codes[src]))):
-          fout.write('%s:\t%d.\t%s\t%s'%(src,i+1,atom.code,atom.name))
+          fout.write('%s:\t%d.\t%s\t%s'%(src, i+1, atom.code, atom.name))
           n_code_this+=1
       n_code+=n_code_this
     logging.info('n_cui: %d'%i_cui)
@@ -218,16 +228,10 @@ if __name__=='__main__':
   elif args.op == 'search':
     if not args.searchQuery:
       parser.error('search requires --searchQuery')
-    umls.Utils.Search(base_url,args.ver,auth,args.searchQuery,args.searchType,args.inputType,args.returnIdType,args.srcs,fout)
+    umls.Utils.Search(base_url, args.version, auth, args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, fout)
 
   elif args.op == 'searchByTUI':
     parser.error('ERROR: searchByTUI NOT IMPLEMENTED YET.')
-
-  elif args.op == 'listSources':
-    for i,src in enumerate(srclist.sources):
-      abbr,name,pname = src
-      logging.info('%d.\t%s\t"%s"\t(%s)'%(i+1,abbr,name,pname))
-    logging.info('n_src: %d'%len(srclist.sources))
 
   else:
     parser.error('Invalid operation: %s'%args.op)

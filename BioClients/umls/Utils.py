@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+"""
+UMLS REST API client
+UTS = UMLS Technology Services
+"""
 #############################################################################
-### UMLS REST API client
-### UTS = UMLS Technology Services
-###
 ### https://documentation.uts.nlm.nih.gov/rest/home.html
 ### https://documentation.uts.nlm.nih.gov/rest/authentication.html
 ### https://documentation.uts.nlm.nih.gov/rest/concept/
@@ -173,14 +174,13 @@ class SourceList:
     if not fin:
       logging.error('Could not open %s'%sfile)
       return
-    csvReader = csv.reader(fin,dialect='excel',delimiter=',',quotechar='"')
+    csvReader = csv.reader(fin, delimiter='\t', quotechar='"')
     row = csvReader.next() #ignore header
     while True:
       try:
         row = csvReader.next()
       except:
         break
-      abbr,name,ver = row
       self.sources.append(tuple(row))
     self.sources.sort()
     fin.close()
