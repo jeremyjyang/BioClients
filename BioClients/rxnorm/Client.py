@@ -41,16 +41,17 @@ NDFRT_TYPES=('DISEASE','INGREDIENT','MOA','PE','PK') ## NDFRT drug class types
 
 ##############################################################################
 if __name__=='__main__':
+  ATC_LEVELS="1-4"
   epilog='''\
 get_spellingsuggestions requires --name.
-get_rxcui_by_name requires --name.
+get_rxcui_by_name requires --names.
 get_class_members requires --class_id and --rel_src.
 Example RXCUIs: 131725, 213269.
 Example names: "prozac", "tamiflu".
 '''
   parser = argparse.ArgumentParser(description='RxNorm API client utility', epilog=epilog)
   ops = [
-	"version", "rawquery"
+	"version", "rawquery",
 	"list_sourcetypes", "list_relationtypes", "list_termtypes",
 	"list_propnames", "list_propcategories", "list_idtypes",
 	"list_class_types", "list_classes_atc", "list_classes_mesh",
@@ -69,7 +70,8 @@ Example names: "prozac", "tamiflu".
   parser.add_argument("--rel_src", help="relationship source")
   parser.add_argument("--class_id", help="drug class ID")
   parser.add_argument("--atc", help="ATC drug classes")
-  parser.add_argument("--mesh", help="MeSH pharmacologic actions")
+  parser.add_argument("--atc_levels", default=ATC_LEVELS, help="ATC levels, currently only supporting '1-4'")
+  parser.add_argument("--meshpa", help="MeSH pharmacologic actions (classtype 'MESHPA'")
   parser.add_argument("--ndfrt_type", choices=NDFRT_TYPES, help="NDFRT drug class types")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
@@ -123,10 +125,10 @@ Example names: "prozac", "tamiflu".
     rxnorm.Utils.List_PropCategories(BASE_URL, fout)
 
   elif args.op == 'list_class_types':
-    rxnorm.Utils.List_Class_Types(BASE_URL, fout)
+    rxnorm.Utils.List_ClassTypes(BASE_URL, fout)
 
   elif args.op == 'list_classes_atc':
-    rxnorm.Utils.List_Classes_ATC(BASE_URL, fout)
+    rxnorm.Utils.List_Classes_ATC(BASE_URL, args.atc_levels, fout)
 
   elif args.op == 'list_classes_mesh':
     rxnorm.Utils.List_Classes_MESH(BASE_URL, fout)
@@ -158,6 +160,7 @@ Example names: "prozac", "tamiflu".
     rxnorm.Utils.Get_Drug_By_Name(BASE_URL, names, fout)
 
   elif args.op == 'get_rxcui_by_name':
+    if not args.names: parser.error('%s requires --names'%args.op)
     rxnorm.Utils.Get_RxCUI_By_Name(BASE_URL, names, fout)
 
   elif args.op == 'rawquery':
