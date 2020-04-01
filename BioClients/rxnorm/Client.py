@@ -29,7 +29,9 @@ https://mor.nlm.nih.gov/download/rxnav/RxNormAPIs.html
 #############################################################################
 import sys,os,re,argparse,time,logging,urllib,json
 
-from ..util import rest_utils
+#from ..util import rest_utils
+
+from .. import rxnorm
 
 #
 API_HOST='rxnav.nlm.nih.gov'
@@ -41,25 +43,28 @@ NDFRT_TYPES=('DISEASE','INGREDIENT','MOA','PE','PK') ## NDFRT drug class types
 if __name__=='__main__':
   epilog='''\
 get_spellingsuggestions requires --name.
-name2rxcuis requires --name.
+get_rxcui_by_name requires --name.
 get_class_members requires --class_id and --rel_src.
 Example RXCUIs: 131725, 213269.
 Example names: "prozac", "tamiflu".
 '''
   parser = argparse.ArgumentParser(description='RxNorm API client utility', epilog=epilog)
-  ops = ["version",
-	"list_sourcetypes", "list_relatypes", "list_termtypes", "list_propnames", "list_propcategories", "list_idtypes",
+  ops = [
+	"version", "rawquery"
+	"list_sourcetypes", "list_relationtypes", "list_termtypes",
+	"list_propnames", "list_propcategories", "list_idtypes",
 	"list_class_types", "list_classes_atc", "list_classes_mesh",
-	"get_rxcui", "get_drug_by_name",
+	"get_drug_by_name", "get_rxcui_by_name",
+	"get_rxcui",
 	"get_status", "get_rxcui_properties", "get_ndcs", "get_allrelated",
 	"get_classes_atc", "get_classes_mesh", "get_classes_ndfrt",
-	"get_class_members",
-	"get_spellingsuggestions", "name2rxcuis", "rawquery"]
+	"get_class_members", "get_spellingsuggestions"
+	]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="external drug IDs or RXCUIs")
   parser.add_argument("--ids", help="drug IDs or RXCUIs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--name", help="drug name (e.g. Minoxidil)")
+  parser.add_argument("--names", help="drug name (e.g. Minoxidil) (comma-separated)")
   parser.add_argument("--idtype", help="drug ID type")
   parser.add_argument("--rel_src", help="relationship source")
   parser.add_argument("--class_id", help="drug class ID")
@@ -79,11 +84,12 @@ Example names: "prozac", "tamiflu".
   else:
     fout = sys.stdout
 
-  API_BASE_URL='https://'+args.api_host+args.api_base_path
+  BASE_URL='https://'+args.api_host+args.api_base_path
 
   t0=time.time()
   
   ids = re.split(r'[,\s]+', args.ids.strip()) if args.ids else []
+  names = re.split(r'[,\s]+', args.names.strip()) if args.names else []
 
   if args.ifile:
     fin = open(args.ifile)
@@ -95,114 +101,69 @@ Example names: "prozac", "tamiflu".
     fin.close()
 
   if args.op == 'version':
-    rval = rest_utils.GetURL(API_BASE_URL+'/version.json', parse_json=True)
+    rval = rest_utils.GetURL(BASE_URL+'/version.json', parse_json=True)
     print(rval['version'])
+
+  elif args.op == 'list_idtypes':
+    rxnorm.Utils.List_IDTypes(BASE_URL, fout)
+
+  elif args.op == 'list_sourcetypes':
+    rxnorm.Utils.List_SourceTypes(BASE_URL, fout)
+
+  elif args.op == 'list_relationtypes':
+    rxnorm.Utils.List_RelationTypes(BASE_URL, fout)
+
+  elif args.op == 'list_termtypes':
+    rxnorm.Utils.List_TermTypes(BASE_URL, fout)
+
+  elif args.op == 'list_propnames':
+    rxnorm.Utils.List_PropNames(BASE_URL, fout)
+
+  elif args.op == 'list_propcategories':
+    rxnorm.Utils.List_PropCategories(BASE_URL, fout)
+
+  elif args.op == 'list_class_types':
+    rxnorm.Utils.List_Class_Types(BASE_URL, fout)
+
+  elif args.op == 'list_classes_atc':
+    rxnorm.Utils.List_Classes_ATC(BASE_URL, fout)
+
+  elif args.op == 'list_classes_mesh':
+    rxnorm.Utils.List_Classes_MESH(BASE_URL, fout)
+
+  elif args.op == 'get_status':
+    rxnorm.Utils.Get_Status(BASE_URL, ids, fout)
 
   elif args.op == 'get_rxcui':
     if not (args.ids and args.idtype): parser.error('%s requires --ids and --idtype'%args.op)
-    fout.write('%s\trxcui\n'%(args.idtype))
-    for id_this in ids:
-      rval = rest_utils.GetURL(API_BASE_URL+'/rxcui.json?idtype=%s&id=%s'%(args.idtype, id_this), parse_json=True)
-      for rxcui in rval['idGroup']['rxnormId']:
-        fout.write('%s\t%s\n'%(id_this, rxcui))
-
-  elif args.op == 'get_drug_by_name':
-    if not args.name: parser.error('%s requires --name'%args.op)
-    rval = rest_utils.GetURL(API_BASE_URL+'/drugs.json?name=%s'%urllib.parse.quote(args.name, ''), parse_json=True)
-    print(json.dumps(rval, indent=4))
-
-  elif args.op == 'list_idtypes':
-    rval = rest_utils.GetURL(API_BASE_URL+'/idtypes.json', parse_json=True)
-    for idtype in rval['idTypeList']['idName']:
-      fout.write('%s\n'%idtype)
-
-  elif args.op == 'list_sourcetypes':
-    rval = rest_utils.GetURL(API_BASE_URL+'/sourcetypes.json', parse_json=True)
-    for sourcetype in rval['sourceTypeList']['sourceName']:
-      fout.write('%s\n'%sourcetype)
-
-  elif args.op == 'list_relatypes':
-    rval = rest_utils.GetURL(API_BASE_URL+'/relatypes.json', parse_json=True)
-    for relatype in rval['relationTypeList']['relationType']:
-      fout.write('%s\n'%relatype)
-
-  elif args.op == 'list_termtypes':
-    rval = rest_utils.GetURL(API_BASE_URL+'/termtypes.json', parse_json=True)
-    for termtype in rval['termTypeList']['termType']:
-      fout.write('%s\n'%termtype)
-
-  elif args.op == 'list_propnames':
-    rval = rest_utils.GetURL(API_BASE_URL+'/propnames.json', parse_json=True)
-    for propname in rval['propNameList']['propName']:
-      fout.write('%s\n'%propname)
-
-  elif args.op == 'list_propcategories':
-    rval = rest_utils.GetURL(API_BASE_URL+'/propCategories.json', parse_json=True)
-    for propcat in rval['propCategoryList']['propCategory']:
-      fout.write('%s\n'%propcat)
-
-  elif args.op == 'list_class_types':
-    rval = rest_utils.GetURL(API_BASE_URL+'/rxclass/classTypes.json', parse_json=True)
-    logging.debug(json.dumps(rval, indent=4))
-    for classtype in rval['classTypeList']['classTypeName']:
-      fout.write('%s\n'%classtype)
-
-  elif args.op == 'list_classes_atc':
-    rval = rest_utils.GetURL(API_BASE_URL+'/rxclass/allClasses.json?classTypes=ATC1-4', parse_json=True)
-    print(json.dumps(rval, indent=4))
-
-  elif args.op == 'list_classes_mesh':
-    rval = rest_utils.GetURL(API_BASE_URL+'/rxclass/allClasses.json?classTypes=MESHPA', parse_json=True)
-    print(json.dumps(rval, indent=4))
-
-  elif args.op == 'get_status':
-    if not ids: parser.error('%s requires RXCUIs via --i or --ids'%args.op)
-    for rxcui in ids:
-      rval = rest_utils.GetURL(API_BASE_URL+'/rxcui/%s/status.json'%rxcui,parse_json=True)
-      print(json.dumps(rval, indent=4))
+    rxnorm.Utils.Get_RxCUI(BASE_URL, ids, args.idtype, fout)
 
   elif args.op == 'get_rxcui_properties':
-    if not ids: parser.error('%s requires RXCUIs via --i or --ids'%args.op)
-    for rxcui in ids:
-      rval = rest_utils.GetURL(API_BASE_URL+'/rxcui/%s/properties.json'%rxcui,parse_json=True)
-      print(json.dumps(rval, indent=4))
+    rxnorm.Utils.Get_RxCUI_Properties(BASE_URL, ids, fout)
 
   elif args.op == 'get_ndcs':
-    if not ids: parser.error('%s requires RXCUIs via --i or --ids'%args.op)
-    fout.write('rxcui\tndc\n')
-    for rxcui in ids:
-      rval = rest_utils.GetURL(API_BASE_URL+'/rxcui/%s/ndcs.json'%rxcui,parse_json=True)
-      for ndc in rval['ndcGroup']['ndcList']['ndc']:
-        fout.write('%s\t%s\n'%(rxcui, ndc))
+    rxnorm.Utils.Get_NDCs(BASE_URL, ids, fout)
 
   elif args.op == 'get_allrelated':
-    if not ids: parser.error('%s requires RXCUIs via --i or --ids'%args.op)
-    for rxcui in ids:
-      rval = rest_utils.GetURL(API_BASE_URL+'/rxcui/%s/allrelated.json'%rxcui,parse_json=True)
-      print(json.dumps(rval, indent=4))
+    rxnorm.Utils.Get_AllRelated(BASE_URL, ids, fout)
 
   elif args.op == 'get_class_members':
-    if not args.class_id: parser.error('%s requires --class_id'%args.op)
-    if not args.rel_src: parser.error('%s requires --rel_src'%args.op)
-    url = (API_BASE_URL+'/rxclass/%s/classMembers.json?classId=%s&relaSource=%s'%(args.class_id,args.rel_src))
-    rval = rest_utils.GetURL(url, parse_json=True)
-    print(json.dumps(rval, indent=4))
+    rxnorm.Utils.Get_Class_Members(BASE_URL, ids, fout)
 
   elif args.op == 'get_spellingsuggestions':
-    if not args.name: parser.error('ERROR: requires --name')
-    rval = rest_utils.GetURL(API_BASE_URL+'/spellingsuggestions.json?name=%s'%urllib.parse.quote(args.name, ''), parse_json=True)
-    print(json.dumps(rval, indent=4))
+    rxnorm.Utils.Get_SpellingSuggestions(BASE_URL, ids, fout)
 
-  elif args.op == 'name2rxcuis':
-    if not args.name: parser.error('ERROR: requires --name')
-    rval = rest_utils.GetURL(API_BASE_URL+'/rxcui.json?name=%s'%urllib.parse.quote(args.name, ''), parse_json=True)
-    print(json.dumps(rval, indent=4))
+  elif args.op == 'get_drug_by_name':
+    if not args.names: parser.error('%s requires --names'%args.op)
+    rxnorm.Utils.Get_Drug_By_Name(BASE_URL, names, fout)
+
+  elif args.op == 'get_rxcui_by_name':
+    rxnorm.Utils.Get_RxCUI_By_Name(BASE_URL, names, fout)
 
   elif args.op == 'rawquery':
-    rval = rest_utils.GetURL(API_BASE_URL+rawquery, parse_json=True)
-    print(json.dumps(rval, indent=4))
+    rxnorm.Utils.RawQuery(BASE_URL, args.rawquery, fout)
 
   else:
-    parser.error("No operation specified.")
+    parser.error("Invalid operation: %s"%args.op)
 
   logging.info(('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
