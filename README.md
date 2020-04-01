@@ -69,6 +69,37 @@ From the NIH National Library of Medicine (NLM).
 
 * <https://www.nlm.nih.gov/research/umls/rxnorm/>
 
+### Usage examples
+
+```
+python3 -m BioClients.rxnorm.Client -h
+python3 -m BioClients.rxnorm.Client list_sourcetypes
+python3 -m BioClients.rxnorm.Client list_relationtypes
+python3 -m BioClients.rxnorm.Client list_termtypes
+python3 -m BioClients.rxnorm.Client list_propnames
+python3 -m BioClients.rxnorm.Client list_propcategories
+python3 -m BioClients.rxnorm.Client list_idtypes
+python3 -m BioClients.rxnorm.Client list_class_types
+python3 -m BioClients.rxnorm.Client list_classes_atc
+python3 -m BioClients.rxnorm.Client list_classes_mesh
+```
+
+Requiring names:
+
+```
+python3 -m BioClients.rxnorm.Client get_drug_by_name --names "prozac,tamiflu"
+python3 -m BioClients.rxnorm.Client get_rxcui_by_name --names "prozac,tamiflu"
+```
+
+Requiring RxCUI IDs:
+```
+python3 -m BioClients.rxnorm.Client get_rxcui --ids "131725,213269"
+python3 -m BioClients.rxnorm.Client get_rxcui_status --ids "131725,213269"
+python3 -m BioClients.rxnorm.Client get_rxcui_properties --ids "131725,213269"
+python3 -m BioClients.rxnorm.Client get_rxcui_ndcs --ids "131725,213269"
+python3 -m BioClients.rxnorm.Client get_rxcui_allrelated --ids "131725,213269"
+```
+
 ##  MeSH
 
 From the NIH National Library of Medicine (NLM).

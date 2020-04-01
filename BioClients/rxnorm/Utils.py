@@ -1,67 +1,12 @@
 #!/usr/bin/env python3
 """
 https://mor.nlm.nih.gov/download/rxnav/RxNormAPIs.html
+https://www.nlm.nih.gov/research/umls/rxnorm/docs/
 """
-#############################################################################
-### data["allRelatedGroup"]["conceptGroup"] (list of concept)
-### concept["tty"]
-### concept["conceptProperties"] (list of conceptproperty)
-### conceptproperty["rxcui"]
-### conceptproperty["name"]
-### conceptproperty["synonym"]
-### conceptproperty["language"]
-### "tty": "BN" ?
-### "tty": "IN" ?
-### "tty": "PIN" ?
-#############################################################################
 ###
-import sys,os,re,json,logging,urllib,urllib.parse
+import sys,os,re,json,logging,urllib.parse
 
 from ..util import rest_utils
-
-NDFRT_TYPES=('DISEASE','INGREDIENT','MOA','PE','PK') ## NDFRT drug class types
-
-#############################################################################
-def Get_RxCUI(base_url, ids, idtype, fout):
-  n_out=0;
-  fout.write('%s\trxcui\n'%(idtype))
-  for id_this in ids:
-    rval = rest_utils.GetURL(base_url+'/rxcui.json?idtype=%s&id=%s'%(idtype, id_this), parse_json=True)
-    for rxcui in rval['idGroup']['rxnormId']:
-      fout.write('%s\t%s\n'%(id_this, rxcui))
-      n_out+=1
-  logging.info("n_out: %d"%(n_out))
-
-#############################################################################
-def Get_RxCUI_By_Name(base_url, names, fout):
-  n_out=0;
-  fout.write('RxCUI\n')
-  for name in names:
-    rval = rest_utils.GetURL(base_url+'/rxcui.json?name=%s'%urllib.parse.quote(name, ''), parse_json=True)
-    logging.debug(json.dumps(rval, indent=4))
-    rxnormIds = rval["idGroup"]["rxnormId"] if "idGroup" in rval and "rxnormId" in rval["idGroup"] else []
-    for rxnormId in rxnormIds:
-      fout.write(rxnormId+"\n")
-      n_out+=1
-  logging.info("n_out: %d"%(n_out))
-
-#############################################################################
-def Get_Drug_By_Name(base_url, names, fout):
-  n_out=0;
-  tags = ["rxcui", "name", "synonym", "tty", "language", "suppress", "umlscui"]
-  fout.write("rxcui\tname\tsynonym\ttty\tlanguage\tsuppress\tumlscui\n")
-  for name in names:
-    rval = rest_utils.GetURL(base_url+'/drugs.json?name=%s'%urllib.parse.quote(name), parse_json=True)
-    logging.debug(json.dumps(rval, indent=4))
-    conceptGroups = rval["drugGroup"]["conceptGroup"] if "drugGroup" in rval and "conceptGroup" in rval["drugGroup"] else []
-    for cgroup in conceptGroups:
-      cprops = cgroup["conceptProperties"] if "conceptProperties" in cgroup else []
-      if not cprops: continue
-      for cprop in cprops:
-        vals = [cprop[tag] if tag in cprop else '' for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-  logging.info("n_out: %d"%(n_out))
 
 #############################################################################
 def List_IDTypes(base_url, fout):
@@ -155,7 +100,49 @@ def List_Classes_MESH(base_url, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def Get_Status(base_url, ids, fout):
+def Get_Name_RxCUI(base_url, names, fout):
+  n_out=0;
+  fout.write('RxCUI\n')
+  for name in names:
+    rval = rest_utils.GetURL(base_url+'/rxcui.json?name=%s'%urllib.parse.quote(name, ''), parse_json=True)
+    logging.debug(json.dumps(rval, indent=4))
+    rxnormIds = rval["idGroup"]["rxnormId"] if "idGroup" in rval and "rxnormId" in rval["idGroup"] else []
+    for rxnormId in rxnormIds:
+      fout.write(rxnormId+"\n")
+      n_out+=1
+  logging.info("n_out: %d"%(n_out))
+
+#############################################################################
+def Get_Name(base_url, names, fout):
+  n_out=0;
+  tags = ["rxcui", "name", "synonym", "tty", "language", "suppress", "umlscui"]
+  fout.write("rxcui\tname\tsynonym\ttty\tlanguage\tsuppress\tumlscui\n")
+  for name in names:
+    rval = rest_utils.GetURL(base_url+'/drugs.json?name=%s'%urllib.parse.quote(name), parse_json=True)
+    logging.debug(json.dumps(rval, indent=4))
+    conceptGroups = rval["drugGroup"]["conceptGroup"] if "drugGroup" in rval and "conceptGroup" in rval["drugGroup"] else []
+    for cgroup in conceptGroups:
+      cprops = cgroup["conceptProperties"] if "conceptProperties" in cgroup else []
+      if not cprops: continue
+      for cprop in cprops:
+        vals = [cprop[tag] if tag in cprop else '' for tag in tags]
+        fout.write("\t".join(vals)+"\n")
+        n_out+=1
+  logging.info("n_out: %d"%(n_out))
+
+#############################################################################
+def Get_RxCUI(base_url, ids, idtype, fout):
+  n_out=0;
+  fout.write('%s\trxcui\n'%(idtype))
+  for id_this in ids:
+    rval = rest_utils.GetURL(base_url+'/rxcui.json?idtype=%s&id=%s'%(idtype, id_this), parse_json=True)
+    for rxcui in rval['idGroup']['rxnormId']:
+      fout.write('%s\t%s\n'%(id_this, rxcui))
+      n_out+=1
+  logging.info("n_out: %d"%(n_out))
+
+#############################################################################
+def Get_RxCUI_Status(base_url, ids, fout):
   n_out=0;
   tags = ["rxcui", "name", "tty"]
   fout.write('\t'.join(tags)+"\tstatus\tremappedDate\n")
@@ -190,7 +177,7 @@ def Get_RxCUI_Properties(base_url, ids, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def Get_NDCs(base_url, ids, fout):
+def Get_RxCUI_NDCs(base_url, ids, fout):
   n_out=0;
   fout.write('rxcui\tndc\n')
   for rxcui in ids:
@@ -202,7 +189,7 @@ def Get_NDCs(base_url, ids, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def Get_AllRelated(base_url, ids, fout):
+def Get_RxCUI_AllRelated(base_url, ids, fout):
   n_out=0;
   tags = ["rxcui", "name", "synonym", "tty", "language", "suppress", "umlscui"]
   fout.write("rxcui\trxcui_related\tname\tsynonym\ttty\tlanguage\tsuppress\tumlscui\n")
