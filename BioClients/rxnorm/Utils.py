@@ -74,27 +74,16 @@ def List_ClassTypes(base_url, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def List_Classes_ATC(base_url, atc_levels, fout):
+def List_Classes(base_url, class_types, fout):
   n_out=0;
   tags = ["classId", "classType", "className" ]
-  rval = rest_utils.GetURL(base_url+'/rxclass/allClasses.json?classTypes=ATC%s'%(atc_levels), parse_json=True)
+  url = (base_url+'/rxclass/allClasses.json')
+  if class_types: url+=("?classTypes=%s"%urllib.parse.quote(' '.join(class_types)))
+  rval = rest_utils.GetURL(url, parse_json=True)
   logging.debug(json.dumps(rval, indent=4))
-  atcs = rval["rxclassMinConceptList"]["rxclassMinConcept"] if "rxclassMinConceptList" in rval and "rxclassMinConcept" in rval["rxclassMinConceptList"] else []
-  for atc in atcs:
-    vals = [atc[tag] if tag in atc else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-    n_out+=1
-  logging.info("n_out: %d"%(n_out))
-
-#############################################################################
-def List_Classes_MESH(base_url, fout):
-  n_out=0;
-  tags = ["classId", "classType", "className" ]
-  rval = rest_utils.GetURL(base_url+'/rxclass/allClasses.json?classTypes=MESHPA', parse_json=True)
-  logging.debug(json.dumps(rval, indent=4))
-  meshs = rval["rxclassMinConceptList"]["rxclassMinConcept"] if "rxclassMinConceptList" in rval and "rxclassMinConcept" in rval["rxclassMinConceptList"] else []
-  for mesh in meshs:
-    vals = [mesh[tag] if tag in mesh else '' for tag in tags]
+  clss = rval["rxclassMinConceptList"]["rxclassMinConcept"] if "rxclassMinConceptList" in rval and "rxclassMinConcept" in rval["rxclassMinConceptList"] else []
+  for cls in clss:
+    vals = [cls[tag] if tag in cls else '' for tag in tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
   logging.info("n_out: %d"%(n_out))

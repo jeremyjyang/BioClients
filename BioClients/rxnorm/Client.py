@@ -40,21 +40,23 @@ NDFRT_TYPES=('DISEASE','INGREDIENT','MOA','PE','PK') ## NDFRT drug class types
 
 ##############################################################################
 if __name__=='__main__':
-  ATC_LEVELS="1-4"
   epilog='''\
 get_id2rxcui requires --idtype.
 get_spellingsuggestions requires --name.
 get_class_members requires --class_id and --rel_src.
 Example names: "prozac", "tamiflu", "minoxidil".
 Example RXCUIs: 131725, 213269.
-Example IDs: C2709711 (UMLSCUI)
+Example IDs: C2709711 (UMLSCUI).
+Note that RxCUIs generally refer to drug products. Term Types
+"Ingredient" (IN) and "Precise Ingredient" (PIN) generally refer
+to chemical compounds.
 '''
   parser = argparse.ArgumentParser(description='RxNorm API client utility', epilog=epilog)
   ops = [
 	"version", "rawquery",
 	"list_sourcetypes", "list_relationtypes", "list_termtypes",
 	"list_propnames", "list_propcategories", "list_idtypes",
-	"list_class_types", "list_classes_atc", "list_classes_mesh",
+	"list_class_types", "list_classes",
 	"get_name", "get_name2rxcui",
 	"get_id2rxcui",
 	"get_rxcui_status", "get_rxcui_properties", "get_rxcui_allproperties",
@@ -69,8 +71,8 @@ Example IDs: C2709711 (UMLSCUI)
   parser.add_argument("--idtype", help="drug ID type")
   parser.add_argument("--rel_src", help="relationship source")
   parser.add_argument("--class_id", help="drug class ID")
+  parser.add_argument("--class_types", help="drug class (e.g. 'MESHPA', 'MESHPA,ATC1-4')")
   parser.add_argument("--atc", help="ATC drug classes")
-  parser.add_argument("--atc_levels", default=ATC_LEVELS, help="ATC levels, currently only supporting '1-4'")
   parser.add_argument("--meshpa", help="MeSH pharmacologic actions (classtype 'MESHPA'")
   parser.add_argument("--ndfrt_type", choices=NDFRT_TYPES, help="NDFRT drug class types")
   parser.add_argument("--tty", help="term type")
@@ -129,11 +131,9 @@ Example IDs: C2709711 (UMLSCUI)
   elif args.op == 'list_class_types':
     rxnorm.Utils.List_ClassTypes(BASE_URL, fout)
 
-  elif args.op == 'list_classes_atc':
-    rxnorm.Utils.List_Classes_ATC(BASE_URL, args.atc_levels, fout)
-
-  elif args.op == 'list_classes_mesh':
-    rxnorm.Utils.List_Classes_MESH(BASE_URL, fout)
+  elif args.op == 'list_classes':
+    class_types = re.split(r'[,\s]+', args.class_types.strip())
+    rxnorm.Utils.List_Classes(BASE_URL, class_types, fout)
 
   elif args.op == 'get_id2rxcui':
     if not args.idtype: parser.error('%s requires --idtype'%args.op)
