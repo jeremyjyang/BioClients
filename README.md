@@ -80,8 +80,8 @@ python3 -m BioClients.rxnorm.Client list_propnames
 python3 -m BioClients.rxnorm.Client list_propcategories
 python3 -m BioClients.rxnorm.Client list_idtypes
 python3 -m BioClients.rxnorm.Client list_class_types
-python3 -m BioClients.rxnorm.Client list_classes_atc
-python3 -m BioClients.rxnorm.Client list_classes_mesh
+python3 -m BioClients.rxnorm.Client list_classes
+python3 -m BioClients.rxnorm.Client list_classes --class_types 'MESHPA,ATC1-4'
 ```
 
 Requiring names:
