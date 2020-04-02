@@ -42,11 +42,12 @@ NDFRT_TYPES=('DISEASE','INGREDIENT','MOA','PE','PK') ## NDFRT drug class types
 if __name__=='__main__':
   ATC_LEVELS="1-4"
   epilog='''\
+get_id2rxcui requires --idtype.
 get_spellingsuggestions requires --name.
-get_name_rxcui requires --names.
 get_class_members requires --class_id and --rel_src.
+Example names: "prozac", "tamiflu", "minoxidil".
 Example RXCUIs: 131725, 213269.
-Example names: "prozac", "tamiflu".
+Example IDs: C2709711 (UMLSCUI)
 '''
   parser = argparse.ArgumentParser(description='RxNorm API client utility', epilog=epilog)
   ops = [
@@ -54,18 +55,17 @@ Example names: "prozac", "tamiflu".
 	"list_sourcetypes", "list_relationtypes", "list_termtypes",
 	"list_propnames", "list_propcategories", "list_idtypes",
 	"list_class_types", "list_classes_atc", "list_classes_mesh",
-	"get_name", "get_name_rxcui",
-	"get_rxcui",
-	"get_rxcui_status", "get_rxcui_properties", "get_rxcui_ndcs",
-"get_rxcui_allrelated",
+	"get_name", "get_name2rxcui",
+	"get_id2rxcui",
+	"get_rxcui_status", "get_rxcui_properties", "get_rxcui_allproperties",
+	"get_rxcui_ndcs", "get_rxcui_allrelated",
 	"get_classes_atc", "get_classes_mesh", "get_classes_ndfrt",
 	"get_class_members", "get_spellingsuggestions"
 	]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="external drug IDs or RXCUIs")
-  parser.add_argument("--ids", help="drug IDs or RXCUIs (comma-separated)")
+  parser.add_argument("--ids", help="drug names, IDs, or RXCUIs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--names", help="drug name (e.g. Minoxidil) (comma-separated)")
   parser.add_argument("--idtype", help="drug ID type")
   parser.add_argument("--rel_src", help="relationship source")
   parser.add_argument("--class_id", help="drug class ID")
@@ -82,18 +82,12 @@ Example names: "prozac", "tamiflu".
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if args.ofile:
-    fout = open(args.ofile, "w+")
-  else:
-    fout = sys.stdout
-
   BASE_URL='https://'+args.api_host+args.api_base_path
 
   t0=time.time()
-  
-  ids = re.split(r'[,\s]+', args.ids.strip()) if args.ids else []
-  names = re.split(r'[,\s]+', args.names.strip()) if args.names else []
 
+  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
+  
   if args.ifile:
     fin = open(args.ifile)
     while True:
@@ -102,6 +96,13 @@ Example names: "prozac", "tamiflu".
       ids.append(line.rstrip())
     logging.info('input IDs: %d'%(len(ids)))
     fin.close()
+  elif args.ids:
+    ids = re.split(r'[,\s]+', args.ids.strip())
+  else:
+    ids=[]
+
+  if re.match(r'get_', args.op) and not ids:
+    parser.error('%s requires --i or --ids'%args.op)
 
   if args.op == 'version':
     rval = rest_utils.GetURL(BASE_URL+'/version.json', parse_json=True)
@@ -134,15 +135,24 @@ Example names: "prozac", "tamiflu".
   elif args.op == 'list_classes_mesh':
     rxnorm.Utils.List_Classes_MESH(BASE_URL, fout)
 
+  elif args.op == 'get_id2rxcui':
+    if not args.idtype: parser.error('%s requires --idtype'%args.op)
+    rxnorm.Utils.Get_ID2RxCUI(BASE_URL, ids, args.idtype, fout)
+
+  elif args.op == 'get_name':
+    rxnorm.Utils.Get_Name(BASE_URL, ids, fout)
+
+  elif args.op == 'get_name2rxcui':
+    rxnorm.Utils.Get_Name2RxCUI(BASE_URL, ids, fout)
+
   elif args.op == 'get_rxcui_status':
     rxnorm.Utils.Get_RxCUI_Status(BASE_URL, ids, fout)
 
-  elif args.op == 'get_rxcui':
-    if not (args.ids and args.idtype): parser.error('%s requires --ids and --idtype'%args.op)
-    rxnorm.Utils.Get_RxCUI(BASE_URL, ids, args.idtype, fout)
-
   elif args.op == 'get_rxcui_properties':
     rxnorm.Utils.Get_RxCUI_Properties(BASE_URL, ids, fout)
+
+  elif args.op == 'get_rxcui_allproperties':
+    rxnorm.Utils.Get_RxCUI_AllProperties(BASE_URL, ids, fout)
 
   elif args.op == 'get_rxcui_ndcs':
     rxnorm.Utils.Get_RxCUI_NDCs(BASE_URL, ids, fout)
@@ -155,14 +165,6 @@ Example names: "prozac", "tamiflu".
 
   elif args.op == 'get_spellingsuggestions':
     rxnorm.Utils.Get_SpellingSuggestions(BASE_URL, ids, fout)
-
-  elif args.op == 'get_name':
-    if not args.names: parser.error('%s requires --names'%args.op)
-    rxnorm.Utils.Get_Name(BASE_URL, names, fout)
-
-  elif args.op == 'get_name_rxcui':
-    if not args.names: parser.error('%s requires --names'%args.op)
-    rxnorm.Utils.Get_Name_RxCUI(BASE_URL, names, fout)
 
   elif args.op == 'rawquery':
     rxnorm.Utils.RawQuery(BASE_URL, args.rawquery, fout)

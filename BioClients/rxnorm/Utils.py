@@ -100,15 +100,15 @@ def List_Classes_MESH(base_url, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def Get_Name_RxCUI(base_url, names, fout):
+def Get_Name2RxCUI(base_url, names, fout):
   n_out=0;
-  fout.write('RxCUI\n')
+  fout.write('Name\tRxCUI\n')
   for name in names:
-    rval = rest_utils.GetURL(base_url+'/rxcui.json?name=%s'%urllib.parse.quote(name, ''), parse_json=True)
+    rval = rest_utils.GetURL(base_url+'/rxcui.json?name=%s'%urllib.parse.quote(name), parse_json=True)
     logging.debug(json.dumps(rval, indent=4))
     rxnormIds = rval["idGroup"]["rxnormId"] if "idGroup" in rval and "rxnormId" in rval["idGroup"] else []
     for rxnormId in rxnormIds:
-      fout.write(rxnormId+"\n")
+      fout.write("%s\t%s\n"%(name, rxnormId))
       n_out+=1
   logging.info("n_out: %d"%(n_out))
 
@@ -131,7 +131,8 @@ def Get_Name(base_url, names, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
-def Get_RxCUI(base_url, ids, idtype, fout):
+def Get_ID2RxCUI(base_url, ids, idtype, fout):
+  """For mapping external ID, for supported ID types, to RxNorm ID."""
   n_out=0;
   fout.write('%s\trxcui\n'%(idtype))
   for id_this in ids:
@@ -165,15 +166,49 @@ def Get_RxCUI_Status(base_url, ids, fout):
 def Get_RxCUI_Properties(base_url, ids, fout):
   n_out=0; tags=None;
   for rxcui in ids:
-    rval = rest_utils.GetURL(base_url+'/rxcui/%s/properties.json'%rxcui,parse_json=True)
+    rval = rest_utils.GetURL(base_url+'/rxcui/%s/properties.json'%rxcui, parse_json=True)
     logging.debug(json.dumps(rval, indent=4))
-    properties = rval["properties"]
+    props = rval["properties"] if "properties" in rval else []
     if not tags:
-      tags = properties.keys()
+      tags = props.keys()
       fout.write('\t'.join(tags)+'\n')
-    vals = [properties[tag] if tag in properties else '' for tag in tags]
+    vals = [props[tag] if tag in props else '' for tag in tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
+  logging.info("n_out: %d"%(n_out))
+
+#############################################################################
+def Get_RxCUI_AllProperties(base_url, ids, fout):
+  n_out=0; tags=None;
+  for rxcui in ids:
+    rval = rest_utils.GetURL(base_url+'/rxcui/%s/allProperties.json?prop=all'%rxcui, parse_json=True)
+    logging.debug(json.dumps(rval, indent=4))
+    props = rval["propConceptGroup"]["propConcept"] if "propConceptGroup" in rval and "propConcept" in rval["propConceptGroup"] else {}
+    for prop in props:
+      if not tags:
+        tags = list(prop.keys())
+        fout.write('\t'.join(['RxCui']+tags)+'\n')
+      vals = [prop[tag] if tag in prop else '' for tag in tags]
+      fout.write('\t'.join([rxcui]+vals)+'\n')
+      n_out+=1
+  logging.info("n_out: %d"%(n_out))
+
+#############################################################################
+def Get_RxCUI_AllRelated(base_url, ids, fout):
+  n_out=0; tags=None;
+  for rxcui in ids:
+    rval = rest_utils.GetURL(base_url+'/rxcui/%s/allrelated.json'%rxcui, parse_json=True)
+    logging.debug(json.dumps(rval, indent=4))
+    conceptGroups = rval["allRelatedGroup"]["conceptGroup"] if "allRelatedGroup" in rval and "conceptGroup" in rval["allRelatedGroup"] else []
+    for cgroup in conceptGroups:
+      props = cgroup["conceptProperties"] if "conceptProperties" in cgroup else []
+      for prop in props:
+        if not tags:
+          tags = list(prop.keys())
+          fout.write('\t'.join(['RxCui']+tags)+'\n')
+        vals = [prop[tag] if tag in prop else '' for tag in tags]
+        fout.write("\t".join([rxcui]+vals)+"\n")
+        n_out+=1
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
@@ -186,24 +221,6 @@ def Get_RxCUI_NDCs(base_url, ids, fout):
     for ndc in ndcs:
       fout.write('%s\t%s\n'%(rxcui, ndc))
       n_out+=1
-  logging.info("n_out: %d"%(n_out))
-
-#############################################################################
-def Get_RxCUI_AllRelated(base_url, ids, fout):
-  n_out=0;
-  tags = ["rxcui", "name", "synonym", "tty", "language", "suppress", "umlscui"]
-  fout.write("rxcui\trxcui_related\tname\tsynonym\ttty\tlanguage\tsuppress\tumlscui\n")
-  for rxcui in ids:
-    rval = rest_utils.GetURL(base_url+'/rxcui/%s/allrelated.json'%rxcui,parse_json=True)
-    logging.debug(json.dumps(rval, indent=4))
-    conceptGroups = rval["allRelatedGroup"]["conceptGroup"] if "allRelatedGroup" in rval and "conceptGroup" in rval["allRelatedGroup"] else []
-    for cgroup in conceptGroups:
-      cprops = cgroup["conceptProperties"] if "conceptProperties" in cgroup else []
-      if not cprops: continue
-      for cprop in cprops:
-        vals = [cprop[tag] if tag in cprop else '' for tag in tags]
-        fout.write("\t".join([rxcui]+vals)+"\n")
-        n_out+=1
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################

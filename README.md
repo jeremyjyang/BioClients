@@ -87,13 +87,17 @@ python3 -m BioClients.rxnorm.Client list_classes_mesh
 Requiring names:
 
 ```
-python3 -m BioClients.rxnorm.Client get_drug_by_name --names "prozac,tamiflu"
-python3 -m BioClients.rxnorm.Client get_rxcui_by_name --names "prozac,tamiflu"
+python3 -m BioClients.rxnorm.Client get_name --ids "prozac,tamiflu"
+python3 -m BioClients.rxnorm.Client get_name2rxcui --ids "prozac,tamiflu"
+```
+
+Requiring external IDs:
+```
+python3 -m BioClients.rxnorm.Client get_id2rxcui --ids "C2709711" --idtype UMLSCUI
 ```
 
 Requiring RxCUI IDs:
 ```
-python3 -m BioClients.rxnorm.Client get_rxcui --ids "131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_status --ids "131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_properties --ids "131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_ndcs --ids "131725,213269"
