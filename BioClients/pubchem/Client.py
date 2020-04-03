@@ -14,7 +14,7 @@ API_BASE_PATH='/rest/pug'
 if __name__=='__main__':
   ops = [
         "list_substancesources", "list_assaysources",
-        "name2sid", "name2cid",
+        "name2sid", "name2cid", "name2synonyms",
         "smi2cid",
         "cid2smi", "cid2smiles", "cid2sdf", "cid2properties", "cid2inchi",
         "cid2synonyms", "cid2sid", "cid2assaysummary",
@@ -27,7 +27,7 @@ if __name__=='__main__':
   parser.add_argument("--ids", help="input IDs (CID|SID) (comma-separated)")
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
   parser.add_argument("--iaid", dest="ifile_aid", help="input AIDs file")
-  parser.add_argument("--name", dest="name_query", help="name query")
+  parser.add_argument("--names", help="name queries (comma-separated)")
   parser.add_argument("--smiles", help="SMILES query")
   parser.add_argument("--isomeric", action="store_true", help="return Isomeric SMILES")
   parser.add_argument("--api_host", default=API_HOST)
@@ -80,6 +80,8 @@ if __name__=='__main__':
   else:
     aids=[]
 
+  names = re.split(r'[,\s]+', args.names) if args.names else []
+
   t0=time.time()
 
   if args.op == 'list_assaysources':
@@ -118,15 +120,18 @@ if __name__=='__main__':
   elif args.op == 'sid2sdf':
     pubchem.Utils.SID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
 
-  elif args.op == 'name2sid':
-    pubchem.Utils.Name2SID(BASE_URL, args.name_query, fout)
-
   elif args.op == 'smi2cid':
     if not args.smiles: parser.error('--smiles required.')
     pubchem.Utils.Smiles2CID(BASE_URL, args.smiles, fout)
 
+  elif args.op == 'name2sid':
+    pubchem.Utils.Name2SID(BASE_URL, names, fout)
+
   elif args.op == 'name2cid':
-    pubchem.Utils.Name2CID(BASE_URL, args.name_query, fout)
+    pubchem.Utils.Name2CID(BASE_URL, names, fout)
+
+  elif args.op == 'name2synonyms':
+    pubchem.Utils.Name2Synonyms(BASE_URL, names, fout)
 
   elif args.op == 'aid2name':
     pubchem.Utils.AID2Name(BASE_URL, aids, fout)

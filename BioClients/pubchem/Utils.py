@@ -582,16 +582,6 @@ def AssayDescriptions(base_url, aids, fout):
       fout.write('\t'.join(vals))
 
 #############################################################################
-def Name2SID(base_url, name, fout):
-  if fout: fout.write("SID\n")
-  rval = rest_utils.GetURL(base_url+'/substance/name/%s/sids/JSON'%urllib.parse.quote(name), parse_json=True)
-  sids = rval ['IdentifierList']['SID']
-  if fout:
-    for sid in sids:
-      if fout: fout.write("%d\n"%sid)
-  return sids
-
-#############################################################################
 def SID2Synonyms(base_url, sids, fout):
   synonyms=[]
   if fout: fout.write("SID\tSynonym\n")
@@ -636,17 +626,55 @@ def CID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
   logging.info('Totals: CIDs: %d; SIDs: %d; Synonyms: %d'%(len(cids), len(sids_all), n_out))
 
 #############################################################################
-def Name2CID(base_url, name, fout):
-  sids = Name2SID(base_url, name, None)
-  cids=set()
-  for cid in SID2CID(base_url, sids):
-    cids.add(cid)
-  cids = list(cids)
-  cids.sort()
-  if fout:
-    fout.write("CID\n")
-    for cid in cids:
-      fout.write("%d\n"%cid)
+def Name2SID(base_url, names, fout):
+  n_out=0; sids_all = set()
+  if fout: fout.write("Name\tSID\n")
+  for name in names:
+    rval = rest_utils.GetURL(base_url+'/substance/name/%s/sids/JSON'%urllib.parse.quote(name), parse_json=True)
+    sids_this = rval['IdentifierList']['SID']
+    for sid in sids_this:
+      if fout:
+        fout.write("%s\t%s\n"%(name, sid))
+        n_out+=1
+      sids_all |= set(sids_this)
+  logging.info("n_out: %d; n_unique: %d"%(n_out, len(sids_all)))
+  return list(sids_all)
+
+#############################################################################
+def Name2CID(base_url, names, fout):
+  n_out=0; cids_all = set()
+  if fout: fout.write("Name\tCID\n")
+  for name in names:
+    sids_this = Name2SID(base_url, [name], None)
+    cids_this = list(set(SID2CID(base_url, sids_this)) )
+    for cid in cids_this:
+      if fout:
+        fout.write("%s\t%s\n"%(name, cid))
+        n_out+=1
+    cids_all |= set(cids_this)
+  logging.info("n_out: %d; n_unique: %d"%(n_out, len(cids_all)))
+  return list(cids_all)
+
+#############################################################################
+def Name2Synonyms(base_url, names, fout):
+  n_out=0; sids_all = set(); synonyms_all = set()
+  if fout: fout.write("Name\tSID\tSynonym\n")
+  for name in names:
+    sids_this = Name2SID(base_url, [name], None)
+    sids_all |= set(sids_this)
+    for sid in sids_this:
+      rval = rest_utils.GetURL(base_url+'/substance/sid/%s/synonyms/JSON'%(sid), parse_json=True)
+      infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
+      synonyms_this_sid = set()
+      for info in infos:
+        synonyms_this = info['Synonym'] if 'Synonym' in info else []
+        synonyms_this_sid |= set(synonyms_this)
+        for synonym in synonyms_this:
+          if fout:
+            fout.write("%s\t%s\t%s\n"%(name, sid, synonym))
+            n_out+=1
+      synonyms_all |= set(synonyms_this_sid)
+  logging.info("n_out: %d; n_unique: %d; n_sids_unique: %d"%(n_out, len(synonyms_all), len(sids_all)))
 
 #############################################################################
 def NameNicenessScore(name, len_optimal=9):
