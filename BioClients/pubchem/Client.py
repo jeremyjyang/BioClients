@@ -138,10 +138,10 @@ if __name__=='__main__':
     pubchem.Utils.GetAssayName(BASE_URL, aids, fout)
 
   elif args.op == 'get_assaydescriptions':
-    pubchem.Utils.GetAssayDescriptions(BASE_URL, aids, fout)
+    pubchem.Utils.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
 
   elif args.op == 'get_assayresults':
-    #Requires AIDs and SIDs.
+    if not (aids and ids): parser.error('Input AIDs and SIDs required.')
     pubchem.Utils.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
 
   else:

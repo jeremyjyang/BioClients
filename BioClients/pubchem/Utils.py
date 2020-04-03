@@ -2,7 +2,7 @@
 """
 Utility functions for the PubChem PUG REST API.
 
-* http://pubchem.ncbi.nlm.nih.gov/rest/pug/
+* https://pubchemdocs.ncbi.nlm.nih.gov/pug-rest
 
 	<DOMAIN>/<NAMESPACE>/<IDENTIFIERS>
 
@@ -251,60 +251,36 @@ def GetAssayName(base_url, aids, fout):
     fout.write('%d\t%s\t%s'%(aid, name, source))
 
 #############################################################################
-### DEPRECATE AND USE JSON.
-def GetAssayDescriptions(base_url, ids, fout, skip, nmax):
-  from xml.etree import ElementTree #newer
-  from xml.parsers import expat #newer
-
-  fout.write('ID,Source,Name,Target,Date\n')
-  #adesc_xpath='/PC-AssayContainer/PC-AssaySubmit/PC-AssaySubmit_assay/PC-AssaySubmit_assay_descr/PC-AssayDescription'
-  adesc_xpath='./PC-AssayContainer/PC-AssaySubmit/PC-AssaySubmit_assay/PC-AssaySubmit_assay_descr/PC-AssayDescription'
-  tag_name='PC-AssayDescription_name'
-  tag_source='PC-DBTracking_name'
-  tag_year='Date-std_year'
-  tag_month='Date-std_month'
-  tag_day='Date-std_day'
-  tag_tgtname='PC-AssayTargetInfo_name'
+def GetAssayDescriptions(base_url, ids, skip, nmax, fout):
+  """Example AIDs: 159014"""
   n_in=0; n_out=0;
+  fout.write("aid\tname\tsource\trevision\tassay_group\tproject_category\tactivity_outcome_method\tdescription\tcomment\n")
   for aid in ids:
     n_in+=1
     if skip and n_in<skip: continue
     if nmax and n_out==nmax: break
-
-    #Old way.
-    #xmlstr=rest_utils.GetURL(base_url+'/assay/aid/%d/description/XML'%aid)
-    #dom=xml.dom.minidom.parseString(xmlstr)
-    #desc_nodes = xpath.find(adesc_xpath,dom)
-    #for desc_node in desc_nodes:
-    #  name=xpath.findvalue('//%s'%tag_name,desc_node)
-    #  source=xpath.findvalue('//%s'%tag_source,desc_node)
-    #  year=xpath.findvalue('//%s'%tag_year,desc_node)
-    #  month=xpath.findvalue('//%s'%tag_month,desc_node)
-    #  day=xpath.findvalue('//%s'%tag_day,desc_node)
-    #  ymd = (year+month+day) if (year and month and day) else ''
-    #  tgtname=xpath.findvalue('//%s'%tag_tgtname,desc_node)
-    #  fout.write('%d,"%s","%s","%s",%s\n'%(aid,source,name,(tgtname if tgtname else ''),ymd))
-    #  n_out+=1
-
-    #Newer way.
-    url = (base_url+'/assay/aid/%s/description/XML'%aid)
-    logging.debug(url)
-    tree = ElementTree.parse(urllib.request.urlopen(base_url+'/assay/aid/%s/description/XML'%aid))
-    root = tree.getroot()
-    #logging.debug(ElementTree.tostring(root))
-    #print(ElementTree.tostring(root, encoding='utf-8'), file=sys.stderr)
-    desc_nodes = tree.findall(adesc_xpath)
-    logging.debug('desc_nodes: %d'%len(desc_nodes))
-    for desc_node in desc_nodes:
-      name=desc_node.find('//%s'%tag_name).text
-      source=desc_node.find('//%s'%tag_source).text
-      year=desc_node.find('//%s'%tag_year).text
-      month=desc_node.find('//%s'%tag_month).text
-      day=desc_node.find('//%s'%tag_day).text
-      ymd = (year+month+day) if (year and month and day) else ''
-      tgtname=desc_node.find('//%s'%tag_tgtname).text
-      fout.write('%d\t"%s"\t"%s"\t"%s"\t%s\n'%(aid, source, name, (tgtname if tgtname else ''), ymd))
+    url = (base_url+'/assay/aid/%s/description/JSON'%aid)
+    rval = rest_utils.GetURL(url, parse_json=True)
+    logging.debug(json.dumps(rval, indent=2))
+    assays = rval['PC_AssayContainer'] if 'PC_AssayContainer' in rval else []
+    for assay in assays:
+      descr = assay['assay']['descr'] if 'assay' in assay and 'descr'  in assay['assay'] else None
+      if not descr: continue
+      #aid = str(descr['aid']['id'])
+      name = descr['name']
+      source = descr['aid_source']['db']['name']
+      revision = str(descr['revision'])
+      project_category = str(descr['project_category'])
+      activity_outcome_method = str(descr['activity_outcome_method'])
+      assay_group = descr['assay_group'] #list of PMIDs
+      description_lines = descr['description'] #list of lines
+      comment_lines = descr['comment'] #list of lines
+      description = (r'\\n').join(description_lines)
+      comment = (r'\\n').join(comment_lines)
+      vals = [aid, name, source, revision, (';'.join(assay_group)), project_category, activity_outcome_method, description, comment]
+      fout.write('\t'.join(vals)+'\n')
       n_out+=1
+  logging.info("n_out: %d"%n_out)
 
 #############################################################################
 def OutcomeCode(txt):
@@ -446,23 +422,6 @@ def AssayXML2NameAndSource(xmlstr):
   source=root.find('//%s'%tag_sourcedom).text  ##1st
 
   return name,source
-
-#############################################################################
-def GetAssayDescriptions(base_url, aids, fout):
-  tags=None;
-  for aid in aids:
-    rval = rest_utils.GetURL(base_url+'/assay/aid/%d/description/JSON'%aid, parse_json=True)
-    logging.debug(json.dumps(rval, indent=4))
-    assays = rval['PC_AssayContainer'] if 'PC_AssayContainer' in rval else []
-    fout.write('aid\tname\tassay_group\tproject_category\tactivity_outcome_method')
-    for assay in assays:
-      aid = assay['assay']['descr']['aid']['id']
-      name = assay['assay']['descr']['name']
-      assay_group = assay['assay']['descr']['assay_group'][0]
-      project_category = assay['assay']['descr']['project_category']
-      activity_outcome_method = assay['assay']['descr']['activity_outcome_method']
-      vals = [aid, name, assay_group, project_category, activity_outcome_method]
-      fout.write('\t'.join(vals))
 
 #############################################################################
 def GetSID2Synonyms(base_url, sids, fout):
