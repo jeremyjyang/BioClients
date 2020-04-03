@@ -13,13 +13,14 @@ API_BASE_PATH='/rest/pug'
 ##############################################################################
 if __name__=='__main__':
   ops = [
-        "list_substancesources", "list_assaysources",
-        "name2sid", "name2cid", "name2synonyms",
+        "list_sources_substance", "list_sources_assay",
+        "get_name2sid", "get_name2cid", "get_name2synonyms",
         "smi2cid",
-        "cid2smi", "cid2smiles", "cid2sdf", "cid2properties", "cid2inchi",
-        "cid2synonyms", "cid2sid", "cid2assaysummary",
-        "sid2cid", "sid2sdf", "sid2assaysummary",
-        "aid2name", "assaydescriptions", "assayresults" ]
+        "get_cid2smi", "get_cid2smiles", "get_cid2sdf",
+        "get_cid2properties", "get_cid2inchi",
+        "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
+        "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
+        "get_assayname", "get_assaydescriptions", "get_assayresults" ]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
   parser.add_argument("op",choices=ops,help='operation')
   parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID)")
@@ -84,62 +85,62 @@ if __name__=='__main__':
 
   t0=time.time()
 
-  if args.op == 'list_assaysources':
-    pubchem.Utils.ListAssaySources(BASE_URL, fout)
+  if args.op == 'list_sources_assay':
+    pubchem.Utils.ListSources(BASE_URL, "assay", fout)
 
-  elif args.op == 'list_substancesources':
-    pubchem.Utils.ListSubstanceSources(BASE_URL, fout)
+  elif args.op == 'list_sources_substance':
+    pubchem.Utils.ListSources(BASE_URL, "substance", fout)
 
-  elif args.op == 'cid2synonyms':
-    pubchem.Utils.CID2Synonyms(BASE_URL, ids, args.skip, args.nmax, args.nmax_per_cid, fout)
+  elif args.op == 'get_cid2synonyms':
+    pubchem.Utils.GetCID2Synonyms(BASE_URL, ids, args.skip, args.nmax, args.nmax_per_cid, fout)
 
-  elif args.op == 'cid2properties':
-    pubchem.Utils.CID2Properties(BASE_URL, ids, fout)
+  elif args.op == 'get_cid2properties':
+    pubchem.Utils.GetCID2Properties(BASE_URL, ids, fout)
 
-  elif args.op == 'cid2inchi':
-    pubchem.Utils.CID2Inchi(BASE_URL, ids, fout)
+  elif args.op == 'get_cid2inchi':
+    pubchem.Utils.GetCID2Inchi(BASE_URL, ids, fout)
 
-  elif args.op == 'cid2sid':
-    pubchem.Utils.CID2SID(BASE_URL, ids, fout)
+  elif args.op == 'get_cid2sid':
+    pubchem.Utils.GetCID2SID(BASE_URL, ids, fout)
 
-  elif args.op == 'cid2smiles':
-    pubchem.Utils.CID2Smiles(BASE_URL, ids, args.isomeric, fout)
+  elif args.op == 'get_cid2smiles':
+    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, args.isomeric, fout)
 
-  elif args.op == 'cid2sdf':
-    pubchem.Utils.CID2SDF(BASE_URL, ids, fout)
+  elif args.op == 'get_cid2sdf':
+    pubchem.Utils.GetCID2SDF(BASE_URL, ids, fout)
 
-  elif args.op == 'cid2assaysummary':
-    pubchem.Utils.CID2AssaySummary(BASE_URL, ids, fout)
+  elif args.op == 'get_cid2assaysummary':
+    pubchem.Utils.GetCID2AssaySummary(BASE_URL, ids, fout)
 
-  elif args.op == 'sid2cid':
-    pubchem.Utils.SID2CID(BASE_URL, ids, fout)
+  elif args.op == 'get_sid2cid':
+    pubchem.Utils.GetSID2CID(BASE_URL, ids, fout)
 
-  elif args.op == 'sid2assaysummary':
-    pubchem.Utils.SID2Assaysummary(BASE_URL, ids, fout)
+  elif args.op == 'get_sid2assaysummary':
+    pubchem.Utils.GetSID2AssaySummary(BASE_URL, ids, fout)
 
-  elif args.op == 'sid2sdf':
-    pubchem.Utils.SID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
+  elif args.op == 'get_sid2sdf':
+    pubchem.Utils.GetSID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
 
   elif args.op == 'smi2cid':
     if not args.smiles: parser.error('--smiles required.')
-    pubchem.Utils.Smiles2CID(BASE_URL, args.smiles, fout)
+    pubchem.Utils.GetSmiles2CID(BASE_URL, args.smiles, fout)
 
-  elif args.op == 'name2sid':
-    pubchem.Utils.Name2SID(BASE_URL, names, fout)
+  elif args.op == 'get_name2sid':
+    pubchem.Utils.GetName2SID(BASE_URL, names, fout)
 
-  elif args.op == 'name2cid':
-    pubchem.Utils.Name2CID(BASE_URL, names, fout)
+  elif args.op == 'get_name2cid':
+    pubchem.Utils.GetName2CID(BASE_URL, names, fout)
 
-  elif args.op == 'name2synonyms':
-    pubchem.Utils.Name2Synonyms(BASE_URL, names, fout)
+  elif args.op == 'get_name2synonyms':
+    pubchem.Utils.GetName2Synonyms(BASE_URL, names, fout)
 
-  elif args.op == 'aid2name':
-    pubchem.Utils.AID2Name(BASE_URL, aids, fout)
+  elif args.op == 'get_assayname':
+    pubchem.Utils.GetAssayName(BASE_URL, aids, fout)
 
-  elif args.op == 'assaydescriptions':
-    pubchem.Utils.AssayDescriptions(BASE_URL, aids, fout)
+  elif args.op == 'get_assaydescriptions':
+    pubchem.Utils.GetAssayDescriptions(BASE_URL, aids, fout)
 
-  elif args.op == 'assayresults':
+  elif args.op == 'get_assayresults':
     #Requires AIDs and SIDs.
     pubchem.Utils.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
 

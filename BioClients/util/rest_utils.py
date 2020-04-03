@@ -80,7 +80,7 @@ def RequestURL(url, headers, data, usr, pw, parse_json, parse_xml, nmax_retry, v
     break
 
   if ftxt.strip()=='': return None
-  logging.debug('%s'%ftxt)
+  #logging.debug('%s'%ftxt)
 
   if parse_json:
     try:
@@ -93,16 +93,16 @@ def RequestURL(url, headers, data, usr, pw, parse_json, parse_xml, nmax_retry, v
         ftxt_fix = ftxt_fix.replace(r'\n', '\\\\n') #ok?
         rval = json.loads(ftxt_fix, encoding='utf-8')
         logging.debug('Apparently fixed JSON Error: %s'%e)
-        logging.debug('DEBUG: Apparently fixed JSON: "%s"'%ftxt)
+        logging.debug('Apparently fixed JSON: "%s"'%ftxt)
       except ValueError as e:
-        logging.debug('Failed to fix JSON Error: %s'%e)
-        logging.debug('DEBUG: ftxt_fix="%s"'%ftxt_fix)
+        logging.error('Failed to fix JSON Error: %s'%e)
+        logging.error('ftxt_fix="%s"'%ftxt_fix)
         raise
   elif parse_xml:
     try:
       rval = ParseXml(ftxt)
     except Exception as e:
-      logging.debug('XML Error: %s'%e)
+      logging.error('XML Error: %s'%e)
       rval=ftxt
   else: #raw
     rval=ftxt

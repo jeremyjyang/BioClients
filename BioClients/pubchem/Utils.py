@@ -4,262 +4,145 @@ Utility functions for the PubChem PUG REST API.
 
 * http://pubchem.ncbi.nlm.nih.gov/rest/pug/
 
- URL paths:
-	<domain>/<namespace>/<identifiers>
+	<DOMAIN>/<NAMESPACE>/<IDENTIFIERS>
 
-  compound domain:
-	compound/cid 
- 	compound/name 
- 	compound/smiles 
- 	compound/inchi 
- 	compound/inchikey 
- 	compound/listkey
- 	compound/substructure/{smiles|inchi}
-
-  substance domain:
-	substance/sid 
- 	substance/name 
- 	substance/listkey
- 	substance/sourceid/<source name> 
- 	substance/sourceall/<source name> 
-    substance/sid/<SID>/cids/JSON
-    substance/sid/<SID>/cids/XML?cids_type=all
-
-  assay domain:
-	assay/aid 
- 	assay/listkey 
+	compound/{cid|name|smiles|inchi|inchikey|listkey}
+	compound/substructure/{smiles|inchi}
+	substance/{sid|name|listkey}
+	substance/sourceid/<source name> 
+	substance/sourceall/<source name> 
+	substance/sid/<SID>/cids/JSON
+	substance/sid/<SID>/cids/XML?cids_type=all
+	assay/{aid|listkey} 
  	assay/type/{all|confirmatory|doseresponse|onhold|panel|rnai|screening|summary}
  	assay/sourceall/<source name>
-
-  sources domain:
 	sources/{substance|assay}
 
-  <identifiers> = comma-separated list of positive integers (cid, sid, aid) or
-  identifier strings (source, inchikey, listkey); single identifier string
+  <IDENTIFIERS> = comma-separated list of positive integers (cid, sid, aid) or
+  strings (source, inchikey, listkey); single identifier string
   (name, smiles; inchi by POST only)
 """
 ###
-import sys,os,io,re,math,time,logging
+import sys,os,io,re,csv,json,pandas,math,time,logging
 import urllib.request,urllib.parse
-import csv,json
-import pandas as pd
 #
 from ..util import rest_utils
 #
-OFMTS={
-	'XML':'application/xml',
-	'JSON':'application/json',
-	'JSONP':'application/javascript',
-	'ASNB':'application/ber-encoded',
-	'SDF':'application/x-mdl-sdfile',
-	'CSV':'text/csv',
-	'TSV':'text/tsv',
-	'PNG':'image/png',
-	'TXT':'text/plain'
-	}
-#
-OUTCOME_CODES = {'inactive':1,'active':2,'inconclusive':3,'unspecified':4,'probe':5}
+OUTCOME_CODES = {
+        'inactive':1,
+        'active':2,
+        'inconclusive':3,
+        'unspecified':4,
+        'probe':5}
 #
 #############################################################################
-def ListSubstanceSources(base_url,fout):
-  rval=rest_utils.GetURL(base_url+'/sources/substance/JSON',parse_json=True)
-  sources = rval['InformationList']['SourceName']
+def ListSources(base_url, src_type, fout):
+  rval = rest_utils.GetURL(base_url+'/sources/%s/JSON'%src_type, parse_json=True)
+  logging.debug(json.dumps(rval,indent=2))
+  sources = rval['InformationList']['SourceName'] if 'InformationList' in rval and 'SourceName' in rval['InformationList'] else []
   n_src=0;
   for source in sorted(sources):
     fout.write('"%s"\n'%source)
     n_src+=1
-  logging.info('n_src: %d'%n_src)
-  return
-
-#############################################################################
-def ListAssaySources(base_url,fout):
-  rval=rest_utils.GetURL(base_url+'/sources/assay/JSON',parse_json=True)
-  #logging.info(json.dumps(rval,indent=2))
-  sources = rval['InformationList']['SourceName']
-  n_src=0;
-  for source in sorted(sources):
-    fout.write('"%s"\n'%source)
-    n_src+=1
-  logging.info('n_src: %d'%n_src)
-  return
+  logging.info('n_src (%s): %d'%(src_type, n_src))
 
 ##############################################################################
-def SID2Sdf(base_url, id_query):
+def GetSID2SDF(base_url, id_query):
   url=(base_url+'/substance/sid/%d/SDF'%id_query)
   txt=rest_utils.GetURL(url)
   return txt
 
 #############################################################################
-def SID2AssaySummaryCSV(base_url,id_query):
-  txt=rest_utils.GetURL(base_url+'/substance/sid/%d/assaysummary/CSV'%id_query)
-  return txt
+def GetSID2CID(base_url, sids, fout):
+  cids = set()
+  if fout: fout.write("SID\tCID\n")
+  for sid in sids:
+    rval = rest_utils.GetURL(base_url+'/substance/sid/%s/cids/JSON?cids_type=standardized'%sid, parse_json=True)
+    infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
+    for info in infos:
+      cids_this = info['CID'] if 'CID' in info else []
+      for cid in cids_this:
+        cids.add(str(cid))
+        if fout: fout.write("%s\t%s\n"%(sid, cid))
+  return list(cids)
 
 #############################################################################
-def SID2CID(base_url,sid):
-  d=rest_utils.GetURL(base_url+'/substance/sid/%d/cids/JSON?cids_type=standardized'%sid,parse_json=True)
-  try:
-    infos = d['InformationList']['Information']
-    cid=infos[0]['CID'][0]
-  except Exception as  e:
-    logging.info('Error (Exception): %s'%e)
-    cid=None
-  return cid
+def GetSID2Smiles(base_url, sids, fout):
+  cids = GetSID2CID(base_url, sids, None)
+  GetCID2Smiles(base_url, cids, fout)
 
 #############################################################################
-def SID2Smiles(base_url, sids, fout):
-  cids = SID2CID(base_url, sids, None)
-  CID2Smiles(base_url, cids, fout)
-
-#############################################################################
-def CID2SID(base_url, cids, fout):
-  sids=[]
-  if fout: fout.write("SID\n")
+def GetCID2SID(base_url, cids, fout):
+  sids = set()
+  if fout: fout.write("CID\tSID\n")
   for cid in cids:
     rval = rest_utils.GetURL(base_url+'/compound/cid/%s/sids/JSON'%cid, parse_json=True)
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
       sids_this = info['SID'] if 'SID' in info else []
       for sid in sids_this:
-        sids.append(str(sid))
-        if fout: fout.write("%s\n"%sid)
-  return sids
+        sids.add(str(sid))
+        if fout: fout.write("%s\t%s\n"%(cid, sid))
+  return list(sids)
 
 #############################################################################
-### JSON returned: "{u'IdentifierList': {u'CID': [245086]}}"
-### Problem: must quote forward slash '/' in smiles.  2nd param in quote()
+### Must quote forward slash '/' in smiles.  2nd param in quote()
 ### specifies "safe" chars to not quote, '/' being the default, so specify
 ### '' for no safe chars.
 #############################################################################
-def Smi2Ids(base_url, smi):
-  rval=rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi, ''), parse_json=True)
-  if rval and 'IdentifierList' in rval:
-    return rval['IdentifierList']
-  else:
-    return None
-
-#############################################################################
-def Smiles2CID(base_url, smi, fout):
-  ids = Smi2Ids(base_url, smi)
+def GetSmiles2CID(base_url, smi, fout):
+  rval = rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi, ''), parse_json=True)
+  cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
   fout.write("CID\n")
-  cids = ids['CID'] if ids and 'CID' in ids else []
   for cid in cids:
-    fout.write("%d\n"%cid)
+    fout.write("%s\n"%cid)
 
 #############################################################################
-#  sids: '846753,846754,846755,846760,846761,3712736,3712737'
-#  cids: '644415,5767160,644417,644418,644420'
-#  Very slow -- progress?
-#############################################################################
-def SID2CID(base_url, ids):
-  ## Use method POST; put SIDs in data.
-  ids_dict={'sid':(','.join(map(lambda x:str(x), ids)))}
-  rval=rest_utils.PostURL(url=base_url+'/substance/sid/cids/TXT?cids_type=standardized',
-	headers={'Accept':OFMTS['TXT'],'Content-type':'application/x-www-form-urlencoded'},
-	data=ids_dict)
-  cids=[]
-  lines=rval.splitlines()
-  for line in lines:
-    try:
-      cid=int(line)
-      cids.append(cid)
-    except:
-      pass
-  return cids
+def GetCID2AssaySummary(base_url, ids, fout):
+  """Example CIDs: 2519 (caffeine), 3034034 (quinine)"""
+  n_out=0;
+  for i,id_this in enumerate(ids):
+    rval = rest_utils.GetURL(base_url+'/compound/cid/%s/assaysummary/CSV'%id_this)
+    logging.debug(rval)
+    if not rval: continue
+    df = pandas.read_csv(io.StringIO(rval), sep=',')
+    df.to_csv(fout, sep='\t', index=False, header=bool(i==0))
+    n_out += df.shape[0]
+  logging.info('CIDs: %d; assay summaries out: %d'%(len(ids), n_out))
 
 #############################################################################
-def SID2CIDTSV(base_url, ids, fout):
-  t0 = time.time()
-  fout.write('sid,cid\n')
-  n_in=0; n_out=0; n_err=0;
-  for sid in ids:
-    n_in+=1
-    cid = SID2CID(base_url,sid)
-    try:
-      cid=int(cid)
-    except Exception as  e:
-      n_err+=1
-      continue
-    fout.write('%d,%d\n'%(sid,cid))
-    n_out+=1
-    if (n_in%1000)==0:
-      logging.info('processed: %6d / %6d (%.1f%%); elapsed time: %s'%(n_in,len(ids), 100.0*n_in/len(ids),time.gmtime(time.time()-t0)))
-  logging.info('sids in: %d'%len(ids))
-  logging.info('cids out: %d'%n_out)
-  logging.info('errors: %d'%n_err)
+def GetSID2AssaySummary(base_url, ids, fout):
+  n_out=0;
+  for id_this in ids:
+    rval = rest_utils.GetURL(base_url+'/substance/sid/%s/assaysummary/CSV'%id_this)
+    if not rval: continue
+    df = pandas.read_csv(io.StringIO(rval), sep=',')
+    df.to_csv(fout, sep='\t', index=False, header=bool(i==0))
+    n_out += df.shape[0]
+  logging.info('SIDs: %d; assay summaries out: %d'%(len(ids), n_out))
 
 #############################################################################
-def CID2SIDTSV(base_url,ids,fout):
-  fout.write('cid\tsid\n')
-  n_out=0; n_err=0;
-  for cid in ids:
-    try:
-      d=rest_utils.GetURL(base_url+'/compound/cid/%s/sids/TXT'%cid)
-      sids=d.splitlines()
-    except Exception as  e:
-      logging.info('Error (Exception): %s'%e)
-      n_err+=1
-      continue
-    for sid in sids:
-      fout.write('%s\t%s\n'%(cid,sid))
-      n_out+=1
-  logging.info('CIDs in: %d; SIDs out: %d; errors: %d'%(len(ids), n_out, n_err))
-
-#############################################################################
-def CID2Assaysummary(base_url,ids,fout):
-  n_out=0; n_err=0;
-  for cid in ids:
-    try:
-      d=rest_utils.GetURL(base_url+'/compound/cid/%s/assaysummary/CSV'%cid)
-      rows=d.splitlines()
-    except Exception as  e:
-      logging.info('Error (Exception): %s'%e)
-      n_err+=1
-      continue
-    for i,row in enumerate(rows):
-      if i==0 and n_out>0: continue #1 header only
-      fout.write('%s\n'%(row))
-      n_out+=1
-  logging.info('CIDs in: %d; assay summaries out: %d; errors: %d'%(len(ids), n_out, n_err))
-
-#############################################################################
-def Sids2Assaysummary(base_url, ids, fout):
-  n_out=0; n_err=0;
-  for sid in ids:
-    try:
-      d=rest_utils.GetURL(base_url+'/substance/sid/%s/assaysummary/CSV'%sid)
-      rows=d.splitlines()
-    except Exception as  e:
-      logging.info('Error (Exception): %s'%e)
-      n_err+=1
-      continue
-    for i, row in enumerate(rows):
-      if i==0 and n_out>0: continue #1 header only
-      fout.write('%s\n'%(row))
-      n_out+=1
-  logging.info('SIDs in: %d; assay summaries out: %d; errors: %d'%(len(ids), n_out, n_err))
-
-#############################################################################
-def CID2Properties(base_url, ids, fout):
+def GetCID2Properties(base_url, ids, fout):
   PROPTAGS = [ "CanonicalSMILES", "IsomericSMILES", "InChIKey", "InChI", "MolecularFormula", "HeavyAtomCount", "MolecularWeight", "XLogP", "TPSA"]
   ids_dict = {'cid':(','.join(map(lambda x:str(x), ids)))}
   url = (base_url+'/compound/cid/property/%s/CSV'%(','.join(PROPTAGS)))
   rval = rest_utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
-  df = pd.read_csv(io.StringIO(rval), sep=',')
+  df = pandas.read_csv(io.StringIO(rval), sep=',')
   df.to_csv(fout, sep='\t', index=False)
   logging.info("Input IDs: {0}; Output records: {1}".format(len(ids), df.shape[0]))
 
 #############################################################################
-def CID2Inchi(base_url, ids, fout):
+def GetCID2Inchi(base_url, ids, fout):
   PROPTAGS = [ "InChIKey", "InChI" ]
   ids_dict = {'cid':(','.join(map(lambda x:str(x), ids)))}
   url = (base_url+'/compound/cid/property/%s/CSV'%(','.join(PROPTAGS)))
   rval = rest_utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
-  df = pd.read_csv(io.StringIO(rval), sep=',')
+  df = pandas.read_csv(io.StringIO(rval), sep=',')
   df.to_csv(fout, sep='\t', index=False)
   logging.info("Input IDs: {0}; Output InChIs: {1}".format(len(ids), df.shape[0]))
 
 ##############################################################################
-#def CID2SDF(base_url, ids, fout):
+#def GetCID2SDF(base_url, ids, fout):
 #  n_out=0;
 #  for cid in ids:
 #    url = (base_url+'/compound/cid/%d/SDF'%cid)
@@ -268,7 +151,7 @@ def CID2Inchi(base_url, ids, fout):
 #  logging.info('SDFs out: %d'%n_out)
 #
 #############################################################################
-def CID2SDF(base_url, ids, fout):
+def GetCID2SDF(base_url, ids, fout):
   """Faster via POST(?). Request in chunks.  Works for 50, and not
   for 200 (seems to be a limit)."""
   nchunk=50; nskip_this=0; n_out=0;
@@ -282,7 +165,7 @@ def CID2SDF(base_url, ids, fout):
   logging.info('SDFs out: %d'%n_out)
 
 #############################################################################
-def SID2SDF(base_url, sids, skip, nmax, fout):
+def GetSID2SDF(base_url, sids, skip, nmax, fout):
   """Faster via POST(?). Request in chunks.  Works for 50, and not
   for 200 (seems to be a limit)."""
   n_out=0;
@@ -304,7 +187,7 @@ def SID2SDF(base_url, sids, skip, nmax, fout):
   logging.info('SIDs: %d ; SDFs out: %d'%(len(sids), n_out))
 
 #############################################################################
-def CID2Smiles(base_url, ids, isomeric, fout):
+def GetCID2Smiles(base_url, ids, isomeric, fout):
   """Returns Canonical or Isomeric SMILES."""
   t0 = time.time()
   nchunk=50; nskip_this=0;
@@ -361,7 +244,7 @@ def Inchi2CID(base_url, inchis, fout):
   logging.info('n_out: %d'%n_out)
 
 #############################################################################
-def AID2Name(base_url, aids, fout):
+def GetAssayName(base_url, aids, fout):
   for aid in aids:
     xmlstr = rest_utils.GetURL(base_url+'/assay/aid/%d/description/XML'%id_query)
     name, source = AssayXML2NameAndSource(xmlstr)
@@ -565,7 +448,7 @@ def AssayXML2NameAndSource(xmlstr):
   return name,source
 
 #############################################################################
-def AssayDescriptions(base_url, aids, fout):
+def GetAssayDescriptions(base_url, aids, fout):
   tags=None;
   for aid in aids:
     rval = rest_utils.GetURL(base_url+'/assay/aid/%d/description/JSON'%aid, parse_json=True)
@@ -582,7 +465,7 @@ def AssayDescriptions(base_url, aids, fout):
       fout.write('\t'.join(vals))
 
 #############################################################################
-def SID2Synonyms(base_url, sids, fout):
+def GetSID2Synonyms(base_url, sids, fout):
   synonyms=[]
   if fout: fout.write("SID\tSynonym\n")
   for sid in sids:
@@ -596,18 +479,18 @@ def SID2Synonyms(base_url, sids, fout):
   return synonyms
 
 #############################################################################
-def CID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
+def GetCID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
   fout.write('CID\tSynonym\n')
   sids_all = set([])
   i_cid=0; n_out=0;
   for cid in cids:
     i_cid+=1
     if skip and i_cid<=skip: continue
-    sids_this = CID2SID(base_url, cid, None)
+    sids_this = GetCID2SID(base_url, cid, None)
     sids_all |= set(sids_this)
     synonyms_this_cid = set()
     for sid in sids_this:
-      synonyms_this_sid = SID2Synonyms(base_url, [sid], None)
+      synonyms_this_sid = GetSID2Synonyms(base_url, [sid], None)
       synonyms_this_cid |= set(synonyms_this_sid)
     synonyms_this_cid_nice = SortCompoundNamesByNiceness(list(synonyms_this_cid))
     for j,synonym in enumerate(synonyms_this_cid_nice):
@@ -626,41 +509,39 @@ def CID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
   logging.info('Totals: CIDs: %d; SIDs: %d; Synonyms: %d'%(len(cids), len(sids_all), n_out))
 
 #############################################################################
-def Name2SID(base_url, names, fout):
-  n_out=0; sids_all = set()
+def GetName2SID(base_url, names, fout):
+  n_sid=0; sids_all = set()
   if fout: fout.write("Name\tSID\n")
   for name in names:
     rval = rest_utils.GetURL(base_url+'/substance/name/%s/sids/JSON'%urllib.parse.quote(name), parse_json=True)
     sids_this = rval['IdentifierList']['SID']
     for sid in sids_this:
-      if fout:
-        fout.write("%s\t%s\n"%(name, sid))
-        n_out+=1
+      n_sid+=1
+      if fout: fout.write("%s\t%s\n"%(name, sid))
       sids_all |= set(sids_this)
-  logging.info("n_out: %d; n_unique: %d"%(n_out, len(sids_all)))
+  logging.info("n_name: %d; n_sid: %d; n_unique: %d"%(len(names), n_sid, len(sids_all)))
   return list(sids_all)
 
 #############################################################################
-def Name2CID(base_url, names, fout):
-  n_out=0; cids_all = set()
+def GetName2CID(base_url, names, fout):
+  n_cid=0; cids_all = set()
   if fout: fout.write("Name\tCID\n")
   for name in names:
-    sids_this = Name2SID(base_url, [name], None)
-    cids_this = list(set(SID2CID(base_url, sids_this)) )
+    sids_this = GetName2SID(base_url, [name], None)
+    cids_this = list(set(GetSID2CID(base_url, sids_this, None)) )
     for cid in cids_this:
-      if fout:
-        fout.write("%s\t%s\n"%(name, cid))
-        n_out+=1
+      n_cid+=1
+      if fout: fout.write("%s\t%s\n"%(name, cid))
     cids_all |= set(cids_this)
-  logging.info("n_out: %d; n_unique: %d"%(n_out, len(cids_all)))
+  logging.info("n_name: %d; n_cid: %d; n_unique: %d"%(len(names), n_cid, len(cids_all)))
   return list(cids_all)
 
 #############################################################################
-def Name2Synonyms(base_url, names, fout):
-  n_out=0; sids_all = set(); synonyms_all = set()
+def GetName2Synonyms(base_url, names, fout):
+  n_synonym=0; sids_all = set(); synonyms_all = set()
   if fout: fout.write("Name\tSID\tSynonym\n")
   for name in names:
-    sids_this = Name2SID(base_url, [name], None)
+    sids_this = GetName2SID(base_url, [name], None)
     sids_all |= set(sids_this)
     for sid in sids_this:
       rval = rest_utils.GetURL(base_url+'/substance/sid/%s/synonyms/JSON'%(sid), parse_json=True)
@@ -670,14 +551,15 @@ def Name2Synonyms(base_url, names, fout):
         synonyms_this = info['Synonym'] if 'Synonym' in info else []
         synonyms_this_sid |= set(synonyms_this)
         for synonym in synonyms_this:
-          if fout:
-            fout.write("%s\t%s\t%s\n"%(name, sid, synonym))
-            n_out+=1
+          n_synonym+=1
+          if fout: fout.write("%s\t%s\t%s\n"%(name, sid, synonym))
       synonyms_all |= set(synonyms_this_sid)
-  logging.info("n_out: %d; n_unique: %d; n_sids_unique: %d"%(n_out, len(synonyms_all), len(sids_all)))
+  logging.info("n_name: %d; n_synonym: %d; n_unique: %d; n_sids_unique: %d"%(len(names), n_synonym, len(synonyms_all), len(sids_all)))
 
 #############################################################################
 def NameNicenessScore(name, len_optimal=9):
+  """Heuristic for human comprehensibility. In PubChem, a 'name' may be
+any ID, often not useful."""
   score=0;
   pat_proper = re.compile(r'^[A-Z][a-z]+$')
   pat_text = re.compile(r'^[A-Za-z ]+$')
@@ -691,8 +573,6 @@ def NameNicenessScore(name, len_optimal=9):
   return score
 
 #############################################################################
-### Heuristic for human comprehensibility.
-#############################################################################
 def SortCompoundNamesByNiceness(names):
   names_scored = {n:NameNicenessScore(n) for n in names}
   names_ranked = [[score,name] for name,score in names_scored.items()]
@@ -702,6 +582,7 @@ def SortCompoundNamesByNiceness(names):
 
 #############################################################################
 def GetCpdAssayStats(base_url, cid, smiles, aidset, fout_mol, fout_act, aidhash):
+  """This function needs fixing."""
   aids_tested=set(); aids_active=set();
   sids_tested=set(); sids_active=set();
   n_sam=0; n_sam_active=0; mol_active=False; mol_found=False;
@@ -795,8 +676,8 @@ x:'"%s"'%x),csvReader.fieldnames))))
   return mol_found,mol_active,n_sam,n_sam_active
 
 #############################################################################
-def GetCpdAssayData(base_url,cid_query,aidset,fout):
-
+def GetCpdAssayData(base_url, cid_query, aidset, fout):
+  """This function needs fixing."""
   try:
     fcsv=rest_utils.GetURL(base_url+'/compound/cid/%d/assaysummary/CSV'%cid_query)
   except Exception as e:
