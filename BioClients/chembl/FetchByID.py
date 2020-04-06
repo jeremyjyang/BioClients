@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-#############################################################################
-### See https://github.com/chembl/chembl_webresource_client
-### New with ChEMBL 25 March 2019:
-###   https://chembl.gitbook.io/chembl-interface-documentation/web-services/chembl-data-web-services
-#############################################################################
-### Not all fields included. Lists/dicts excluded.
-#############################################################################
+"""
+See https://github.com/chembl/chembl_webresource_client
+New with ChEMBL 25 March 2019:
+https://chembl.gitbook.io/chembl-interface-documentation/web-services/chembl-data-web-services
+"""
+###
 import sys,os,argparse,logging
 import csv
 
@@ -13,10 +12,6 @@ from chembl_webresource_client.new_client import new_client
 
 NCHUNK = 50
 
-#############################################################################
-### Compounds to targets through activities.
-### Normally select biochemical assays, protein targets, activities with pChembl.
-### Process in chunks to avoid timeouts due to size.
 #############################################################################
 act_tags_selected = ['activity_id', 'assay_chembl_id', 'assay_type', 'src_id',
 	'relation', 'standard_relation',
@@ -28,8 +23,12 @@ act_tags_selected = ['activity_id', 'assay_chembl_id', 'assay_type', 'src_id',
 	'text_value', 'published_value',
 	'units', 'qudt_units', 'uo_units', 'published_units', 'standard_units',
 	'type', 'published_type', 'standard_type']
-#
 def CID2Activity(cids, args, fout):
+  """
+Compounds to targets through activities.
+Normally select biochemical assays, protein targets, activities with pChembl.
+Process in chunks to avoid timeouts due to size.
+  """
   tags=None;
   n_act=0;
   i_start=(args.skip if args.skip else 0)

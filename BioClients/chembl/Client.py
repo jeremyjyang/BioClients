@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
-##############################################################################
-### utility for ChEMBL REST API.
-##############################################################################
-### Consider using package https://github.com/chembl/chembl_webresource_client.
-##############################################################################
-### https://www.ebi.ac.uk/chembl/api/data/docs
-### https://www.ebi.ac.uk/chembl/api/utils/docs
-### https://chembl.gitbook.io/chembl-interface-documentation/frequently-asked-questions/general-questions
-### https://www.ebi.ac.uk/chembl/faq
-##############################################################################
-# ASSAY TYPES:
-# Binding (assay_type=B) - Data measuring binding of compound to a molecular target, e.g. Ki, IC50, Kd.
-# Functional (assay_type=F) - Data measuring the biological effect of a compound, e.g. %cell death in a cell line, rat weight.
-# ADMET (assay_type=A) - ADME data e.g. t1/2, oral bioavailability.
-# Toxicity (assay_type=T) - Data measuring toxicity of a compound, e.g., cytotoxicity.
-# Physicochemical (assay_type=P) - Assays measuring physicochemical properties of the compounds in the absence of biological material e.g., chemical stability, solubility.
-# Unclassified (assay_type=U) - A small proportion of assays cannot be classified into one of the above categories e.g., ratio of binding vs efficacy.
-##############################################################################
+"""
+Utility for ChEMBL REST API.
+
+Consider using package https://github.com/chembl/chembl_webresource_client.
+
+* https://www.ebi.ac.uk/chembl/api/data/docs
+* https://www.ebi.ac.uk/chembl/api/utils/docs
+* https://chembl.gitbook.io/chembl-interface-documentation/frequently-asked-questions/general-questions
+* https://www.ebi.ac.uk/chembl/faq
+
+ASSAY TYPES:
+* Binding (assay_type=B) - Data measuring binding of compound to a molecular target, e.g. Ki, IC50, Kd.
+* Functional (assay_type=F) - Data measuring the biological effect of a compound, e.g. %cell death in a cell line, rat weight.
+* ADMET (assay_type=A) - ADME data e.g. t1/2, oral bioavailability.
+* Toxicity (assay_type=T) - Data measuring toxicity of a compound, e.g., cytotoxicity.
+* Physicochemical (assay_type=P) - Assays measuring physicochemical properties of the compounds in the absence of biological material e.g., chemical stability, solubility.
+* Unclassified (assay_type=U) - A small proportion of assays cannot be classified into one of the above categories e.g., ratio of binding vs efficacy.
+"""
+###
 import sys,os,re,json,argparse,time,logging
 #
 from .. import chembl
@@ -31,8 +32,9 @@ if __name__=='__main__':
   parser = argparse.ArgumentParser(description='ChEMBL REST API client', epilog=epilog)
   ops = ["status", "list_sources", "list_targets", "list_assays", "list_docs",
 "list_mols", "list_drugs", "list_tissues", "list_cells", "list_mechanisms",
-"search_assays", "get_mol",
-"get_tgt", "get_assay", "getActivityForMol", "getActivityForAssay", "getActivityForTarget", "get_doc"]
+"search_assays", "get_mol", "get_inchi2compound",
+"get_tgt", "get_assay", "get_activity_mol", "get_activity_assay",
+"get_activity_target", "get_doc"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="input IDs (mol, assay, target, or document)")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
@@ -43,9 +45,9 @@ if __name__=='__main__':
   parser.add_argument("--assay_source" , help="source_id")
   parser.add_argument("--assay_type" , help="{0}".format(str(assay_types)))
   parser.add_argument("--pmin", type=float, help="min pChEMBL activity value (9 ~ 1nM *C50)")
+  parser.add_argument("--include_phenotypic", action="store_true", help="else pChembl required")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
-  parser.add_argument("--include_phenotypic", action="store_true", help="else pChembl required")
   parser.add_argument("-v","--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -53,10 +55,7 @@ if __name__=='__main__':
 
   base_url='https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, 'w')
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, 'w') if args.ofile else sys.stdout
 
   ids=[]
   if args.ifile:
@@ -112,13 +111,16 @@ if __name__=='__main__':
   elif args.op == "get_mol":
     chembl.Utils.GetMolecule(base_url, ids, fout)
 
-  elif args.op == "getActivityForMol":
+  elif args.op == "get_inchi2compound":
+    chembl.Utils.GetInchi2Compound(base_url, ids, fout)
+
+  elif args.op == "get_activity_mol":
     chembl.Utils.GetActivity(ids, 'molecule', args.api_host, args.api_base_path, pmin, fout)
 
-  elif args.op == "getActivityForAssay":
+  elif args.op == "get_activity_assay":
     chembl.Utils.GetActivity(ids, 'assay', args.api_host, args.pmin, fout)
 
-  elif args.op == "getActivityForTarget":
+  elif args.op == "get_activity_target":
     chembl.Utils.GetActivity(ids, 'target', args.api_host, args.pmin, fout)
 
   elif args.op == "get_tgt":
@@ -134,4 +136,4 @@ if __name__=='__main__':
     chembl.Utils.SearchAssays(args.assay_source, args.assay_type, args.api_host, args.api_base_path, args.skip, args.nmax, fout)
 
   else:
-    parser.error('No operation specified.')
+    parser.error('Invalid operation: {0}'.format(args.op))

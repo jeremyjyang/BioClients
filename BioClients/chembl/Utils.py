@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
-##############################################################################
-### DEPRECATED: Should use package https://github.com/chembl/chembl_webresource_client.
-##############################################################################
-### chembl_api_utils.py - utility functions for ChEMBL REST API.
-### See: https://www.ebi.ac.uk/chembldb/index.php/ws
+"""
+Utility functions for ChEMBL REST API.
+See: https://www.ebi.ac.uk/chembldb/index.php/ws
+"""
 ###
-### JSON and XML are supported, e.g.:
-###   /targets/CHEMBL2477	-> XML
-###   /targets/CHEMBL2477.json 	-> JSON
-##############################################################################
 import sys,os,re,json,logging
 #
 from ..util import rest_utils
@@ -565,5 +560,31 @@ def ListMolecules(api_host, api_base_path, only_drug, skip, nmax, fout):
   logging.info('n_mol: %d'%n_mol)
   logging.info('n_out: %d'%n_out)
   logging.info('n_err: %d'%n_err)
+
+#
+#############################################################################
+### /chemblws/compounds/stdinchikey/QFFGVLORLPOAEC-SNVBAGLBSA-N
+def GetInchi2Compound(base_url, ids, fout):
+  """Requires InChI key."""
+  tags = ['chemblId', 'stdInChiKey', 'smiles', 'molecularFormula', 'species', 'knownDrug', 'preferredCompoundName', 'synonyms', 'molecularWeight' ]
+  n_qry=0; n_out=0; n_err=0; 
+  fout.write('\t'.join(tags)+'\n')
+  for id_this in ids:
+    n_qry+=1
+    mol = rest_utils.GetURL(base_url+'/compounds/stdinchikey/%s.json'%id_this, parse_json=True)
+    if not mol or type(mol) is not dict:
+      n_err+=1
+      continue
+    elif 'compound' not in mol:
+      n_err+=1
+      continue
+    cpd = mol['compound']
+    vals = [str(cpd[tag]) if tag in cpd else '' for tag in tags]
+    fout.write('\t'.join(vals)+'\n')
+    n_out+=1
+
+  logging.info('n_qry: %d'%(n_qry))
+  logging.info('n_out: %d'%(n_out))
+  logging.info('errors: %d'%(n_err))
 
 #############################################################################
