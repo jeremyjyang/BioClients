@@ -541,7 +541,30 @@ def SortCompoundNamesByNiceness(names):
 
 #############################################################################
 def GetCpdAssayStats(base_url, cid, smiles, aidset, fout_mol, fout_act, aidhash):
-  """This function needs fixing."""
+  """
+THIS FUNCTION NEEDS WORK.
+From PubChem PUG REST API, determine activity stats for compounds.
+ 
+ Input: smiles and CIDs
+ Output (1):
+   SMILES CID SID aTested aActive wTested wActive 
+     where:
+   aTested - how many assays where that cpd has been tested
+   aActive - how many assays where that cpd has been tested active
+   wTested - how many samples (wells) with that cpd have been tested
+   wActive - how many samples (wells) with that cpd have been tested active
+ 
+ Output (2): activity file, each line:
+   CID SID AID Outcome
+     where:
+   1 = inactive
+   2 = active
+   3 = inconclusive
+   4 = unspecified
+   5 = probe
+   multiple, differing 1, 2 or 3 = discrepant
+   not 4 = tested
+"""
   aids_tested=set(); aids_active=set();
   sids_tested=set(); sids_active=set();
   n_sam=0; n_sam_active=0; mol_active=False; mol_found=False;
