@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 """
-	GWAS Catalog REST API client.
+GWAS Catalog REST API client.
 
-	https://www.ebi.ac.uk/gwas/docs/api
-	https://www.ebi.ac.uk/gwas/rest/api
-	https://www.ebi.ac.uk/gwas/rest/docs/api
-	https://www.ebi.ac.uk/gwas/rest/docs/sample-scripts
-
-	https://www.ebi.ac.uk/gwas/rest/api/studies/GCST004364?projection=study
-	https://www.ebi.ac.uk/gwas/docs/api/studies/GCST000227/associations?projection=associationByStudy
-	https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs6085920
+https://www.ebi.ac.uk/gwas/docs/api
+https://www.ebi.ac.uk/gwas/rest/api
+https://www.ebi.ac.uk/gwas/rest/docs/api
+https://www.ebi.ac.uk/gwas/rest/docs/sample-scripts
 """
 import sys,os,re,argparse,json,time,logging
 #
@@ -22,8 +18,7 @@ API_BASE_PATH='/gwas/rest/api'
 #
 ##############################################################################
 if __name__=='__main__':
-
-  epilog = "Examples: PubmedId=28530673; gcst=GCST004364; EfoUri=EFO_0004232"
+  epilog = "Examples: PubmedId=28530673; gcst=GCST004364,GCST000227; EfoUri=EFO_0004232; snpId=rs6085920"
   parser = argparse.ArgumentParser(description='GWAS Catalog REST API client', epilog=epilog)
   searchtypes=['pubmedmid', 'gcst', 'efotrait', 'efouri', 'accessionid', 'rs']
   ops = ['listStudies', 'searchStudies', 'getStudyAssociations', 'getSnps']
@@ -39,10 +34,7 @@ if __name__=='__main__':
 
   base_url = 'https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, 'w')
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, 'w') if args.ofile: else sys.stdout
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
