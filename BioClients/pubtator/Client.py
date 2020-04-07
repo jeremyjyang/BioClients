@@ -28,7 +28,7 @@ API_BASE_PATH="/CBBresearch/Lu/Demo/RESTful/tmTool.cgi"
 #
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description='Pubtator REST API client utility', epilog='Reports PubMed NER annotations for specified PMID[s].')
+  parser = argparse.ArgumentParser(description='PubTator REST API client', epilog='Reports PubMed NER annotations for specified PMID[s].')
   ops=['get_annotations']
   modes = ['Gene', 'Chemical', 'BioConcept']
   parser.add_argument("op", choices=ops, help="operation")
@@ -55,15 +55,14 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('input IDs: %d'%(len(ids)))
+    logging.info('Input IDs: %d'%(len(ids)))
     fin.close()
   elif args.ids:
     ids = re.split(r'[\s,]+', args.ids.strip())
 
   if args.op == 'get_annotations':
-    if not ids:
-      logging.error('input PMIDs required.')
+    if not ids: logging.error('Input PMIDs required.')
     pubtator.Utils.GetAnnotations(BASE_URL, args.mode, ids, fout)
 
   else:
-    logging.error('Invalid operation: %s'%args.op)
+    logging.error('Invalid operation: {0}'.format(args.op))

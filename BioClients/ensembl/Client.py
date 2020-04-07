@@ -13,7 +13,7 @@ API_BASE_PATH=''
 ##############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(description="Ensembl REST API client", epilog="Example ID: ENSG00000157764")
-  ops = ["get_xrefs", "get_info"]
+  ops = ["list_species", "get_xrefs", "get_info", "show_version"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003)")
   parser.add_argument("--i", dest="ifile", help="input file, Ensembl_IDs")
@@ -33,7 +33,6 @@ if __name__=='__main__':
 
   if args.ifile:
     fin = open(args.ifile)
-    if not fin: logging.error('Failed to open input file: %s'%args.ifile)
     ids=[]
     while True:
       line = fin.readline()
@@ -41,14 +40,21 @@ if __name__=='__main__':
       ids.append(line.strip())
   elif args.ids:
     ids = re.split(r'\s*,\s*', args.ids.strip())
-  else:
+
+  if re.match("^get_", args.op) and not ids:
     parser.error('--i or --ids required.')
 
-  if args.op=='get_info':
+  if args.op=='list_species':
+    ensembl.Utils.ListSpecies(BASE_URL, fout)
+
+  elif args.op=='get_info':
     ensembl.Utils.GetInfo(BASE_URL, ids, fout)
 
   elif args.op=='get_xrefs':
     ensembl.Utils.GetXrefs(BASE_URL, ids, fout)
+
+  elif args.op=='show_version':
+    ensembl.Utils.ShowVersion(BASE_URL, fout)
 
   else:
     parser.error('Invalid operation: {0}'.format(args.op))
