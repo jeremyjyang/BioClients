@@ -1,62 +1,13 @@
 #!/usr/bin/env python3
-#############################################################################
-### PUbMed iCite  REST API client
-### https://icite.od.nih.gov/api
-#############################################################################
+"""
+PubMed iCite  REST API client
+https://icite.od.nih.gov/api
+"""
+###
 import sys,os,argparse,logging
 import urllib.request,json,re
 #
-from ..util import rest_utils
-
-#############################################################################
-def GetPmid(base_url, pmids, fout):
-  n_out=0;
-  tags=None;
-  for pmid in pmids:
-    url=base_url+'/%s'%pmid
-    pub = rest_utils.GetURL(url, parse_json=True)
-    if not pub:
-      logging.info('not found: %s'%(pmid))
-    if not tags:
-      tags = pub.keys()
-      fout.write('\t'.join(tags)+'\n')
-    vals=[];
-    for tag in tags:
-      val = (pub[tag] if tag in pub else '')
-      vals.append(val)
-    fout.write('\t'.join([str(vals) for val in vals])+'\n')
-    n_out+=1
-  logging.info('n_in = %d'%(len(pmids)))
-  logging.info('n_out = %d'%(n_out))
-
-#############################################################################
-def GetPmids(base_url, pmids, fout):
-  n_in=0; n_out=0; tags=None; nchunk=100;
-
-  while True:
-    if n_in >= len(pmids):
-      break
-    pmids_this = pmids[n_in:n_in+nchunk]
-    n_in += (nchunk if n_in+nchunk < len(pmids) else len(pmids)-n_in)
-    url_this = base_url+'?pmids=%s'%(','.join(pmids_this))
-    rval = rest_utils.GetURL(url_this, parse_json=True)
-    if not rval:
-      break
-    url_self = rval['links']['self']
-    pubs = rval['data']
-    for pub in pubs:
-      if not tags:
-        tags = list(pub.keys())
-        tags.sort()
-        fout.write('\t'.join(tags)+'\n')
-      vals=[];
-      for tag in tags:
-        val = (pub[tag] if tag in pub else '')
-        vals.append(val)
-      fout.write('\t'.join([str(val) for val in vals])+'\n')
-      n_out+=1
-  logging.info('n_in = %d'%(len(pmids)))
-  logging.info('n_out = %d'%(n_out))
+from .. import icite
 
 #############################################################################
 if __name__=='__main__':
@@ -64,7 +15,7 @@ if __name__=='__main__':
   API_BASE_PATH="/api/pubs"
   #
   parser = argparse.ArgumentParser(description='PubMed iCite REST API client utility', epilog='Publication metadata.')
-  ops = ['get']
+  ops = ['get_stats']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="PubMed IDs, comma-separated (ex:25533513)")
   parser.add_argument("--i", dest="ifile", help="input file, PubMed IDs")
@@ -74,17 +25,13 @@ if __name__=='__main__':
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
-
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   BASE_URL='https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, "w", encoding="utf-8")
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, "w", encoding="utf-8") if args.ofile else sys.stdout
 
   ids=[];
   if args.ifile:
@@ -93,16 +40,14 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('input IDs: %d'%(len(ids)))
+    logging.info('Input IDs: %d'%(len(ids)))
     fin.close()
   elif args.ids:
     ids = re.split(r'[\s,]+', args.ids.strip())
 
-  if args.op == 'get':
-    if not ids:
-      parser.error('get requires PMID[s].')
-      parser.exit()
-    GetPmids(BASE_URL, ids, fout)
+  if args.op == 'get_stats':
+    if not ids: parser.error('Requires PMID[s].')
+    icite.Utils.GetStats(BASE_URL, ids, fout)
 
   else:
     parser.error("Invalid operation: %s"%args.op)
