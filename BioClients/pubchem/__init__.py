@@ -1,3 +1,3 @@
 from .Utils import *
 
-__all__ = [ "ftp" ]
+__all__ = [ "ftp", "rdf", "soap" ]
