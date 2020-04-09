@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="BioClients-jeremyjyang",
+    name="BioClients",
     version="0.0.3",
     author="Jeremy Yang",
     author_email="jeremyjyang@gmail.com",

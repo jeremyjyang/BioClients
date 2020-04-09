@@ -3,15 +3,29 @@
 Python package for access to online biomedical resources,
 usually via REST APIs. Modules generally include
 `Client.py` for command-line use and `Utils.py` for
-integration into other code.
+integration into other code. With the advent of HTTP web services,
+first SOAP/XML and then mostly REST/JSON, many online APIs
+require very similar methods for data search, requests
+and transforms into usable formats, often CSV/TSV.
 
 ## Dependencies
 
-* Python3
+* Python 3.6+
 
 ## Modules
 
 `biogrid`, `brenda`, `chembl`, `diseaseontology`, `disgenet`, `dnorm`, `ensembl`, `fda`, `geneontology`, `gwascatalog`, `hugo`, `humanbase`, `icite`, `lincs`, `mesh`, `omim`, `opentargets`, `pdb`, `pubchem`, `pubmed`, `pubtator`, `reactome`, `rxnorm`, `stringdb`, `umls`, `uniprot`
+
+## Availability and installation
+
+Source at <https://github.com/jeremyjyang/BioClients>.
+Latest numbered release available via `pypi.org`:
+<https://pypi.org/project/BioClients/>.
+However, currently development snapshot recommended.
+
+```
+$ pip3 install BioClients
+```
 
 ## Usage
 
