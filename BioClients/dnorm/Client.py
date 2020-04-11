@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-#############################################################################
-### dnorm_query.py - NCBI CBB REST client (Computational Biology Branch)
+"""
+NCBI CBB REST client (Computational Biology Branch)
+/CBBresearch/Lu/Demo/RESTful/tmTool.cgi/Disease/19894120/JSON
+"""
 ### 
-### /CBBresearch/Lu/Demo/RESTful/tmTool.cgi/Disease/19894120/JSON'
-#############################################################################
 import sys,os,re,json,argparse,time,logging
 #
 from .. import rest_utils

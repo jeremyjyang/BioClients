@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-#############################################################################
-'''
+"""
 Functions for BRENDA API (SOAP) access.
 
 "EC" refers to Enzyme Commission.  EC Numbers are assigned based on functionality,
@@ -22,9 +21,8 @@ Ref:	BRENDA in 2015: exciting developments in its 25th year of existence.
 	http://www.ncbi.nlm.nih.gov/pubmed/25378310.
 
 Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
-'''
-
-#############################################################################
+"""
+###
 import sys,os,os.path,time,argparse,logging,hashlib
 import string,re,json,yaml
 

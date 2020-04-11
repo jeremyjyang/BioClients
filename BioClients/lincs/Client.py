@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-#############################################################################
-### LINCS REST API client
-### New (2019) iLINCS: 
-### http://www.ilincs.org/ilincs/APIinfo
-### http://www.ilincs.org/ilincs/APIdocumentation
-#############################################################################
-### (http://lincsportal.ccs.miami.edu/dcic/api/ DEPRECATED?)
-#############################################################################
+"""
+LINCS REST API client
+New (2019) iLINCS: 
+http://www.ilincs.org/ilincs/APIinfo
+http://www.ilincs.org/ilincs/APIdocumentation
+(http://lincsportal.ccs.miami.edu/dcic/api/ DEPRECATED?)
+"""
+###
 import sys,os,argparse,re,time,json,logging
 #
 from ..util import rest_utils

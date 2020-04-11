@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
-##############################################################################
-### utility for BioGRID REST API.
-### 
-### See: http://wiki.thebiogrid.org/doku.php/biogridrest
-### 
-### URL form
-### Formats:
-### 	tab1, tab2, extendedTab2, count, json, jsonExtended
-##############################################################################
-### EXPERIMENTAL_SYSTEM
-###	"Affinity Capture-Luminescence"
-###	"Affinity Capture-MS"
-###	"Affinity Capture-Western"
-###	"Biochemical Activity"
-###	"Co-fractionation"
-###	"Co-localization"
-###	"FRET"
-###	"PCA"
-###	"Phenotypic Enhancement"
-###	"Phenotypic Suppression"
-###	"Protein-peptide"
-###	"Reconstituted Complex"
-###	"Synthetic Growth Defect"
-###	"Two-hybrid"
-##############################################################################
+"""
+Utility for BioGRID REST API.
+
+See: http://wiki.thebiogrid.org/doku.php/biogridrest
+
+Formats: tab1, tab2, extendedTab2, count, json, jsonExtended
+
+EXPERIMENTAL_SYSTEM
+	"Affinity Capture-Luminescence"
+	"Affinity Capture-MS"
+	"Affinity Capture-Western"
+	"Biochemical Activity"
+	"Co-fractionation"
+	"Co-localization"
+	"FRET"
+	"PCA"
+	"Phenotypic Enhancement"
+	"Phenotypic Suppression"
+	"Protein-peptide"
+	"Reconstituted Complex"
+	"Synthetic Growth Defect"
+	"Two-hybrid"
+"""
+###
 import sys,os,re,json,argparse,time,logging
 #
 from ..util import rest_utils

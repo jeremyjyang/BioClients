@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-#############################################################################
-# OpenTargets REST API client, using the Python client package.
-#
-# https://www.targetvalidation.org/documentation/api/
-# http://opentargets.readthedocs.io/
-# https://docs.targetvalidation.org/programmatic-access/python-client
-# https://docs.targetvalidation.org/programmatic-access/rest-api
-# https://docs.targetvalidation.org/data-sources/genetic-associations
-# https://platform-api.opentargets.io/v3/platform
-# https://platform-api.opentargets.io/v3/platform/docs/swagger-ui
-#############################################################################
+"""
+OpenTargets REST API client, using the Python client package.
+
+https://www.targetvalidation.org/documentation/api/
+http://opentargets.readthedocs.io/
+https://docs.targetvalidation.org/programmatic-access/python-client
+https://docs.targetvalidation.org/programmatic-access/rest-api
+https://docs.targetvalidation.org/data-sources/genetic-associations
+https://platform-api.opentargets.io/v3/platform
+https://platform-api.opentargets.io/v3/platform/docs/swagger-ui
+"""
 import sys,os,re,time,argparse,json,csv,logging
 
 import opentargets

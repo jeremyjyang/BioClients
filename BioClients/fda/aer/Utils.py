@@ -1,36 +1,34 @@
 #!/usr/bin/env python3
-#############################################################################
-### fda_aer_utils.py - OpenFDA Adverse Events Reports REST API utility functions.
-###
-### Reports include multiple reactions with multiple drugs, i.e. many-to-many
-### drug-reaction associations.  It is inherently unknown which drug or drug
-### combination is explanatory.
-###
-###
-### My API key: ==SEE $HOME/.fda.yaml==
-### My email: ==SEE $HOME/.fda.yaml==
-### 
-### Query params:
-###   search	(e.g. search=patient.drug.drugindication:"multiple+myeloma")
-###   count	(e.g. count=patient.drug.drugindication)
-###   limit	(e.g. limit=25)
-###   skip	(e.g. skip=100)
-### 
-### https://api.fda.gov/drug/event.json?search=patient.drug.openfda.pharm_class_epc:"nonsteroidal+anti-inflammatory+drug"&count=patient.reaction.reactionmeddrapt.exact
-### 
-### 
-### patient.reaction.reactionmeddrapt  - MedDRA term(s) for the reaction(s).
-### 
-### patient.reaction.reactionmeddraversionpt - The MedDRA version that patient.reaction.reactionmeddrapt uses.
-### 
-### patient.reaction.reactionoutcome - Outcome of the reaction/event at the time of last observation
-###	1 = recovered/resolved
-###	2 = recovering/resolving
-###	3 = not recovered/not resolved
-###	4 = recovered/resolved with sequelae
-###	5 = fatal
-###	6 = unknown
-#############################################################################
+"""
+OpenFDA Adverse Events Reports REST API utility functions.
+
+ Reports include multiple reactions with multiple drugs, i.e. many-to-many
+ drug-reaction associations.  It is inherently unknown which drug or drug
+ combination is explanatory.
+
+ My API key: ==SEE $HOME/.fda.yaml==
+ My email: ==SEE $HOME/.fda.yaml==
+ 
+ Query params:
+   search	(e.g. search=patient.drug.drugindication:"multiple+myeloma")
+   count	(e.g. count=patient.drug.drugindication)
+   limit	(e.g. limit=25)
+   skip	(e.g. skip=100)
+ 
+ https://api.fda.gov/drug/event.json?search=patient.drug.openfda.pharm_class_epc:"nonsteroidal+anti-inflammatory+drug"&count=patient.reaction.reactionmeddrapt.exact
+ 
+ patient.reaction.reactionmeddrapt  - MedDRA term(s) for the reaction(s).
+ 
+ patient.reaction.reactionmeddraversionpt - The MedDRA version that patient.reaction.reactionmeddrapt uses.
+ 
+ patient.reaction.reactionoutcome - Outcome of the reaction/event at the time of last observation
+	1 = recovered/resolved
+	2 = recovering/resolving
+	3 = not recovered/not resolved
+	4 = recovered/resolved with sequelae
+	5 = fatal
+	6 = unknown
+"""
 import sys,os,re,time,json,logging
 #
 from ...util import rest_utils

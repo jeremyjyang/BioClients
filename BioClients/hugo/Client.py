@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-#############################################################################
-### hugo_query.py
-### See: http://www.genenames.org/
-#############################################################################
+"""
+See: http://www.genenames.org/
+"""
+###
 import sys,os,re,argparse,time,json,logging
 #
 from ..util import rest_utils

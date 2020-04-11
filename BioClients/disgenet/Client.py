@@ -1,65 +1,66 @@
 #!/usr/bin/env python3
-#############################################################################
-### https://www.disgenet.org/api/
-### https://www.disgenet.org/dbinfo
-### DisGeNET Disease Types : disease, phenotype, group
-### DisGeNET Metrics:
-###   GDA Score
-###   VDA Score
-###   Disease Specificity Index (DSI)
-###   Disease Pleiotropy Index (DPI)
-###   Evidence Level (EL)
-###   Evidence Index (EI)
-### GNOMAD pLI (Loss-of-function Intolerant)
-#############################################################################
-### DisGeNET Association Types:
-###   Therapeutic
-###   Biomarker
-###   Genomic Alterations
-###   GeneticVariation
-###   Causal Mutation
-###   Germline Causal Mutation
-###   Somatic Causal Mutation
-###   Chromosomal Rearrangement
-###   Fusion Gene
-###   Susceptibility Mutation
-###   Modifying Mutation
-###   Germline Modifying Mutation
-###   Somatic Modifying Mutation
-###   AlteredExpression
-###   Post-translational Modification
-#############################################################################
-### MeSH Disease classes:
-### C01 - Bacterial Infections and Mycoses
-### C02 - Virus Diseases
-### C03 - Parasitic Diseases
-### C04 - Neoplasms
-### C05 - Musculoskeletal Diseases
-### C06 - Digestive System Diseases
-### C07 - Stomatognathic Diseases
-### C08 - Respiratory Tract Diseases
-### C09 - Otorhinolaryngologic Diseases
-### C10 - Nervous System Diseases
-### C11 - Eye Diseases
-### C12 - Male Urogenital Diseases
-### C13 - Female Urogenital Diseases and Pregnancy Complications
-### C14 - Cardiovascular Diseases
-### C15 - Hemic and Lymphatic Diseases
-### C16 - Congenital, Hereditary, and Neonatal Diseases and Abnormalities
-### C17 - Skin and Connective Tissue Diseases
-### C18 - Nutritional and Metabolic Diseases
-### C19 - Endocrine System Diseases
-### C20 - Immune System Diseases
-### C21 - Disorders of Environmental Origin
-### C22 - Animal Diseases
-### C23 - Pathological Conditions, Signs and Symptoms
-### C24 - Occupational Diseases
-### C25 - Substance-Related Disorders
-### C26 - Wounds and Injuries
-### F01 - Behavior and Behavior Mechanisms
-### F02 - Psychological Phenomena
-### F03 - Mental Disorders
-#############################################################################
+"""
+ https://www.disgenet.org/api/
+ https://www.disgenet.org/dbinfo
+ DisGeNET Disease Types : disease, phenotype, group
+ DisGeNET Metrics:
+   GDA Score
+   VDA Score
+   Disease Specificity Index (DSI)
+   Disease Pleiotropy Index (DPI)
+   Evidence Level (EL)
+   Evidence Index (EI)
+ GNOMAD pLI (Loss-of-function Intolerant)
+
+ DisGeNET Association Types:
+   Therapeutic
+   Biomarker
+   Genomic Alterations
+   GeneticVariation
+   Causal Mutation
+   Germline Causal Mutation
+   Somatic Causal Mutation
+   Chromosomal Rearrangement
+   Fusion Gene
+   Susceptibility Mutation
+   Modifying Mutation
+   Germline Modifying Mutation
+   Somatic Modifying Mutation
+   AlteredExpression
+   Post-translational Modification
+
+ MeSH Disease classes:
+ C01 - Bacterial Infections and Mycoses
+ C02 - Virus Diseases
+ C03 - Parasitic Diseases
+ C04 - Neoplasms
+ C05 - Musculoskeletal Diseases
+ C06 - Digestive System Diseases
+ C07 - Stomatognathic Diseases
+ C08 - Respiratory Tract Diseases
+ C09 - Otorhinolaryngologic Diseases
+ C10 - Nervous System Diseases
+ C11 - Eye Diseases
+ C12 - Male Urogenital Diseases
+ C13 - Female Urogenital Diseases and Pregnancy Complications
+ C14 - Cardiovascular Diseases
+ C15 - Hemic and Lymphatic Diseases
+ C16 - Congenital, Hereditary, and Neonatal Diseases and Abnormalities
+ C17 - Skin and Connective Tissue Diseases
+ C18 - Nutritional and Metabolic Diseases
+ C19 - Endocrine System Diseases
+ C20 - Immune System Diseases
+ C21 - Disorders of Environmental Origin
+ C22 - Animal Diseases
+ C23 - Pathological Conditions, Signs and Symptoms
+ C24 - Occupational Diseases
+ C25 - Substance-Related Disorders
+ C26 - Wounds and Injuries
+ F01 - Behavior and Behavior Mechanisms
+ F02 - Psychological Phenomena
+ F03 - Mental Disorders
+"""
+###
 import sys,os,re,argparse,time,json,logging
 #
 from ..util import rest_utils

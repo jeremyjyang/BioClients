@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-#############################################################################
-### fda_aer_query.py - OpenFDA Adverse Event Reports REST API client.
-###
-### My API key: iZwIm6FZBh2jmzWW3gOuV9cIZzmpYo33Icfxl4SA
-### My email: jeremyjyang@gmail.com
-###
-### No API Key: 40 requests/min, 1000 requests/day (per IP-address)
-### With API Key: 120 requests/min, 60000 requests/day (per Key)
+"""
+OpenFDA Adverse Event Reports REST API client.
+"""
 ### 
-### https://api.fda.gov/drug/event.json?search=patient.drug.openfda.pharm_class_epc:"nonsteroidal+anti-inflammatory+drug"&count=patient.reaction.reactionmeddrapt.exact
-#############################################################################
-import sys,os,re,json,argparse,time,logging
+import sys,os,re,json,argparse,time,yaml,logging
 
 from ... import fda
 #

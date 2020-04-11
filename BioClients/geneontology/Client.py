@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-'''
-	GeneOntology client.
-'''
+"""
+GeneOntology client.
+"""
+###
 import os,sys,argparse,re,json,time,logging
 import urllib.parse
 

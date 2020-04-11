@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
-'''
-	MeSH XML utility functions.
-'''
-#############################################################################
-### MeSH XML
-### Download: https://www.nlm.nih.gov/mesh/download_mesh.html
-### Doc: https://www.nlm.nih.gov/mesh/xml_data_elements.html
-###  
-### <DescriptorRecord DescriptorClass="1">
-### 1 = Topical Descriptor.
-### 2 = Publication Types, for example, 'Review'.
-### 3 = Check Tag, e.g., 'Male' (no tree number)
-### 4 = Geographic Descriptor (Z category of tree number).
-###  
-### Category "C" : Diseases
-### Category "F" : Psychiatry and Psychology
-### Category "F03" : Mental Disorders
-### Thus, include "C*" and "F03*" only.
-### Terms can have multiple TreeNumbers; diseases can be in non-disease cateories,
-### in addition to a disease category.
-#############################################################################
+"""
+MeSH XML utility functions.
+
+ MeSH XML
+ Download: https://www.nlm.nih.gov/mesh/download_mesh.html
+ Doc: https://www.nlm.nih.gov/mesh/xml_data_elements.html
+  
+ <DescriptorRecord DescriptorClass="1">
+ 1 = Topical Descriptor.
+ 2 = Publication Types, for example, 'Review'.
+ 3 = Check Tag, e.g., 'Male' (no tree number)
+ 4 = Geographic Descriptor (Z category of tree number).
+  
+ Category "C" : Diseases
+ Category "F" : Psychiatry and Psychology
+ Category "F03" : Mental Disorders
+ Thus, include "C*" and "F03*" only.
+ Terms can have multiple TreeNumbers; diseases can be in non-disease cateories, in addition to a disease category.
+"""
+###
 import sys,os,re,argparse,logging,gzip
 
 import xml.etree.cElementTree as ElementTree

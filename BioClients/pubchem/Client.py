@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-	Utility app for the PubChem PUG REST API.
+Utility app for the PubChem PUG REST API.
 """
 ###
 import sys,os,re,argparse,time,logging

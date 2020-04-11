@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-##############################################################################
-### Client.py - access to Uniprot REST API.
-### https://www.uniprot.org/help/api
-### UniprotKB = Uniprot Knowledge Base
-##############################################################################
-### python3 -m BioClients.uniprot.Client --uids Q14790 getData
-##############################################################################
+"""
+Access to Uniprot REST API.
+https://www.uniprot.org/help/api
+UniprotKB = Uniprot Knowledge Base
+
+python3 -m BioClients.uniprot.Client --uids Q14790 getData
+"""
 import sys,os,re,argparse,time,logging
 #
 from .. import uniprot

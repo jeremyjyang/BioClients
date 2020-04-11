@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-##############################################################################
-### See http://www.guidetopharmacology.org/webServices.jsp
-##############################################################################
+"""
+See http://www.guidetopharmacology.org/webServices.jsp
+"""
 import sys,os,re,argparse,time,logging,urllib.parse,json
 #
 from .. import iuphar
