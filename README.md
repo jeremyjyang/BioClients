@@ -29,10 +29,10 @@ $ pip3 install BioClients
 | [BioGrid](doc/biogrid.md) | [BRENDA](doc/brenda.md) | [ChEMBL](doc/chembl.md) |[Disease Ontology](doc/diseaseontology.md) | [DisGeNet](doc/disgenet.md)
 |:--:|:--:|:--:|:--:|:--:|
 | [DNorm](doc/dnorm.md) | [EnsEMBL](doc/ensembl.md) | [FDA](doc/fda.md) | [Gene Ontology](doc/geneontology.md) | [GWAS Catalog](doc/gwascatalog.md)
-| [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [LINCS](doc/lincs.md) | [MeSH](doc/mesh.md)
-| [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md) | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md) | [PubMed](doc/pubmed.md)
-| [PubTator](doc/pubtator.md) | [Reactome](doc/reactome.md) | [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [UMLS](doc/umls.md)
-| [UniProt](doc/uniprot.md)
+| [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [IDG](doc/idg.md) | [LINCS](doc/lincs.md)
+| [MeSH](doc/mesh.md) | [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md) | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md)
+| [PubMed](doc/pubmed.md) | [PubTator](doc/pubtator.md) | [Reactome](doc/reactome.md) | [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md)
+| [UMLS](doc/umls.md) | [UniProt](doc/uniprot.md)
 
 ## Usage
 
