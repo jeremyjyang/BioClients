@@ -12,7 +12,7 @@ API_BASE_PATH=''
 #
 ##############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description="Ensembl REST API client", epilog="Example ID: ENSG00000157764")
+  parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl REST API client", epilog="Example ID: ENSG00000157764")
   ops = ["list_species", "get_xrefs", "get_info", "show_version"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003)")
@@ -60,5 +60,3 @@ if __name__=='__main__':
     parser.error('Invalid operation: {0}'.format(args.op))
 
   logging.info(('%s: elapsed time: %s'%(os.path.basename(sys.argv[0]), time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
-  
-

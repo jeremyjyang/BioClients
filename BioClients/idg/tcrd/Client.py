@@ -157,21 +157,23 @@ def ListTargets(dbcon,tdl,pfam,fout):
   cur=dbcon.cursor(dictionary=True)
   sql='''
 SELECT
-	target.id AS "target_id",
-	target.name,
-	target.fam,
-	target.tdl,
-	target.idg2,
-	protein.id AS "protein_id",
-	protein.sym,
-	protein.family,
-	protein.geneid,
-	protein.uniprot,
-	protein.up_version,
-	protein.stringid,
+	target.id AS "tcrdTargetId",
+	target.name AS "tcrdTargetName",
+	target.fam AS "tcrdTargetFamily",
+	target.tdl AS "TDL",
+	target.ttype AS "tcrdTargetType",
+	target.idg AS "idgList",
+	protein.id AS "tcrdProteinId",
+	protein.sym AS "tcrdGeneSymbol",
+	protein.family AS "tcrdProteinFamily",
+	protein.geneid AS "ncbiGeneId",
+	protein.uniprot AS "uniprotId",
+	protein.up_version AS "uniprotVersion",
+	protein.stringid AS "ensemblProteinId",
 	protein.chr,
-	protein.description,
-	protein.dtoid
+	protein.description AS "tcrdProteinDescription",
+	protein.dtoid AS "dtoId",
+	protein.dtoclass AS "dtoClass"
 FROM
 	target,
 	protein,
@@ -193,9 +195,9 @@ FROM
     if i_row==1:
       colnames=row.keys()
       fout.write('\t'.join(colnames)+'\n')
-    if 'target_id' in row: tids.add(row['target_id'])
-    if 'protein_id' in row: pids.add(row['protein_id'])
-    if 'uniprot' in row: uniprots.add(row['uniprot'])
+    if 'tcrdTargetId' in row: tids.add(row['tcrdTargetId'])
+    if 'tcrdProteinId' in row: pids.add(row['tcrdProteinId'])
+    if 'uniprotId' in row: uniprots.add(row['uniprotId'])
 #    for j,tag in enumerate(colnames):
 #      val = row[tag] if tag in row else ''
 #      fout.write('%s"%s"'%((',' if j>0 else ''),val))
