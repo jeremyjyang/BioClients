@@ -12,16 +12,15 @@ from .. import idg
 if __name__=='__main__':
   API_HOST="pharos.nih.gov"
   API_BASE_PATH="/idg/api/v1"
+  IDTYPES = ['IDG_TARGET_ID', 'UNIPROT', 'ENSP', 'GSYMB']
   parser = argparse.ArgumentParser(description='Pharos REST API client')
-  idtypes = ['IDG_TARGET_ID', 'UNIPROT', 'ENSP', 'GSYMB']
-  ops = ['search_diseases',
-	'list_targets', 'list_diseases',
-	'get_targets', 'get_diseases']
+  ops = [ 'list_targets', 'list_ligands', 'list_diseases',
+	'get_targets', 'get_targetProperties', 'search_targets' ]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input file, target IDs")
   parser.add_argument("--ids", dest="ids", help="IDs, target, comma-separated")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--idtype", default='IDG_TARGET_ID', help="target ID type")
+  parser.add_argument("--idtype", choices=IDTYPES, default='IDG_TARGET_ID', help="target ID type")
   parser.add_argument("--nmax", type=int, help="max to return")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
@@ -54,16 +53,19 @@ if __name__=='__main__':
   if args.op=='get_targets':
     idg.Utils.GetTargets(BASE_URL, ids, args.idtype, fout)
 
+  elif args.op=='get_targetProperties':
+    idg.Utils.GetTargetProperties(BASE_URL, ids, args.idtype, fout)
+
   elif args.op=='list_targets':
     idg.Utils.ListItems('targets', BASE_URL, fout)
 
   elif args.op=='list_diseases':
-    ListItems('diseases', BASE_URL, fout)
+    idg.Utils.ListItems('diseases', BASE_URL, fout)
 
-  elif args.op=='get_diseases':
-    logging.error('Not implemented yet.')
+  elif args.op=='list_ligands':
+    idg.Utils.ListItems('ligands', BASE_URL, fout)
 
-  elif args.op=='search_diseases':
+  elif args.op=='search_targets':
     logging.error('Not implemented yet.')
 
   else:

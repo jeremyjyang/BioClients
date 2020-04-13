@@ -8,15 +8,14 @@ import sys,os,json,re,time,logging
 #
 from ..util import rest_utils
 #
-#
 #############################################################################
 def GetTargets(base_url, ids, idtype, fout):
   tags=[]; n_out=0;
   for id_this in ids:
-    url=base_url+'/targets(%s)'%id_this
-    rval=rest_utils.GetURL(url, parse_json=True)
+    url = base_url+'/targets(%s)'%id_this
+    rval = rest_utils.GetURL(url, parse_json=True)
     if not rval:
-      logging.debug('not found: %s'%(id_this))
+      logging.debug('Not found: %s'%(id_this))
       continue
     tgt = rval
     if not tags:
@@ -24,24 +23,42 @@ def GetTargets(base_url, ids, idtype, fout):
         if not tag.startswith('_') and (type(tgt[tag]) not in (list, dict)):
           tags.append(tag)
       fout.write('\t'.join(tags)+'\n')
-    vals=[];
-    for tag in tags:
-      val=(tgt[tag] if tag in tgt else '')
-      vals.append('' if val is None else str(val))
+    vals = [(str(tgt[tag]) if tag in tgt else '') for tag in tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
+  logging.info('n_in: %d; n_out: %d'%(len(ids), n_out))
+
+#############################################################################
+def GetTargetProperties(base_url, ids, idtype, fout):
+  tags=[]; n_out=0;
+  for id_this in ids:
+    url = (base_url+'/targets(%s)/properties'%id_this)
+    rval = rest_utils.GetURL(url, parse_json=True)
+    if not rval:
+      logging.debug('Not found: %s'%(id_this))
+      continue
+    props = rval
+    for prop in props:
+      if not tags:
+        for tag in prop.keys():
+          if not tag.startswith('_') and (type(prop[tag]) not in (list, dict)):
+            tags.append(tag)
+        fout.write('\t'.join([idtype]+tags)+'\n')
+      vals = [id_this]+[(str(prop[tag]) if tag in prop else '') for tag in tags]
+      fout.write('\t'.join(vals)+'\n')
+      n_out+=1
   logging.info('n_in: %d; n_out: %d'%(len(ids), n_out))
 
 #############################################################################
 def ListItems(mode, base_url, fout):
   n_out=0; tags=[]; top=100; skip=0;
   while True:
-    url=base_url+'/%s?top=%d&skip=%d'%(mode, top, skip)
-    rval=rest_utils.GetURL(url, parse_json=True)
+    url = base_url+'/%s?top=%d&skip=%d'%(mode, top, skip)
+    rval = rest_utils.GetURL(url, parse_json=True)
     if not rval:
       break
     elif type(rval) is not dict:
-      logging.info('ERROR: rval="%s"'%(str(rval)))
+      logging.error('rval="%s"'%(str(rval)))
       break
     logging.debug(json.dumps(rval, indent=2))
     count = rval['count'] if 'count' in rval else None
@@ -56,10 +73,7 @@ def ListItems(mode, base_url, fout):
           if not tag.startswith('_') and (type(item[tag]) not in (list, dict)):
             tags.append(tag)
         fout.write('\t'.join(tags)+'\n')
-      vals=[];
-      for tag in tags:
-        val=(item[tag] if tag in item else '')
-        vals.append('' if val is None else str(val))
+      vals = [(str(item[tag]) if tag in item else '') for tag in tags]
       fout.write('\t'.join(vals)+'\n')
       n_out+=1
     skip+=top
