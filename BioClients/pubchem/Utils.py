@@ -90,12 +90,13 @@ def GetCID2SID(base_url, cids, fout):
 ### specifies "safe" chars to not quote, '/' being the default, so specify
 ### '' for no safe chars.
 #############################################################################
-def GetSmiles2CID(base_url, smi, fout):
-  rval = rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi, ''), parse_json=True)
-  cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
-  fout.write("CID\n")
-  for cid in cids:
-    fout.write("%s\n"%cid)
+def GetSmiles2CID(base_url, smis, fout):
+  for smi in smis:
+    rval = rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi, ''), parse_json=True)
+    cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
+    fout.write("CID\n")
+    for cid in cids:
+      fout.write("%s\n"%cid)
 
 #############################################################################
 def GetCID2AssaySummary(base_url, ids, fout):

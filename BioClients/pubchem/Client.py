@@ -15,7 +15,7 @@ if __name__=='__main__':
   ops = [
         "list_sources_substance", "list_sources_assay",
         "get_name2sid", "get_name2cid", "get_name2synonyms",
-        "smi2cid",
+        "get_smi2cid",
         "get_cid2smi", "get_cid2smiles", "get_cid2sdf",
         "get_cid2properties", "get_cid2inchi",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
@@ -23,13 +23,11 @@ if __name__=='__main__':
         "get_assayname", "get_assaydescriptions", "get_assayresults" ]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
   parser.add_argument("op",choices=ops,help='operation')
-  parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID)")
-  parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
-  parser.add_argument("--ids", help="input IDs (CID|SID) (comma-separated)")
+  parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID|SMILES|name)")
+  parser.add_argument("--ids", help="input IDs (CID|SID|SMILES|name) (comma-separated)")
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
   parser.add_argument("--iaid", dest="ifile_aid", help="input AIDs file")
-  parser.add_argument("--names", help="name queries (comma-separated)")
-  parser.add_argument("--smiles", help="SMILES query")
+  parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
   parser.add_argument("--isomeric", action="store_true", help="return Isomeric SMILES")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
@@ -45,43 +43,29 @@ if __name__=='__main__':
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
+  ids=[]
   if args.ifile:
     fin = open(args.ifile)
-    ids=[]
     while True:
-      line=fin.readline()
+      line = fin.readline()
       if not line: break
-      try:
-        ids.append(int(line.rstrip()))
-      except:
-        logging.error('Bad input ID: %s'%line)
-        continue
+      ids.append(line.rstrip())
     logging.info('Input IDs: %d'%(len(ids)))
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
-  else:
-    ids=[]
 
+  aids=[]
   if args.ifile_aid:
     fin = open(args.ifile_aid)
-    aids=[]
     while True:
-      line=fin.readline()
+      line = fin.readline()
       if not line: break
-      try:
-        aids.append(int(line.rstrip()))
-      except:
-        logging.error('Bad input AID: %s'%line)
-        continue
+      aids.append(line.rstrip())
     logging.info('Input AIDs: %d'%(len(aids)))
     fin.close()
   elif args.aids:
     aids = re.split(r'[,\s]+', args.aids)
-  else:
-    aids=[]
-
-  names = re.split(r'[,\s]+', args.names) if args.names else []
 
   t0=time.time()
 
@@ -121,18 +105,17 @@ if __name__=='__main__':
   elif args.op == 'get_sid2sdf':
     pubchem.Utils.GetSID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
 
-  elif args.op == 'smi2cid':
-    if not args.smiles: parser.error('--smiles required.')
-    pubchem.Utils.GetSmiles2CID(BASE_URL, args.smiles, fout)
+  elif args.op == 'get_smi2cid':
+    pubchem.Utils.GetSmiles2CID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2sid':
-    pubchem.Utils.GetName2SID(BASE_URL, names, fout)
+    pubchem.Utils.GetName2SID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2cid':
-    pubchem.Utils.GetName2CID(BASE_URL, names, fout)
+    pubchem.Utils.GetName2CID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2synonyms':
-    pubchem.Utils.GetName2Synonyms(BASE_URL, names, fout)
+    pubchem.Utils.GetName2Synonyms(BASE_URL, ids, fout)
 
   elif args.op == 'get_assayname':
     pubchem.Utils.GetAssayName(BASE_URL, aids, fout)
