@@ -10,13 +10,18 @@ and transforms into usable formats, often CSV/TSV.
 
 ## Availability and installation
 
-Source at <https://github.com/jeremyjyang/BioClients>.
-Latest numbered release available via `pypi.org`:
+Source at <https://github.com/jeremyjyang/BioClients>;
+releases available via `pypi.org`:
 <https://pypi.org/project/BioClients/>.
-However, currently development snapshot recommended.
 
 ```
 $ pip3 install BioClients
+```
+
+However, current development snapshot recommended.
+
+```
+$ python3 setup.py install
 ```
 
 ## Dependencies

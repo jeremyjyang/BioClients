@@ -50,10 +50,10 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('Input IDs: %d'%(len(ids)))
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
+  logging.info('Input IDs: %d'%(len(ids)))
 
   aids=[]
   if args.ifile_aid:
@@ -62,10 +62,10 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       aids.append(line.rstrip())
-    logging.info('Input AIDs: %d'%(len(aids)))
     fin.close()
   elif args.aids:
     aids = re.split(r'[,\s]+', args.aids)
+  logging.info('Input AIDs: %d'%(len(aids)))
 
   t0=time.time()
 

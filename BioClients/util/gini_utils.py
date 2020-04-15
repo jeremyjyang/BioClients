@@ -1,20 +1,16 @@
 #!/usr/bin/env python
+"""BROKEN! TO DO: Port to Python3. Preferrably avoid R and switch to Numpy, Scipy."""
 #############################################################################
-### gini_utils.py
 ### Use R via RPy2 to calculate Gini Index using ineq package.
-### 
 #############################################################################
 # rpy2 prerequisites:
 #    - Python 2.4+
 #    - R v2.7+, built with ./configure --enable-R-shlib
 #    - Set R_HOME for Apache
 #############################################################################
-### Jeremy Yang
-###  29 Apr 2009
-#############################################################################
 import os,sys,getopt,math,csv
 
-import rpy2.robjects
+#import rpy2.robjects
 
 #############################################################################
 def GiniRCode(vals):

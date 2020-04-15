@@ -446,7 +446,7 @@ def GetCID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
   for cid in cids:
     i_cid+=1
     if skip and i_cid<=skip: continue
-    sids_this = GetCID2SID(base_url, cid, None)
+    sids_this = GetCID2SID(base_url, [cid], None)
     sids_all |= set(sids_this)
     synonyms_this_cid = set()
     for sid in sids_this:

@@ -36,7 +36,7 @@ def ParsePugXml(pugxml):
   status,reqid,url,qkey,wenv,error=None,None,None,None,None,None
   try:
     dom=xml.dom.minidom.parseString(pugxml)
-  except xml.parsers.expat.ExpatError, e:
+  except xml.parsers.expat.ExpatError as e:
     logging.info('XML parse error: %s'%e)
     logging.info('XML: %s'%pugxml)
     sys.exit(1)
@@ -71,7 +71,7 @@ def UrlOpenTry(url=PUGURL,xml=None,ntries=20,poll_wait=10):
       else:
         fin=urllib.urlopen(url)
       break
-    except IOError, e:
+    except IOError as e:
       logging.info('IOError: %s'%e)
       time.sleep(poll_wait)
   if not fin:
