@@ -107,11 +107,10 @@ if __name__=='__main__':
     chembl.Utils.ListMolecules(args.api_host, args.api_base_path, args.dev_phase, args.skip, args.nmax, fout)
 
   elif args.op == "list_drugs":
-    #chembl.Utils.ListMolecules(args.api_host, args.api_base_path, 4, args.skip, args.nmax, fout)
     chembl.Utils.ListDrugs(args.api_host, args.api_base_path, args.skip, args.nmax, fout)
 
   elif args.op == "list_drug_indications":
-    chembl.Utils.ListDrugIndications(args.api_host, args.api_base_path, fout)
+    chembl.Utils.ListDrugIndications(args.api_host, args.api_base_path, args.skip, args.nmax, fout)
 
   elif args.op == "list_docs":
     chembl.Utils.ListDocuments(args.api_host, args.api_base_path, args.skip, args.nmax, fout)

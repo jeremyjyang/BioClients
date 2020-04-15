@@ -221,26 +221,36 @@ def ListCellLines(api_host, api_base_path, fout):
   logging.info('n_cell: %d; n_clo: %d; n_efo: %d; n_out: %d'%(n_cell,n_clo,n_efo,n_out))
 
 #############################################################################
-def ListDrugIndications(api_host, api_base_path, fout):
+def ListDrugIndications(api_host, api_base_path, skip, nmax, fout):
   n_din=0; n_efo=0; n_out=0; tags=None;
-  url_next = (api_base_path+'/drug_indication.json')
-  rval = rest_utils.GetURL('https://'+api_host+url_next, parse_json=True)
-  logging.debug(json.dumps(rval, sort_keys=True, indent=2))
-  dins = rval['drug_indications'] if 'drug_indications' in rval else []
-  for din in dins:
-    n_din+=1
-    if not tags:
-      tags = list(din.keys())
-      for tag in tags[:]:
-        if type(din[tag]) in (dict, list, tuple):
-          tags.remove(tag)
+  url_next = (api_base_path+'/drug_indication.json?limit=%d&offset=%d'%(NCHUNK, skip))
+  while True:
+    rval = rest_utils.GetURL('https://'+api_host+url_next, parse_json=True)
+    if not rval: break
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+    dins = rval['drug_indications'] if 'drug_indications' in rval else []
+    for din in dins:
+      n_din+=1
+      if not tags:
+        tags = list(din.keys())
+        for tag in tags[:]:
+          if type(din[tag]) in (dict, list, tuple):
+            tags.remove(tag)
           logging.info('Ignoring field (%s): "%s"'%(type(din[tag]), tag))
-      fout.write('\t'.join(tags)+'\n')
-    logging.debug(json.dumps(din, sort_keys=True, indent=2))
-    if 'efo_id' in din and din['efo_id']: n_efo+=1
-    vals = [str(din[tag]) if tag in din else '' for tag in tags]
-    fout.write(('\t'.join(vals))+'\n')
-    n_out+=1
+        fout.write('\t'.join(tags)+'\n')
+      logging.debug(json.dumps(din, sort_keys=True, indent=2))
+      if 'efo_id' in din and din['efo_id']: n_efo+=1
+      vals = [str(din[tag]) if tag in din else '' for tag in tags]
+      fout.write(('\t'.join(vals))+'\n')
+      n_out+=1
+      if nmax and n_din>=nmax: break
+    if nmax and n_din>=nmax: break
+    meta = rval['page_meta'] if 'page_meta' in rval else {}
+    url_next = meta['next'] if 'next' in meta else None
+    total_count = meta['total_count'] if 'total_count' in meta else None
+    if n_din%1000==0:
+      logging.info('%d dins / %s total'%(n_din,str(total_count) if total_count else '?'))
+    if not url_next: break
   logging.info('n_din: %d; n_efo: %d; n_out: %d'%(n_din, n_efo, n_out))
 
 #############################################################################
