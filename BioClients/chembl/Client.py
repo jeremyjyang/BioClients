@@ -48,11 +48,31 @@ if __name__=='__main__':
   assay_types = {'B':'Binding', 'F':'Functional', 'A':'ADMET', 'T':'Toxicity', 'P':'Physicochemical', 'U':'Unclassified'}
   epilog='''Assay types: {0}. Example IDs: CHEMBL2 (compound); CHEMBL1642 (compound & drug); CHEMBL240  (target); CHEMBL1824  (target); CHEMBL1217643 (assay); CHEMBL3215220 (assay, PubChem assay 519, NMMLSC FPR); Q12809 (Uniprot)'''.format(str(assay_types))
   parser = argparse.ArgumentParser(description='ChEMBL REST API client', epilog=epilog)
-  ops = ["status", "list_sources", "list_targets", "list_assays", "list_docs",
-"list_mols", "list_drugs", "list_drug_indications", "list_tissues", "list_cells", "list_mechanisms",
-"search_assays", "search_mols_by_name", "get_mol", "get_mol_by_inchikey",
-"get_target", "get_target_by_uniprot", "get_assay", "get_activity_mol", "get_activity_assay",
-"get_activity_target", "get_doc"]
+  ops = ["status",
+	"list_sources",
+	"list_targets",
+	"list_assays",
+	"list_docs",
+	"list_mols",
+	"list_drugs",
+	"list_drug_indications",
+	"list_tissues",
+	"list_cells",
+	"list_mechanisms",
+	"list_organisms",
+	"list_protein_classes",
+	"search_assays",
+	"search_mols_by_name",
+	"get_mol",
+	"get_mol_by_inchikey",
+	"get_target",
+	"get_target_by_uniprot",
+	"get_assay",
+	"get_activity_by_mol",
+	"get_activity_by_assay",
+	"get_activity_by_target",
+	"get_activity_properties",
+	"get_doc"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="input IDs (e.g. mol, assay, target, document)")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
@@ -95,10 +115,16 @@ if __name__=='__main__':
     print("%s, %s, %s"%(api_ver, db_ver, status))
 
   elif args.op == "list_sources":
-    chembl.Utils.ListSources(base_url, fout)
+    chembl.Utils.ListSources(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_mechanisms":
-    chembl.Utils.ListMechanisms(base_url, fout)
+    chembl.Utils.ListMechanisms(args.api_host, args.api_base_path, fout)
+
+  elif args.op == "list_organisms":
+    chembl.Utils.ListOrganisms(args.api_host, args.api_base_path, fout)
+
+  elif args.op == "list_protein_classes":
+    chembl.Utils.ListProteinClasses(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_targets":
     chembl.Utils.ListTargets(args.api_host, args.api_base_path, args.skip, args.nmax, fout)
@@ -133,14 +159,17 @@ if __name__=='__main__':
   elif args.op == "get_mol_by_inchikey":
     chembl.Utils.GetMoleculeByInchikey(base_url, ids, fout)
 
-  elif args.op == "get_activity_mol":
-    chembl.Utils.GetActivity(args.api_host, args.api_base_path, ids, 'molecule', pmin, fout)
+  elif args.op == "get_activity_by_mol":
+    chembl.Utils.GetActivity(args.api_host, args.api_base_path, ids, 'molecule', args.pmin, fout)
 
-  elif args.op == "get_activity_assay":
+  elif args.op == "get_activity_by_assay":
     chembl.Utils.GetActivity(args.api_host, args.api_base_path, ids, 'assay', args.pmin, fout)
 
-  elif args.op == "get_activity_target":
+  elif args.op == "get_activity_by_target":
     chembl.Utils.GetActivity(args.api_host, args.api_base_path, ids, 'target', args.pmin, fout)
+
+  elif args.op == "get_activity_properties":
+    chembl.Utils.GetActivityProperties(base_url, ids, fout)
 
   elif args.op == "get_target":
     chembl.Utils.GetTarget(base_url, ids, fout)
