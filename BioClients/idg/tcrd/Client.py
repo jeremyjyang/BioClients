@@ -153,8 +153,8 @@ WHERE xtype = '%(QTYPE)s'
   logging.info('Xrefs count: %d'%(n_xref))
 
 #############################################################################
-def ListTargets(dbcon,tdl,pfam,fout):
-  cur=dbcon.cursor(dictionary=True)
+def ListTargets(dbcon, tdl, pfam, fout):
+  cur = dbcon.cursor(dictionary=True)
   sql='''
 SELECT
 	target.id AS "tcrdTargetId",
@@ -169,17 +169,22 @@ SELECT
 	protein.geneid AS "ncbiGeneId",
 	protein.uniprot AS "uniprotId",
 	protein.up_version AS "uniprotVersion",
-	protein.stringid AS "ensemblProteinId",
 	protein.chr,
 	protein.description AS "tcrdProteinDescription",
 	protein.dtoid AS "dtoId",
-	protein.dtoclass AS "dtoClass"
+	protein.dtoclass AS "dtoClass",
+	protein.stringid AS "ensemblProteinId",
+	xref.value AS "ensemblGeneId"
 FROM
-	target,
-	protein,
-	t2tc
+	target
+JOIN
+	t2tc ON t2tc.target_id = target.id
+JOIN
+	protein ON protein.id = t2tc.protein_id
+JOIN
+	xref ON xref.protein_id = protein.id
 '''
-  wheres=['protein.id = t2tc.protein_id','target.id = t2tc.target_id']
+  wheres=["xref.xtype = 'Ensembl'", "xref.value REGEXP '^ENSG'"]
   if tdl:
     wheres.append('target.tdl = \'%s\''%tdl)
   if pfam:
@@ -187,29 +192,30 @@ FROM
   if wheres:
     sql+=(' WHERE '+(' AND '.join(wheres)))
   cur.execute(sql)
-  row=cur.fetchone()
+  row = cur.fetchone()
   i_row=0;
-  tids=set(); pids=set(); uniprots=set();
+  tids=set(); pids=set(); uniprots=set(); ensps=set(); ensgs=set(); symbs=set();
   while row:
     i_row+=1
     if i_row==1:
-      colnames=row.keys()
+      colnames = list(row.keys())
       fout.write('\t'.join(colnames)+'\n')
     if 'tcrdTargetId' in row: tids.add(row['tcrdTargetId'])
     if 'tcrdProteinId' in row: pids.add(row['tcrdProteinId'])
     if 'uniprotId' in row: uniprots.add(row['uniprotId'])
-#    for j,tag in enumerate(colnames):
-#      val = row[tag] if tag in row else ''
-#      fout.write('%s"%s"'%((',' if j>0 else ''),val))
-#    fout.write('\n')
+    if 'ensemblProteinId' in row: ensps.add(row['ensemblProteinId'])
+    if 'ensemblGeneId' in row: ensgs.add(row['ensemblGeneId'])
+    if 'tcrdGeneSymbol' in row: symbs.add(row['tcrdGeneSymbol'])
     fout.write('\t'.join([(str(row[tag]) if tag in row else '') for tag in colnames])+'\n')
-    row=cur.fetchone()
+    row = cur.fetchone()
   logging.info('TDL: %s'%(tdl if tdl else 'all'))
   logging.info('rows: %d'%(i_row))
   logging.info('Target count: %d'%(len(tids)))
   logging.info('Protein count: %d'%(len(pids)))
   logging.info('Uniprot count: %d'%(len(uniprots)))
-  return
+  logging.info('ENSP count: %d'%(len(ensps)))
+  logging.info('ENSG count: %d'%(len(ensgs)))
+  logging.info('GeneSymbol count: %d'%(len(symbs)))
 
 #############################################################################
 def GetTargets(dbcon, qs, qtype, fout):
