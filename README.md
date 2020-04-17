@@ -38,7 +38,7 @@ $ python3 setup.py install
 | [GWAS Catalog](doc/gwascatalog.md) | [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [IDG](doc/idg.md)
 | [LINCS](doc/lincs.md) | [MeSH](doc/mesh.md) | [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md) | [Panther](doc/panther.md)
 | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md) | [PubMed](doc/pubmed.md) | [PubTator](doc/pubtator.md) | [Reactome](doc/reactome.md)
-| [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [UMLS](doc/umls.md) | [UniProt](doc/uniprot.md)
+| [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [TIN-X](doc/tinx.md) | [UMLS](doc/umls.md) | [UniProt](doc/uniprot.md)
 
 ## Usage
 
