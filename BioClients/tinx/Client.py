@@ -16,6 +16,8 @@ API_BASE_PATH=""
 ##############################################################################
 if __name__=='__main__':
   epilog="""\
+--disease_ids needed ONLY if BOTH target and disease IDs specified, such
+as for get_disease_target_articles.
 """
   parser = argparse.ArgumentParser(description="TIN-X (Target Importance and Novelty Explorer) REST API client)", epilog=epilog)
   ops = [
@@ -24,15 +26,21 @@ if __name__=='__main__':
 	"list_articles",
 	"list_dtos",
 	"get_disease",
+	"get_disease_by_doid",
 	"get_disease_targets",
 	"get_disease_target_articles",
 	"get_target",
+	"get_target_by_uniprot",
 	"get_target_diseases",
 	"get_dto",
-	"search"]
+	"search_diseases",
+	"search_targets",
+	"search_articles",
+	"search_dtos"
+	]
   parser.add_argument("op", choices=ops, help="operation")
-  parser.add_argument("--i", dest="ifile", help="input IDs")
-  parser.add_argument("--ids", help="IDs (comma-separated)")
+  parser.add_argument("--i", dest="ifile", help="input IDs or search terms")
+  parser.add_argument("--ids", help="IDs or search terms (comma-separated)")
   parser.add_argument("--disease_ids", help="disease IDs (comma-separated), needed ONLY if BOTH target and disease IDs specified")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--query", help="search query")
@@ -70,6 +78,39 @@ if __name__=='__main__':
 
   elif args.op=='list_diseases':
     tinx.Utils.ListDiseases(base_url, args.skip, args.nmax, fout)
+
+  elif args.op=='list_articles':
+    tinx.Utils.ListArticles(base_url, args.skip, args.nmax, fout)
+
+  elif args.op=='get_disease':
+    tinx.Utils.GetDisease(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_disease_by_doid':
+    tinx.Utils.GetDiseaseByDOId(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_disease_targets':
+    tinx.Utils.GetDiseaseTargets(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_disease_target_articles':
+    tinx.Utils.GetDiseaseTargetArticles(base_url, disease_ids, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_target':
+    tinx.Utils.GetTarget(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_target_by_uniprot':
+    tinx.Utils.GetTargetByUniprot(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='get_target_diseases':
+    tinx.Utils.GetTargetDiseases(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='search_diseases':
+    tinx.Utils.SearchDiseases(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='search_targets':
+    tinx.Utils.SearchTargets(base_url, ids, args.skip, args.nmax, fout)
+
+  elif args.op=='search_articles':
+    tinx.Utils.SearchArticles(base_url, ids, args.skip, args.nmax, fout)
 
   else:
     parser.error('Unknown operation: %s'%args.op)

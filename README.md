@@ -12,22 +12,21 @@ and transforms into usable formats, often CSV/TSV.
 
 Source at <https://github.com/jeremyjyang/BioClients>;
 releases available via `pypi.org`:
-<https://pypi.org/project/BioClients/>.
-
-```
-$ pip3 install BioClients
-```
+<https://pypi.org/project/BioClients/>
+(`pip3 install BioClients`).
 
 However, current development snapshot recommended.
 
+___(First download or clone.)___
 ```
+$ cd BioClients
 $ python3 setup.py install
 ```
 
 ## Dependencies
 
 * Python 3.6+
-* Python packages: `pandas`, `requests`, `json`, `xml`, etc.
+* Python packages: `pandas`, `requests`, `urllib`, `json`, `xml`, etc.
 
 ## Modules
 
@@ -45,3 +44,15 @@ $ python3 setup.py install
 ```
 $ python3 -m BioClients.pubchem.Client -h
 ```
+
+## Data structures and formats, XML, JSON, and CSV/TSV
+
+BioClients is designed to be simple and practical, and XML, JSON
+and CSV/TSV are likewise simple in many respects, yet a great deal
+of conceptual and technological progress is reflected. XML and JSON
+can represent arbitrarily complex data objects, comprised of nested lists,
+dictionaries, and trees of primary types. CSV/TSV represents tables of
+rows and columns, the relational db view, flattened as needed for many
+applications (e.g. ML) but related by common keys. Transforming REST JSON
+results to CSV/TSV, as these clients generally do, projects data structures
+to tables useful for many applications.
