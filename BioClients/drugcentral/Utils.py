@@ -95,6 +95,102 @@ def ListActiveIngredients(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
+def ListIndications(dbcon, fout):
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  sql="""\
+SELECT DISTINCT
+	omop.concept_id,
+	omop.concept_name,
+	omop.umls_cui,
+	omop.snomed_full_name,
+	omop.cui_semantic_type,
+	omop.snomed_conceptid
+FROM
+	omop_relationship omop
+JOIN
+	structures s ON omop.struct_id = s.id
+WHERE
+	omop.relationship_name = 'indication'
+"""
+  cur.execute(sql)
+  for row in cur:
+    if not tags:
+      tags = list(row.keys())
+      fout.write("\t".join(tags)+"\n")
+    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+    fout.write("\t".join(vals)+"\n")
+    n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
+def SearchIndications(dbcon, terms, fout):
+  """Search names via Pg regular expression (SIMILAR TO)."""
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  for term in terms:
+    sql="""\
+SELECT DISTINCT
+	omop.concept_id,
+	omop.concept_name,
+	omop.umls_cui,
+	omop.snomed_full_name,
+	omop.cui_semantic_type,
+	omop.snomed_conceptid
+FROM
+	omop_relationship omop
+JOIN
+	structures s ON omop.struct_id = s.id
+WHERE
+	omop.relationship_name = 'indication'
+	AND (omop.concept_name SIMILAR TO '{0}' OR omop.snomed_full_name SIMILAR TO '{0}')
+""".format(term)
+    cur.execute(sql)
+    for row in cur:
+      if not tags:
+        tags = list(row.keys())
+        fout.write("\t".join(tags)+"\n")
+      vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+      fout.write("\t".join(vals)+"\n")
+      n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
+def GetIndicationStructures(dbcon, ids, fout):
+  """Input OMOP conceptIds."""
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  sql="""\
+SELECT DISTINCT
+	omop.concept_id,
+	omop.concept_name,
+	s.id struct_id,
+	s.name struct_name,
+	s.smiles,
+	s.inchikey,
+	s.inchi,
+	s.cd_formula,
+	s.cd_molweight
+FROM
+	omop_relationship omop
+JOIN
+	structures s ON omop.struct_id = s.id
+WHERE
+	omop.relationship_name = 'indication'
+	AND omop.concept_id = %s
+"""
+  for id_this in ids:
+    cur.execute(sql, (id_this,))
+    for row in cur:
+      if not tags:
+        tags = list(row.keys())
+        fout.write("\t".join(tags)+"\n")
+      vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+      fout.write("\t".join(vals)+"\n")
+      n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
 def GetStructure(dbcon, ids, fout):
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -149,7 +245,7 @@ FROM
 JOIN 
 	active_ingredient ai ON ai.struct_id = s.id
 JOIN 
-	product p  ON p.ndc_product_code = ai.ndc_product_code
+	product p ON p.ndc_product_code = ai.ndc_product_code
 WHERE 
 	s.id = %s
 """

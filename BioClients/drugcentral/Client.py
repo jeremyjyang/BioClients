@@ -17,12 +17,16 @@ if __name__=='__main__':
 	"version",
 	"get_structure",
 	"get_structure_by_synonym",
+	"get_structure_by_indication",
 	"get_structure_products",
 	"get_product",
 	"get_product_structures",
+	"get_indication_structures",
 	"list_products",
 	"list_structures",
 	"list_active_ingredients",
+	"list_indications",
+	"search_indications",
 	"search_products"
 	]
   parser.add_argument("op", choices=ops, help="operation")
@@ -76,6 +80,9 @@ if __name__=='__main__':
   elif args.op=='list_active_ingredients':
     drugcentral.Utils.ListActiveIngredients(dbcon, args.dbschema, fout)
 
+  elif args.op=='list_indications':
+    drugcentral.Utils.ListIndications(dbcon, fout)
+
   elif args.op=='get_structure':
     drugcentral.Utils.GetStructure(dbcon, ids, fout)
 
@@ -89,7 +96,13 @@ if __name__=='__main__':
     drugcentral.Utils.GetProductStructures(dbcon, ids, fout)
 
   elif args.op=='search_products':
-    drugcentral.Utils.SearchProducts(dbcon, args.dbschema, ids, fout)
+    drugcentral.Utils.SearchProducts(dbcon, ids, fout)
+
+  elif args.op=='search_indications':
+    drugcentral.Utils.SearchIndications(dbcon, ids, fout)
+
+  elif args.op=='get_indication_structures':
+    drugcentral.Utils.GetIndicationStructures(dbcon, ids, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))
