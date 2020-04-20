@@ -16,6 +16,9 @@ API_BASE_PATH=""
 ##############################################################################
 if __name__=='__main__':
   epilog="""\
+Example IDs:
+5391 (disease); DOID:9297 (DOID);
+12203 (target); Q9H4B4 (UniProt);
 --disease_ids needed ONLY if BOTH target and disease IDs specified, such
 as for get_disease_target_articles.
 """
@@ -24,7 +27,7 @@ as for get_disease_target_articles.
 	"list_diseases",
 	"list_targets",
 	"list_articles",
-	"list_dtos",
+	"list_dto",
 	"get_disease",
 	"get_disease_by_doid",
 	"get_disease_targets",
@@ -81,6 +84,9 @@ as for get_disease_target_articles.
 
   elif args.op=='list_articles':
     tinx.Utils.ListArticles(base_url, args.skip, args.nmax, fout)
+
+  elif args.op=='list_dto':
+    tinx.Utils.ListDTO(base_url, args.skip, args.nmax, fout)
 
   elif args.op=='get_disease':
     tinx.Utils.GetDisease(base_url, ids, args.skip, args.nmax, fout)

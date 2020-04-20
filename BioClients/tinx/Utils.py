@@ -109,6 +109,30 @@ def ListArticles(base_url, skip, nmax, fout):
   logging.info("n_out: %d"%(n_out))
 
 ##############################################################################
+def ListDTO(base_url, skip, nmax, fout):
+  n_out=0; tags=None;
+  url_next = (base_url+'/dto/?limit=%d&offset=%d'%(NCHUNK, skip))
+  while True:
+    rval = rest_utils.GetURL(url_next, parse_json=True)
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+    dtos = rval["results"] if "results" in rval else []
+    for dto in dtos:
+      logging.debug(json.dumps(dto, sort_keys=True, indent=2))
+      if not tags:
+        tags = list(dto.keys())
+        fout.write('\t'.join(tags)+'\n')
+      vals = [(str(dto[tag]) if tag in dto else '') for tag in tags]
+      fout.write('\t'.join(vals)+'\n')
+      n_out+=1
+      if nmax and n_out>=nmax: break
+    if nmax and n_out>=nmax: break
+    count = rval["count"] if "count" in rval else None
+    if n_out%1000==0: logging.info("%d/%s done"%(n_out, count))
+    url_next = rval["next"] if "next" in rval else None
+    if not url_next: break
+  logging.info("n_out: %d"%(n_out))
+
+##############################################################################
 def GetDisease(base_url, ids, skip, nmax, fout):
   """IDs should be TIN-X disease IDs, e.g. 5391."""
   n_in=0; n_out=0; tags=None;
@@ -266,6 +290,7 @@ def GetDiseaseTargetArticles(base_url, disease_ids, ids, skip, nmax, fout):
 
 ##############################################################################
 def SearchDiseases(base_url, terms, skip, nmax, fout):
+  """Search names; begins-with search logic."""
   n_out=0; tags=None;
   for term in terms:
     url_next = (base_url+'/diseases/?search=%s'%(urllib.parse.quote(term)))
@@ -289,6 +314,7 @@ def SearchDiseases(base_url, terms, skip, nmax, fout):
 
 ##############################################################################
 def SearchTargets(base_url, terms, skip, nmax, fout):
+  """Search names."""
   n_out=0; tags=None;
   for term in terms:
     url_next = (base_url+'/targets/?search=%s'%(urllib.parse.quote(term)))
