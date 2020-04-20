@@ -1,62 +1,31 @@
 #!/usr/bin/env python3
 """
-DrugCentral db utility functions.
+DrugCentral PostgreSql db client.
 """
-import os,sys,argparse,re,time,json,logging
-import psycopg2,psycopg2.extras
+import os,sys,argparse,re,time,logging
 
-#############################################################################
-def Connect(dbhost, dbname, dbusr, dbpw):
-  dsn = ("host='%s' dbname='%s' user='%s' password='%s'"%(dbhost, dbname, dbusr, dbpw))
-  dbcon = psycopg2.connect(dsn)
-  dbcon.cursor_factory = psycopg2.extras.DictCursor
-  return dbcon
+from .. import drugcentral
 
-#############################################################################
-def Describe(dbcon, dbschema, fout):
-  '''Return human readable text describing the schema.'''
-  cur = dbcon.cursor(cursor_factory=psycopg2.extras.DictCursor)
-  sql = ("select table_name from information_schema.tables where table_schema='%s'"%dbschema)
-  cur.execute(sql)
-  outtxt=""
-  for row in cur:
-    tablename=row[0]
-    sql = ("select column_name,data_type from information_schema.columns where table_schema='%s' and table_name = '%s'"%(dbschema, tablename))
-    cur2 = dbcon.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur2.execute(sql)
-    outtxt+=("table: %s.%s\n"%(dbschema,tablename))
-    for row in cur2:
-      outtxt+=("\t%s\n"%str(row))
-    cur2.close()
-  cur.close()
-  fout.write(outtxt+"\n")
-
-#############################################################################
-def Counts(dbcon, dbschema, fout):
-  '''Return human readable text listing the table rowcounts.'''
-  cur = dbcon.cursor()
-  outtxt=""
-  sql = ("select table_name from information_schema.tables where table_schema='%s' order by table_name"%dbschema)
-  cur.execute(sql)
-  outtxt+=("table rowcounts:\n")
-  for row in cur:
-    tablename = row[0]
-    sql =(" select count(*) from %s.%s"%(dbschema,tablename))
-    cur2 = dbcon.cursor()
-    cur2.execute(sql)
-    row = cur2.fetchone()
-    outtxt+="%14s: %7d\n"%(tablename,row[0])
-    cur2.close()
-  cur.close()
-  fout.write(outtxt)
-  
 #############################################################################
 if __name__=='__main__':
-  DBHOST='localhost'; DBSCHEMA='public'; DBNAME='drugcentral'; 
-  DBUSR='drugman'; DBPW='dosage'; 
-  parser = argparse.ArgumentParser(description='DrugCentral PostgreSql client utility')
-  ops = ['describe', 'counts', 'get_drug', 'list_drugs']
-  parser.add_argument("op", choices=ops, help='operation')
+  DBHOST="localhost"; DBSCHEMA="public"; DBNAME="drugcentral"; 
+  DBUSR="drugman"; DBPW="dosage"; 
+  parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility")
+  ops = [
+	"describe",
+	"counts",
+	"version",
+	"get_structure",
+	"get_structure_by_synonym",
+	"get_structure_products",
+	"get_product",
+	"get_product_structures",
+	"list_products",
+	"list_structures",
+	"list_active_ingredients",
+	"search_products"
+	]
+  parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
@@ -85,16 +54,42 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    dbcon = Connect(args.dbhost, args.dbname, args.dbusr, args.dbpw)
+    dbcon = drugcentral.Utils.Connect(args.dbhost, args.dbname, args.dbusr, args.dbpw)
   except Exception as e:
-    logging.error("{0}".format(str(e)))
-    parser.print_help()
+    parser.error("{0}".format(str(e)))
 
   if args.op=='describe':
-    Describe(dbcon, args.dbschema, fout)
+    drugcentral.Utils.Describe(dbcon, args.dbschema, fout)
 
   elif args.op=='counts':
-    Counts(dbcon, args.dbschema, fout)
+    drugcentral.Utils.Counts(dbcon, args.dbschema, fout)
+
+  elif args.op=='version':
+    drugcentral.Utils.Version(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_structures':
+    drugcentral.Utils.ListStructures(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_products':
+    drugcentral.Utils.ListProducts(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_active_ingredients':
+    drugcentral.Utils.ListActiveIngredients(dbcon, args.dbschema, fout)
+
+  elif args.op=='get_structure':
+    drugcentral.Utils.GetStructure(dbcon, ids, fout)
+
+  elif args.op=='get_structure_by_synonym':
+    drugcentral.Utils.GetStructureBySynonym(dbcon, ids, fout)
+
+  elif args.op=='get_structure_products':
+    drugcentral.Utils.GetStructureProducts(dbcon, ids, fout)
+
+  elif args.op=='get_product_structures':
+    drugcentral.Utils.GetProductStructures(dbcon, ids, fout)
+
+  elif args.op=='search_products':
+    drugcentral.Utils.SearchProducts(dbcon, args.dbschema, ids, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))
