@@ -100,12 +100,12 @@ def ListIndications(dbcon, fout):
   cur = dbcon.cursor()
   sql="""\
 SELECT DISTINCT
-	omop.concept_id,
-	omop.concept_name,
+	omop.concept_id omop_concept_id,
+	omop.concept_name omop_concept_name,
 	omop.umls_cui,
-	omop.snomed_full_name,
-	omop.cui_semantic_type,
-	omop.snomed_conceptid
+	omop.cui_semantic_type umls_semantic_type,
+	omop.snomed_conceptid,
+	omop.snomed_full_name
 FROM
 	omop_relationship omop
 JOIN
@@ -131,12 +131,12 @@ def SearchIndications(dbcon, terms, fout):
   for term in terms:
     sql="""\
 SELECT DISTINCT
-	omop.concept_id,
-	omop.concept_name,
+	omop.concept_id omop_concept_id,
+	omop.concept_name omop_concept_name,
 	omop.umls_cui,
-	omop.snomed_full_name,
-	omop.cui_semantic_type,
-	omop.snomed_conceptid
+	omop.cui_semantic_type umls_semantic_type,
+	omop.snomed_conceptid,
+	omop.snomed_full_name
 FROM
 	omop_relationship omop
 JOIN
@@ -162,8 +162,8 @@ def GetIndicationStructures(dbcon, ids, fout):
   cur = dbcon.cursor()
   sql="""\
 SELECT DISTINCT
-	omop.concept_id,
-	omop.concept_name,
+	omop.concept_id omop_concept_id,
+	omop.concept_name omop_concept_name,
 	s.id struct_id,
 	s.name struct_name,
 	s.smiles,
