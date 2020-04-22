@@ -57,11 +57,33 @@ def GetDisease(base_url, ids, fout):
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags:
       tags = list(disease.keys())
+      tags.remove("relationships")
+      tags.remove("equivalentNodes")
+      tags.remove("equivalentClasses")
+      tags.remove("bundleJS")
+      tags.remove("bundleCSS")
       fout.write("\t".join(tags)+"\n")
     vals = [(str(disease[tag]) if tag in disease else "") for tag in tags]
     fout.write("\t".join(vals)+"\n")
     n_out+=1
-  logging.info('DOIDs in: %d; records out: %d'%(len(ids), n_out))
+  logging.info('IDs in: %d; n_out: %d'%(len(ids), n_out))
+
+##############################################################################
+def GetDiseaseRelationships(base_url, ids, fout):
+  n_out=0; tags=None;
+  for id_this in ids:
+    disease = rest_utils.GetURL(base_url+'/disease/%s.json'%(id_this), parse_json=True)
+    logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
+    disease_id = disease["id"] if "id" in disease else ""
+    rels = disease["relationships"] if "relationships" in disease else []
+    for rel in rels:
+      if not tags:
+        tags = list(rel.keys())
+        fout.write("\t".join(["id", "disease_id"]+tags)+"\n")
+      vals = [id_this, disease_id]+[(str(rel[tag]) if tag in rel else "") for tag in tags]
+      fout.write("\t".join(vals)+"\n")
+      n_out+=1
+  logging.info('IDs in: %d; n_out: %d'%(len(ids), n_out))
 
 ##############################################################################
 def GetPhenotype(base_url, ids, fout):

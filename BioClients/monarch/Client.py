@@ -68,6 +68,7 @@ NCBIGene:26564 (mouse gene)
   parser = argparse.ArgumentParser(description="Monarch Initiative REST client", epilog=epilog)
   ops = [
         "get_disease",
+        "get_disease_relationships",
         "get_phenotype",
         "get_gene",
         "compare"
@@ -108,8 +109,11 @@ NCBIGene:26564 (mouse gene)
   if args.op=="get_disease":
     monarch.Utils.GetDisease(BASE_URL, idAs, fout)
 
+  elif args.op=="get_disease_relationships":
+    monarch.Utils.GetDiseaseRelationships(BASE_URL, idAs, fout)
+
   elif args.op=="get_phenotype":
-    logging.error('DEBUG: NOT IMPLEMENTED YET!')
+    parser.error("Unimplemented operation: {0}".format(args.op))
     #monarch.Utils.GetPhenotype(BASE_URL, idAs, fout)
 
   elif args.op=="get_gene":
