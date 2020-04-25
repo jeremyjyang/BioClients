@@ -30,14 +30,7 @@ $ python3 setup.py install
 
 ## Modules
 
-| | | | | |
-|:--:|:--:|:--:|:--:|:--:|
-| [AMP-T2D](doc/amp_t2d.md) | [BioGrid](doc/biogrid.md) | [BRENDA](doc/brenda.md) | [ChEMBL](doc/chembl.md) |[Disease Ontology](doc/diseaseontology.md) | [DisGeNet](doc/disgenet.md)
-| [DNorm](doc/dnorm.md) | [DrugCentral](doc/drugcentral.md) | [EnsEMBL](doc/ensembl.md) | [FDA](doc/fda.md) | [Gene Ontology](doc/geneontology.md) | [GWAS Catalog](doc/gwascatalog.md)
-| [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [IDG](doc/idg.md) | [LINCS](doc/lincs.md) | [MeSH](doc/mesh.md)
-| [MONARCH](doc/monarch.md) | [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md) | [Panther](doc/panther.md) | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md)
-| [PubMed](doc/pubmed.md) | [PubTator](doc/pubtator.md) | [Reactome](doc/reactome.md) | [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [TIN-X](doc/tinx.md)
-| [UMLS](doc/umls.md) | [UniProt](doc/uniprot.md)
+ [__AMP-T2D__](doc/amp__t2d.md) &#8226;  [__BioGrid__](doc/biogrid.md) &#8226;  [__BRENDA__](doc/brenda.md) &#8226;  [__ChEMBL__](doc/chembl.md) &#8226; [__Disease Ontology__](doc/diseaseontology.md) &#8226;  [__DisGeNet__](doc/disgenet.md) &#8226;  [__DNorm__](doc/dnorm.md) &#8226;  [__DrugCentral__](doc/drugcentral.md) &#8226;  [__EnsEMBL__](doc/ensembl.md) &#8226;  [__FDA__](doc/fda.md) &#8226;  [__Gene Ontology__](doc/geneontology.md) &#8226;  [__GWAS Catalog__](doc/gwascatalog.md) &#8226;  [__HUGO__](doc/hugo.md) &#8226;  [__HumanBase__](doc/humanbase.md) &#8226;  [__iCite__](doc/icite.md) &#8226;  [__IDG__](doc/idg.md) &#8226;  [__LINCS__](doc/lincs.md) &#8226;  [__MeSH__](doc/mesh.md) &#8226;  [__MONARCH__](doc/monarch.md) &#8226;  [__OMIM__](doc/omim.md) &#8226;  [__Open Targets__](doc/opentargets.md) &#8226;  [__Panther__](doc/panther.md) &#8226;  [__PDB__](doc/pdb.md) &#8226;  [__PubChem__](doc/pubchem.md) &#8226;  [__PubMed__](doc/pubmed.md) &#8226;  [__PubTator__](doc/pubtator.md) &#8226;  [__Reactome__](doc/reactome.md) &#8226;  [__RXNorm__](doc/rxnorm.md) &#8226;  [__STRINGDB__](doc/stringdb.md) &#8226;  [__TIN-X__](doc/tinx.md) &#8226;  [__UMLS__](doc/umls.md) &#8226;  [__UniProt__](doc/uniprot.md) 
 
 ## Usage
 
