@@ -32,13 +32,12 @@ $ python3 setup.py install
 
 | | | | | |
 |:--:|:--:|:--:|:--:|:--:|
-| [BioGrid](doc/biogrid.md) | [BRENDA](doc/brenda.md) | [ChEMBL](doc/chembl.md) |[Disease Ontology](doc/diseaseontology.md) | [DisGeNet](doc/disgenet.md)
-| [DNorm](doc/dnorm.md) | [DrugCentral](doc/drugcentral.md) | [EnsEMBL](doc/ensembl.md) | [FDA](doc/fda.md) | [Gene Ontology](doc/geneontology.md)
-| [GWAS Catalog](doc/gwascatalog.md) | [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [IDG](doc/idg.md)
-| [LINCS](doc/lincs.md) | [MeSH](doc/mesh.md) | [MONARCH](doc/monarch.md) | [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md)
-| [Panther](doc/panther.md) | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md) | [PubMed](doc/pubmed.md) | [PubTator](doc/pubtator.md)
-| [Reactome](doc/reactome.md) | [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [TIN-X](doc/tinx.md) | [UMLS](doc/umls.md)
-| [UniProt](doc/uniprot.md)
+| [AMP-T2D](doc/amp_t2d.md) | [BioGrid](doc/biogrid.md) | [BRENDA](doc/brenda.md) | [ChEMBL](doc/chembl.md) |[Disease Ontology](doc/diseaseontology.md) | [DisGeNet](doc/disgenet.md)
+| [DNorm](doc/dnorm.md) | [DrugCentral](doc/drugcentral.md) | [EnsEMBL](doc/ensembl.md) | [FDA](doc/fda.md) | [Gene Ontology](doc/geneontology.md) | [GWAS Catalog](doc/gwascatalog.md)
+| [HUGO](doc/hugo.md) | [HumanBase](doc/humanbase.md) | [iCite](doc/icite.md) | [IDG](doc/idg.md) | [LINCS](doc/lincs.md) | [MeSH](doc/mesh.md)
+| [MONARCH](doc/monarch.md) | [OMIM](doc/omim.md) | [Open Targets](doc/opentargets.md) | [Panther](doc/panther.md) | [PDB](doc/pdb.md) | [PubChem](doc/pubchem.md)
+| [PubMed](doc/pubmed.md) | [PubTator](doc/pubtator.md) | [Reactome](doc/reactome.md) | [RXNorm](doc/rxnorm.md) | [STRINGDB](doc/stringdb.md) | [TIN-X](doc/tinx.md)
+| [UMLS](doc/umls.md) | [UniProt](doc/uniprot.md)
 
 ## Usage
 
