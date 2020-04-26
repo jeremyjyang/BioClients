@@ -1,35 +1,20 @@
-#!/usr/bin/env python
-##############################################################################
-### slap_utils.py - utility functions for SLAP, and utility application.
-### 
-### See: http://slapfordrugtargetprediction.wikispaces.com/API
-### 
-### URL form
-### http://cheminfov.informatics.indiana.edu/rest/Chem2Bio2RDF/slap/5591:PPARG
-### 
-### Jeremy Yang
-###   7 Feb 2017
-##############################################################################
-import sys,os,re,getopt,time,types
-import urllib,urllib2,httplib,json,csv
-import xml.dom.minidom as minidom
-#from xml.dom import minidom #older
-#import xpath #older
+#!/usr/bin/env python3
+"""
+utility functions for SLAP, and utility application.
 
-from xml.etree import ElementTree #newer
+See: http://slapfordrugtargetprediction.wikispaces.com/API
+
+URL form
+http://cheminfov.informatics.indiana.edu/rest/Chem2Bio2RDF/slap/5591:PPARG
+"""
+###
+import sys,os,re,argparse,time,logging
+import urllib,urllib.parse,json,csv
+
+from xml.etree import ElementTree
 from xml.parsers import expat
 
-import time_utils
-import html_utils
-import rest_utils
-import xml_utils
-import csv_utils
-#
-API_HOST='cheminfov.informatics.indiana.edu'
-API_BASE_PATH='/rest/Chem2Bio2RDF/slap'
-#
-REST_RETRY_NMAX=10
-REST_RETRY_WAIT=5
+from ...util import rest_utils
 #
 #############################################################################
 ### Scrape HTML for predicted-target table for CSV
@@ -41,42 +26,41 @@ REST_RETRY_WAIT=5
 ### all targets have SLAP links like:
 ### http://cheminfov.informatics.indiana.edu:8080/slap/slap.jsp?cid=2995&gene=NFKB2
 #############################################################################
-def Drug2Targets(cids,base_uri,fout,verbose=0):
+def Drug2Targets(base_url,cids,fout):
   n_cid=0; n_found=0; n_not_found=0; n_none_predicted=0;
   fout.write('"cid","target","p_value","score","type","chemohub"\n')
   for cid in cids:
     n_cid+=1
-    if verbose>1:
-      print >>sys.stderr, '%9s: '%(cid)
+    logging.info('%9s: '%(cid))
     try:
-      rval=rest_utils.GetURL(base_uri+'/cid=%s'%(cid),verbose=verbose)
-    except Exception, e:
-      print >>sys.stderr, 'Exception: %s'%(e)
+      rval=rest_utils.GetURL(base_url+'/cid=%s'%(cid))
+    except Exception as e:
+      logging.error('Exception: %s'%(e))
       n_not_found+=1
       continue
     htm=rval
     if not htm:
       n_not_found+=1
-      if verbose>1: print >>sys.stderr, '%9s: CID not found.'%(cid)
+      logging.info('%9s: CID not found.'%(cid))
       continue
     elif re.search('No target predicted', htm):
       n_none_predicted+=1
-      if verbose>1: print >>sys.stderr, '%9s: No targets predicted.'%(cid)
+      logging.info('%9s: No targets predicted.'%(cid))
       continue
     n_found+=1
     htm = re.sub(r'[\n\r]', '', htm)
     htm = re.sub(r'</table>.*$', '', htm)
     htm = re.sub(r'^.*<table[^>]*>', '', htm)
     rows = re.split('<tr>', htm)
-    #print >>sys.stderr, 'DEBUG n_rows = %d'%len(rows)
-    if verbose>1: print >>sys.stderr, '%9s: Targets predicted: %d'%(cid,len(rows)-1)
+    logging.debug('n_rows = %d'%len(rows))
+    logging.info('%9s: Targets predicted: %d'%(cid,len(rows)-1))
     for row in rows:
       if not row: continue
       row = re.sub('</?tr>', '', row, re.I)
       row = re.sub('^<td>(.*)</td>$', '\\1', row, re.I)
       vals_raw = re.split(r'</td><td>', row)
       if not vals_raw: continue
-      #print >>sys.stderr, 'DEBUG: vals_raw[0] = "%s"'%vals_raw[0]
+      logging.debug('vals_raw[0] = "%s"'%vals_raw[0])
       if vals_raw[0] == 'target':
         continue #kludge
       vals=[];
@@ -92,33 +76,32 @@ def Drug2Targets(cids,base_uri,fout,verbose=0):
       vals = [csv_utils.ToStringForCSV(val) for val in vals]
       fout.write(','.join(vals)+'\n')
 
-  print >>sys.stderr, 'n_cid = %d'%(n_cid)
-  print >>sys.stderr, 'n_found = %d'%(n_found)
-  print >>sys.stderr, 'n_not_found = %d'%(n_not_found)
-  print >>sys.stderr, 'n_none_predicted = %d'%(n_none_predicted)
+  logging.info('n_cid = %d'%(n_cid))
+  logging.info('n_found = %d'%(n_found))
+  logging.info('n_not_found = %d'%(n_not_found))
+  logging.info('n_none_predicted = %d'%(n_none_predicted))
 
 #############################################################################
-def Drug2BioSimilarDrugs(cids,base_uri,fout,verbose=0):
+def Drug2BioSimilarDrugs(base_url,cids,fout):
   n_cid=0; n_found=0; n_not_found=0; n_none_predicted=0;
   fout.write('"query_cid","pubchem_cid","drug_name","similarity","related_diseases","atc"\n')
   for cid in cids:
     n_cid+=1
-    if verbose>1:
-      print >>sys.stderr, '%9s: '%(cid)
+    logging.info('%9s: '%(cid))
     try:
-      rval=rest_utils.GetURL(base_uri+'/cid=%s'%(cid),verbose=verbose)
-    except Exception, e:
-      print >>sys.stderr, 'Exception: %s'%(e)
+      rval=rest_utils.GetURL(base_url+'/cid=%s'%(cid))
+    except Exception as e:
+      logging.error('Exception: %s'%(e))
       n_not_found+=1
       continue
     htm=rval
     if not htm:
       n_not_found+=1
-      if verbose>1: print >>sys.stderr, '%9s: CID not found.'%(cid)
+      logging.info('%9s: CID not found.'%(cid))
       continue
     elif re.search('No target predicted', htm): #FIX
       n_none_predicted+=1
-      if verbose>1: print >>sys.stderr, '%9s: No bio-similar drugs found.'%(cid)
+      logging.info('%9s: No bio-similar drugs found.'%(cid))
       continue
     n_found+=1
     htm = re.sub(r'[\n\r]', '', htm)
@@ -126,8 +109,8 @@ def Drug2BioSimilarDrugs(cids,base_uri,fout,verbose=0):
     htm = re.sub(r'</table>.*$', '', htm)
     htm = re.sub(r'^.*<table[^>]*>', '', htm)
     rows = re.split('<tr>', htm)
-    #print >>sys.stderr, 'DEBUG n_rows = %d'%len(rows)
-    if verbose>1: print >>sys.stderr, '%9s: Bio-similar drugs predicted: %d'%(cid,len(rows)-1)
+    logging.debug('n_rows = %d'%len(rows))
+    logging.info('%9s: Bio-similar drugs predicted: %d'%(cid,len(rows)-1))
     for row in rows:
       if not row: continue
       row = re.sub('</?tr>', '', row, re.I)
@@ -150,35 +133,34 @@ def Drug2BioSimilarDrugs(cids,base_uri,fout,verbose=0):
       vals = [csv_utils.ToStringForCSV(val) for val in vals]
       fout.write(','.join(vals)+'\n')
 
-  print >>sys.stderr, 'n_cid = %d'%(n_cid)
-  print >>sys.stderr, 'n_found = %d'%(n_found)
-  print >>sys.stderr, 'n_not_found = %d'%(n_not_found)
-  print >>sys.stderr, 'n_none_predicted = %d'%(n_none_predicted)
+  logging.info('n_cid = %d'%(n_cid))
+  logging.info('n_found = %d'%(n_found))
+  logging.info('n_not_found = %d'%(n_not_found))
+  logging.info('n_none_predicted = %d'%(n_none_predicted))
 
 
 #############################################################################
-def Target2Drugs(tids,base_uri,fout,verbose=0):
+def Target2Drugs(base_url,tids,fout):
   n_tid=0; n_found=0; n_not_found=0; n_none_assn=0;
   fout.write('"target","cid","sources","paths","smiles"\n')
   for tid in tids:
     n_tid+=1
-    if verbose>1:
-      print >>sys.stderr, '%9s: '%(tid)
+    logging.info('%9s: '%(tid))
     try:
-      rval=rest_utils.GetURL(base_uri+'/target=%s'%(tid),verbose=verbose)
-    except Exception, e:
-      print >>sys.stderr, 'Exception: %s'%(e)
+      rval=rest_utils.GetURL(base_url+'/target=%s'%(tid))
+    except Exception as e:
+      logging.error('Exception: %s'%(e))
       n_not_found+=1
       continue
     htm=rval
-    #print >>sys.stderr, 'DEBUG: htm = "%s"'%(htm)
+    logging.debug('htm = "%s"'%(htm))
     if not htm:
       n_not_found+=1
-      if verbose>1: print >>sys.stderr, '%9s: target not found.'%(tid)
+      logging.info('%9s: target not found.'%(tid))
       continue
     elif re.search('No compounds predicted', htm): #FIX
       n_none_assn+=1
-      if verbose>1: print >>sys.stderr, '%9s: No compounds associated.'%(tid)
+      logging.info('%9s: No compounds associated.'%(tid))
       continue
 
     n_found+=1
@@ -186,15 +168,15 @@ def Target2Drugs(tids,base_uri,fout,verbose=0):
     htm = re.sub(r'</table>.*$', '', htm)
     htm = re.sub(r'^.*<table[^>]*>', '', htm)
     rows = re.split('<tr>', htm)
-    #print >>sys.stderr, 'DEBUG n_rows = %d'%len(rows)
-    if verbose>1: print >>sys.stderr, '%9s: Compounds associated: %d'%(tid,len(rows)-1)
+    logging.debug('n_rows = %d'%len(rows))
+    logging.info('%9s: Compounds associated: %d'%(tid,len(rows)-1))
     for row in rows:
       if not row: continue
       row = re.sub('</?tr>', '', row, re.I)
       row = re.sub('^<td>(.*)</td>$', '\\1', row, re.I)
       vals_raw = re.split(r'</td><td>', row)
       if not vals_raw: continue
-      #print >>sys.stderr, 'DEBUG: vals_raw[0] = "%s"'%vals_raw[0]
+      logging.debug('vals_raw[0] = "%s"'%vals_raw[0])
       if vals_raw[0] == 'cid':
         continue #kludge
       vals=[];
@@ -213,10 +195,10 @@ def Target2Drugs(tids,base_uri,fout,verbose=0):
       vals = [csv_utils.ToStringForCSV(val) for val in vals]
       fout.write(','.join(vals)+'\n')
 
-  print >>sys.stderr, 'n_tid = %d'%(n_tid)
-  print >>sys.stderr, 'n_found = %d'%(n_found)
-  print >>sys.stderr, 'n_not_found = %d'%(n_not_found)
-  print >>sys.stderr, 'n_none_assn = %d'%(n_none_assn)
+  logging.info('n_tid = %d'%(n_tid))
+  logging.info('n_found = %d'%(n_found))
+  logging.info('n_not_found = %d'%(n_not_found))
+  logging.info('n_none_assn = %d'%(n_none_assn))
 
 #############################################################################
 ### Given input drug (CID) and target (TID), find paths, subnetwork, and
@@ -237,9 +219,9 @@ def Target2Drugs(tids,base_uri,fout,verbose=0):
 ### Output CSV file contains IDs and scores only.
 ### If odir and path exists, write full graphml file with IDs in name.
 #############################################################################
-def DrugTargetPaths(cids,tids,base_uri,cid_skip,cid_nmax,tid_skip,tid_nmax,fout,odir,verbose=0):
+def DrugTargetPaths(base_url, cids, tids, cid_skip, cid_nmax, tid_skip, tid_nmax, odir, fout):
   errs={}; score_types={}; score_notes={};
-  fout.write("cid,tid,score,score_note,score_type,error\n")
+  fout.write("cid\ttid\tscore\tscore_note\tscore_type\terror\n")
   n=0; n_cid=0; n_dtp=0;
   tids_not_found = set()
   cids_not_found = set()
@@ -252,30 +234,28 @@ def DrugTargetPaths(cids,tids,base_uri,cid_skip,cid_nmax,tid_skip,tid_nmax,fout,
       if tid_skip and n_tid<=tid_skip: continue
       n+=1
       if cid in cids_not_found:
-        print >>sys.stderr, "cid not found; skipping %s:%s"%(cid,tid)
+        logging.info("cid not found; skipping %s:%s"%(cid,tid))
         continue
       if tid in tids_not_found:
-        print >>sys.stderr, "tid not found; skipping %s:%s"%(cid,tid)
+        logging.info("tid not found; skipping %s:%s"%(cid,tid))
         continue
-      if verbose>1:
-        print >>sys.stderr, '%d. [%d/%d][%d/%d]'%(n,n_cid,len(cids),n_tid,len(tids))
+      logging.info('%d.  [%d/%d][%d/%d]'%(n,n_cid,len(cids),n_tid,len(tids)))
 
       #######################################################################
-      if verbose>1:
-        print >>sys.stderr, '%9s: %9s:'%(cid,tid)
+      logging.info('%9s: %9s:'%(cid,tid))
       try:
-        rval=rest_utils.GetURL(base_uri+'/%s:%s'%(cid,tid),verbose=verbose)
-      except urllib2.HTTPError, e:
-        print >>sys.stderr, 'HTTP Error (%s): %s'%(res,e)
+        rval=rest_utils.GetURL(base_url+'/%s:%s'%(cid,tid))
+      except Exception as e:
+        logging.error('HTTP Error (%s): %s'%(res,e))
       txt=('%s'%(str(rval)))
-      print >>sys.stderr, 'DEBUG rval="%s"'%txt
+      logging.debug('rval="%s"'%txt)
 
       rob=re.compile(r'^(.*)(<graphml.*</graphml>).*$',re.I|re.DOTALL)
       score=""; score_note=""; score_type=""; errtxt=""; graphml="";
       m=rob.search(txt)
       if m:
         scorehtm=m.group(1)
-        #print >>sys.stderr, 'DEBUG [cid=%s,tid=%s]: scorehtm: "%s"'%(cid,tid,scorehtm)
+        logging.debug('[cid=%s,tid=%s]: scorehtm: "%s"'%(cid,tid,scorehtm))
         graphml=m.group(2)
         rob2=re.compile(r'^.*P value: </i></b>([0-9+-e]+)\s*\(([^\)]+)\).*Type: </i></b><a.*>([^>]+)</a>.*$',re.I|re.DOTALL)
         rob3=re.compile(r'^.*P value: </i></b>([0-9+-e]+)\s*\(([^\)]+)\).*Type: </i></b>([^\n\r]+).*$',re.I|re.DOTALL)
@@ -289,16 +269,16 @@ def DrugTargetPaths(cids,tids,base_uri,cid_skip,cid_nmax,tid_skip,tid_nmax,fout,
           score=m3.group(1)
           score_note=m3.group(2)
           score_type=m3.group(3)
-        print >>sys.stderr, 'NOTE [cid=%s,tid=%s]: score=%s ; note="%s" ; type="%s"'%(cid,tid,score,score_note,score_type)
+        logging.info('NOTE [cid=%s,tid=%s]: score=%s ; note="%s" ; type="%s"'%(cid,tid,score,score_note,score_type))
       else:
         errtxt=txt
         #if 'not found' in errtxt:
-        print >>sys.stderr, 'ERROR [cid=%s,tid=%s]: "%s"'%(cid,tid,errtxt)
+        logging.error('[cid=%s,tid=%s]: "%s"'%(cid,tid,errtxt))
       if odir and graphml.strip():
         ofile_graphml=(odir+"/%s_%s.graphml"%(cid,tid))
         fout_graphml=open(ofile_graphml,"w+")
-        if not fout_graphml: ErrorExit('ERROR: failed to open output file: %s'%ofile_graphml)
-        if verbose>1: print >>sys.stderr, '%s'%ofile_graphml
+        if not fout_graphml: logging.error('Failed to open output file: %s'%ofile_graphml)
+        logging.info('%s'%ofile_graphml)
         fout_graphml.write(graphml+'\n')
         fout_graphml.flush()
 
@@ -308,12 +288,12 @@ def DrugTargetPaths(cids,tids,base_uri,cid_skip,cid_nmax,tid_skip,tid_nmax,fout,
 
       if score:
         n_dtp+=1
-        if score_type and not score_types.has_key(score_type): score_types[score_type]=1
+        if score_type and not score_type in score_types: score_types[score_type]=1
         score_types[score_type]+=1
-        if score_note and not score_notes.has_key(score_note): score_notes[score_note]=1
+        if score_note and not score_note in score_notes: score_notes[score_note]=1
         score_notes[score_note]+=1
       if errtxt:
-        if not errs.has_key(errtxt): errs[errtxt]=1
+        if not errtxt in errs: errs[errtxt]=1
         errs[errtxt]+=1
         if errtxt == 'target was not found':
           tids_not_found.add(tid)
@@ -322,39 +302,34 @@ def DrugTargetPaths(cids,tids,base_uri,cid_skip,cid_nmax,tid_skip,tid_nmax,fout,
       if tid_nmax and n_tid>=tid_skip+tid_nmax: break
     if cid_nmax and n_cid>=cid_skip+cid_nmax: break
 
-  print >>sys.stderr, "drugs: %d targets: %d"%(n_cid-cid_skip,n_tid-tid_skip)
-  print >>sys.stderr, "drug-target queries: %d  drug-target predictions: %d"%(n,n_dtp)
+  logging.info("drugs: %d targets: %d"%(n_cid-cid_skip,n_tid-tid_skip))
+  logging.info("drug-target queries: %d  drug-target predictions: %d"%(n,n_dtp))
   for score_type in score_types.keys():
-    print >>sys.stderr, 'score_type "%s": %d'%(score_type,score_types[score_type])
+    logging.info('score_type "%s": %d'%(score_type,score_types[score_type]))
   for score_note in score_notes.keys():
-    print >>sys.stderr, 'score_note "%s": %d'%(score_note,score_notes[score_note])
+    logging.info('score_note "%s": %d'%(score_note,score_notes[score_note]))
   for errtxt in errs.keys():
-    print >>sys.stderr, 'ERRORS, "%s": %d'%(errtxt,errs[errtxt])
+    logging.info('ERRORS: "%s": %d'%(errtxt,errs[errtxt]))
 
 #############################################################################
-def DDSimilarity(cid1,cid2,base_uri,fout,verbose=0):
+def DDSimilarity(base_url,cid1,cid2,fout):
   '''Drug-drug similarity query'''
-  try:
-    rval=rest_utils.GetURL(base_uri+'/sim_%s:%s'%(cid1,cid2),verbose=verbose)
-  except urllib2.HTTPError, e:
-    print >>sys.stderr, 'HTTP Error (%s): %s'%(res,e)
-  htm=rval
-  print >>sys.stderr, 'DEBUG: htm = "%s"'%htm
+  htm = rest_utils.GetURL(base_url+'/sim_%s:%s'%(cid1,cid2))
+  logging.debug('htm = "%s"'%htm)
 
 #############################################################################
 #Kludge: workaround since py-dom-xpath does not allow nodes named "node"!
 #############################################################################
-def ParseDTPathGraphml(fin_xml,verbose=0):
+def ParseDTPathGraphml(fin_xml):
   '''Parse drug-target graphml.'''
   xml_str=fin_xml.read()
   xml_str=re.sub(r'<node','<nnode',xml_str) #kludge
   xml_str=re.sub(r'/node>','/nnode>',xml_str) #kludge
   doc=None
   try:
-    #doc=minidom.parseString(xml_str)
     doc=ElementTree.fromstring(xml_str)
-  except Exception, e:
-    print >>sys.stderr,'XML parse error: %s'%e
+  except Exception as e:
+    logging.error('XML parse error: %s'%e)
     return False
   return doc
 
@@ -375,7 +350,7 @@ def ParseDTPathGraphml(fin_xml,verbose=0):
 #"2","O60706","CHEMBL1971","9606","PROTEIN","Homo sapiens","SWISS-PROT","ABCC9","Sulfonylurea receptor 2"
 #"3","O76074","CHEMBL1827","9606","PROTEIN","Homo sapiens","SWISS-PROT","PDE5A","Phosphodiesterase 5A"
 #############################################################################
-def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
+def AnnotateDTPathGraphmlTargets(doc,fin_csv):
   '''Annotate graphml with additional data from CSV file.'''
 
   n_in=0; n_out=0; errtxt=None;
@@ -398,13 +373,13 @@ def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
   except:
     errtxt=('ERROR: bad ifile: %s'%fin_csv.name)
     return doc
-  print >>sys.stderr, 'DEBUG: fieldnames=', csvReader.fieldnames
+  logging.debug('fieldnames=', csvReader.fieldnames)
   tgt_id_tag='protein_accession'
   tgt_gene_tag='gene_symbol'
   tgt_name_tag='pref_name'
   for tag in (tgt_id_tag,tgt_name_tag,tgt_gene_tag):
     if tag not in csvReader.fieldnames:
-      print >>sys.stderr, 'ERROR: %s not in fieldnames'%tag
+      logging.error('%s not in fieldnames'%tag)
       return doc
 
   tgt_id2name={};
@@ -420,13 +395,13 @@ def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
       tgt_id2name[tgt_id]=tgt_name
     except:
       break
-  print >>sys.stderr, 'DEBUG: protein ids/names read: %d'%len(tgt_id2name)
-  #for tgt_id in tgt_id2name.keys():
-  #  print >>sys.stderr, 'DEBUG: protein id: %s'%tgt_id
+  logging.debug('protein ids/names read: %d'%len(tgt_id2name))
+  for tgt_id in tgt_id2name.keys():
+    logging.debug('protein id: %s'%tgt_id)
 
   #gene_nodes = xpath.find('/graphml/graph/nnode/data[@key="class" and text()="gene"]/parent::node()', doc)
   gene_nodes = doc.findall('/graphml/graph/nnode/data[@key="class" and text()="gene"]/parent::node()')
-  print >>sys.stderr, 'DEBUG: gene count: %d'%len(gene_nodes)
+  logging.debug('gene count: %d'%len(gene_nodes))
 
   for node in gene_nodes:
     tgt_id=None
@@ -435,12 +410,12 @@ def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
       if cnode.attributes:
         for attName,attValue in cnode.attributes.items():
           if attName=='key' and attValue=='label':
-            tgt_gene=xml_utils.DOM_NodeText(cnode)
-            if tgt_gene2id.has_key(tgt_gene):
+            tgt_gene=cnode.text
+            if tgt_gene in tgt_gene2id:
               tgt_id=tgt_gene2id[tgt_gene]
-            print >>sys.stderr, 'DEBUG: gene = "%s" ; tgt = "%s"'%(tgt_gene,tgt_id)
+            logging.debug(': gene = "%s" ; tgt = "%s"'%(tgt_gene,tgt_id))
 
-    if tgt_id and tgt_id2name.has_key(tgt_id):
+    if tgt_id and tgt_id in tgt_id2name:
       namenode=doc.createElement('data')
       namenode.setAttribute('key','name')
       namenode.appendChild(doc.createTextNode(tgt_id2name[tgt_id]))
@@ -450,7 +425,7 @@ def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
       #xml_str=re.sub(r'<nnode (.*?)</nnode>',r'<node \1</node>',xml_str,re.DOTALL)
       xml_str=re.sub(r'<nnode','<node',xml_str)
       xml_str=re.sub(r'/nnode>','/node>',xml_str)
-      #print >>sys.stderr, 'DEBUG: %s'%xml_str
+      logging.debug('%s'%xml_str)
 
   return doc
 
@@ -466,7 +441,7 @@ def AnnotateDTPathGraphmlTargets(doc,fin_csv,verbose=0):
 # sids and synonyms are semicolon-delimited
 # synonyms only up to top ten "nicest"
 #############################################################################
-def AnnotateDTPathGraphmlCompounds(doc,fin_csv,verbose=0):
+def AnnotateDTPathGraphmlCompounds(doc,fin_csv):
   '''Annotate graphml with additional data from CSV file.'''
 
   n_in=0; n_out=0; errtxt=None;
@@ -488,13 +463,13 @@ def AnnotateDTPathGraphmlCompounds(doc,fin_csv,verbose=0):
   except:
     errtxt=('ERROR: bad ifile: %s'%fin_csv.name)
     return doc
-  print >>sys.stderr, 'DEBUG: fieldnames=', csvReader.fieldnames
+  logging.debug('fieldnames=', csvReader.fieldnames)
 
   cid_tag='cid'
   synonyms_tag='synonyms'
   for tag in (cid_tag,synonyms_tag):
     if tag not in csvReader.fieldnames:
-      print >>sys.stderr, 'ERROR: %s not in fieldnames'%tag
+      logging.error('%s not in fieldnames'%tag)
       return doc
   cid2synonyms={};
   n_synonyms_total=0;
@@ -508,7 +483,7 @@ def AnnotateDTPathGraphmlCompounds(doc,fin_csv,verbose=0):
       n_synonyms_total+=len(synonyms)
     except:
       break
-  print >>sys.stderr, 'DEBUG: cpd ids read: %d ; total synonyms: %d'%(len(cid2synonyms),n_synonyms_total)
+  logging.debug('cpd ids read: %d ; total synonyms: %d'%(len(cid2synonyms),n_synonyms_total))
 
   #Find cpd nodes in Graphml:
   #cpd_nodes=xpath.find('/graphml/graph/nnode/data[@key="class" and text()="pubchem_compound"]/parent::node()',doc)
@@ -521,15 +496,14 @@ def AnnotateDTPathGraphmlCompounds(doc,fin_csv,verbose=0):
       if cnode.attributes:
         for attName,attValue in cnode.attributes.items():
           if attName=='key' and attValue=='label':
-            txt=xml_utils.DOM_NodeText(cnode)
             try:
-              cid=int(re.sub(r'\(.*\)','',txt))
-            except Exception, e:
-              print >>sys.stderr, 'Error (Exception): %s'%e
+              cid = int(re.sub(r'\(.*\)','',cnode.text))
+            except Exception as e:
+              logging.error('%s'%e)
     if cid==None: continue
     n_cid+=1
 
-    if cid2synonyms.has_key(cid):
+    if cid in cid2synonyms:
       namenode=doc.createElement('data')
       namenode.setAttribute('key','synonyms')
       namenode.appendChild(doc.createTextNode('; '.join(cid2synonyms[cid])))
@@ -544,12 +518,12 @@ def AnnotateDTPathGraphmlCompounds(doc,fin_csv,verbose=0):
       xml_str=re.sub(r'\s*[\n\r]+',r'\n',xml_str)
       xml_str=re.sub(r'<nnode','<node',xml_str)
       xml_str=re.sub(r'/nnode>','/node>',xml_str)
-      #print >>sys.stderr, 'DEBUG: %s'%xml_str
+      logging.debug('%s'%xml_str)
 
     else:
-      print >>sys.stderr, 'DEBUG: cid %d not in csv'%cid
+      logging.debug('cid %d not in csv'%cid)
 
-  if verbose: print >>sys.stderr, 'graphml cid count: %d'%len(cid2synonyms)
+  logging.info('graphml cid count: %d'%len(cid2synonyms))
 
   return doc
 
@@ -560,7 +534,7 @@ def ReplaceNodeText(node, txt):
   node.firstChild.replaceWholeText(txt)
 
 ##############################################################################
-def DTPathGraphml2CIDs(doc,fout,verbose):
+def DTPathGraphml2CIDs(doc,fout):
   #cpd_nodes=xpath.find('/graphml/graph/nnode/data[@key="class" and text()="pubchem_compound"]/parent::node()',doc)
   cpd_nodes=doc.findall('/graphml/graph/nnode/data[@key="class" and text()="pubchem_compound"]/parent::node()')
   n_cid=0;
@@ -571,18 +545,17 @@ def DTPathGraphml2CIDs(doc,fout,verbose):
       if cnode.attributes:
         for attName,attValue in cnode.attributes.items():
           if attName=='key' and attValue=='label':
-            txt=xml_utils.DOM_NodeText(cnode)
             try:
-              cid=int(re.sub(r'\(.*\)','',txt))
-            except Exception, e:
-              print >>sys.stderr, 'Error (Exception): %s'%e
+              cid = int(re.sub(r'\(.*\)', '', cnode.text))
+            except Exception as e:
+              logging.error('Error (Exception): %s'%e)
     if cid==None: continue
     fout.write('%d\n'%cid)
     n_cid+=1
-  if verbose: print >>sys.stderr, 'cid count: %d'%n_cid
+  logging.info('cid count: %d'%n_cid)
 
 ##############################################################################
-def DTPathGraphml2TIDs(doc,fout,verbose):
+def DTPathGraphml2TIDs(doc,fout):
   #tgt_nodes=xpath.find('/graphml/graph/nnode/data[@key="class" and text()="gene"]/parent::node()',doc)
   tgt_nodes=doc.findall('/graphml/graph/nnode/data[@key="class" and text()="gene"]/parent::node()')
   n_tid=0;
@@ -593,58 +566,56 @@ def DTPathGraphml2TIDs(doc,fout,verbose):
       if cnode.attributes:
         for attName,attValue in cnode.attributes.items():
           if attName=='key' and attValue=='label':
-            txt=xml_utils.DOM_NodeText(cnode)
             try:
-              tid=re.sub(r'\(.*\)','',txt)
-            except Exception, e:
-              print >>sys.stderr, 'Error (Exception): %s'%e
+              tid = re.sub(r'\(.*\)', '', cnode.text)
+            except Exception as e:
+              logging.error('Error (Exception): %s'%e)
     if tid==None: continue
     fout.write('%s\n'%tid)
     n_tid+=1
-  if verbose: print >>sys.stderr, 'tid count: %d'%n_tid
+  logging.info('tid count: %d'%n_tid)
 
 ##############################################################################
-def MergeDTPathGraphmlsDir(idir_graphml,verbose):
+def MergeDTPathGraphmlsDir(idir_graphml):
   import glob
   i=0;
   doc_merged=None;
   for fpath in glob.glob(idir_graphml+'/*.graphml'):
-    print >>sys.stderr, 'DEBUG: %s'%fpath
+    logging.debug('%s'%fpath)
     fin=open(fpath,"r")
-    if not fin: ErrorExit('ERROR: failed to open input file: %s'%fpath)
-    doc_this = ParseDTPathGraphml(fin,verbose)
+    if not fin: logging.error('Failed to open input file: %s'%fpath)
+    doc_this = ParseDTPathGraphml(fin)
     fin.close()
     if not doc_this:
-      print >>sys.stderr, 'ERROR: Problem parsing: %s'%fpath
+      logging.error('Problem parsing: %s'%fpath)
       continue
     root_node = doc_this.documentElement
     child_nodes = []
     child_node = root_node.firstChild
     while child_node:
-      if child_node.nodeType is not minidom.Node.TEXT_NODE:
-        child_nodes.append(child_node)
-      child_node=child_node.nextSibling
-    #print 'DEBUG: %s: root: %s  children: %s'%(fpath,root_node.tagName,','.join(map(lambda n:n.tagName,child_nodes)))
+      child_nodes.append(child_node)
+      child_node = child_node.nextSibling
+    logging.debug('%s: root: %s  children: %s'%(fpath,root_node.tagName,','.join(map(lambda n:n.tagName,child_nodes))))
     if i==0:
       doc_merged=doc_this
     else:
       try:
-        doc_merged = MergeDTPathGraphmlsPair(doc_merged,doc_this,verbose)
-      except Exception, e:
-        print >>sys.stderr, 'ERROR (MergeDTPathGraphmlsDir): (Exception): %s'%e
+        doc_merged = MergeDTPathGraphmlsPair(doc_merged,doc_this)
+      except Exception as e:
+        logging.error('(MergeDTPathGraphmlsDir): (Exception): %s'%e)
     i+=1
-  print 'DEBUG: merged graphmls: %d'%i
+  logging.debug('merged graphmls: %d'%i)
 
   return doc_merged
 
 ##############################################################################
-def MergeDTPathGraphmlsPair(docA,docB,verbose):
+def MergeDTPathGraphmlsPair(docA,docB):
   '''Merge docB into docA and return docA.'''
 
   #graphA = xpath.find('/graphml/graph[1]', docA)
   graphA = docA.findall('/graphml/graph[1]')
   if not graphA:
-    print >>sys.stderr, 'DEBUG: not graphA'
+    logging.debug('not graphA')
   else:
     graphA = graphA[0]
   #nodesA = xpath.find('/graphml/graph/nnode', docA)
@@ -652,12 +623,12 @@ def MergeDTPathGraphmlsPair(docA,docB,verbose):
   #edgesA = xpath.find('/graphml/graph/edge', docA)
   edgesA = docA.findall('/graphml/graph/edge')
   if not edgesA:
-    print >>sys.stderr, 'DEBUG: not edgesA'
+    logging.debug('not edgesA')
   #edgeA1 = xpath.find('/graphml/graph/edge[1]', docA)
   edgeA1 = docA.find('/graphml/graph/edge[1]')
   edgeA1 = edgeA1[0]
   if not edgeA1:
-    print >>sys.stderr, 'DEBUG: not edgeA1'
+    logging.debug('not edgeA1')
 
   #nodesB = xpath.find('/graphml/graph/nnode', docB)
   nodesB = docB.findall('/graphml/graph/nnode')
@@ -668,13 +639,13 @@ def MergeDTPathGraphmlsPair(docA,docB,verbose):
     graphA.insertBefore(nodeB,edgeA1)
   for edgeB in edgesB:
     graphA.appendChild(edgeB)
-  print 'DEBUG: new nodes: %d edges: %d'%(len(nodesB),len(edgesB))
-  print 'DEBUG: merged nodes: %d edges: %d'%(len(nodesA),len(edgesA))
+  logging.debug('new nodes: %d edges: %d'%(len(nodesB),len(edgesB)))
+  logging.debug('merged nodes: %d edges: %d'%(len(nodesA),len(edgesA)))
 
   return docA
 
 ##############################################################################
-def ShowNodeClasses(doc,verbose=0):
+def ShowNodeClasses(doc):
   #nodes=xpath.find('/graphml/graph/nnode',doc)
   nodes=doc.findall('/graphml/graph/nnode')
   node_classes = {}
@@ -692,16 +663,14 @@ def ShowNodeClasses(doc,verbose=0):
         if cnode.attributes:
           for attName,attValue in cnode.attributes.items():
             if attName=='key' and attValue=='class':
-              node_class = xml_utils.DOM_NodeText(cnode)
-              node_classes[node_class] = node_class_uri
-
-  print >>sys.stderr, 'Node classes (%d):'%len(node_classes)
+              node_classes[cnode.text] = node_class_uri
+  logging.info('Node classes (%d):'%len(node_classes))
   for node_class in sorted(node_classes.keys()):
-    print >>sys.stderr, '%18s:\t[%s]'%(node_class,node_classes[node_class])
+    logging.info('%18s:\t[%s]'%(node_class,node_classes[node_class]))
   return node_classes
 
 ##############################################################################
-def ShowEdgeClasses(doc,verbose=0):
+def ShowEdgeClasses(doc):
   #edges=xpath.find('/graphml/graph/edge',doc)
   edges=doc.findall('/graphml/graph/edge')
   edge_classes = {}
@@ -724,29 +693,29 @@ def ShowEdgeClasses(doc,verbose=0):
         if cnode.attributes:
           for attName,attValue in cnode.attributes.items():
             if attName=='key' and attValue=='uri':
-              edge_class = xml_utils.DOM_NodeText(cnode)
-              if not edge_classes.has_key(edge_class):
+              edge_class = cnode.text
+              if not edge_class in edge_classes:
                 edge_classes[edge_class] = set()
               edge_classes[edge_class].add(tuple(sorted([source_class_uri,target_class_uri])))
 
-  print >>sys.stderr, 'Edge classes (%d):'%len(edge_classes)
+  logging.info('Edge classes (%d):'%len(edge_classes))
   for edge_class in sorted(edge_classes.keys()):
     edge_class_name = re.sub(r'^.*/','',edge_class)
-    print >>sys.stderr, '%18s:\t[%s]'%(edge_class_name,edge_class)
+    logging.info('%18s:\t[%s]'%(edge_class_name,edge_class))
     for source,target in edge_classes[edge_class]:
       source_name = re.sub(r'^.*/','',source)
       target_name = re.sub(r'^.*/','',target)
-      print >>sys.stderr, '\t\t%s : %s'%(source_name,target_name)
+      logging.info('\t\t%s : %s'%(source_name,target_name))
   return edge_classes
 
 ##############################################################################
-def DTPathGraphmlSummary(doc,verbose):
+def DTPathGraphmlSummary(doc):
   #nodes=xpath.find('/graphml/graph/nnode',doc)
   nodes=doc.findall('/graphml/graph/nnode')
-  print >>sys.stderr, 'Nodes: %d'%len(nodes)
+  logging.info('Nodes: %d'%len(nodes))
   #edges=xpath.find('/graphml/graph/edge',doc)
   edges=doc.findall('/graphml/graph/edge')
-  print >>sys.stderr, 'Edges: %d'%len(edges)
+  logging.info('Edges: %d'%len(edges))
 
 ##############################################################################
 #Kludge: workaround since py-dom-xpath does not allow nodes named "node"!
@@ -760,159 +729,80 @@ def GraphmlDocWrite(doc,fout):
 
 ##############################################################################
 if __name__=='__main__':
-  PROG=os.path.basename(sys.argv[0])
-  usage='''\
-%(PROG)s
-required (one of):
-	--dtp_annotate_tgts ......... annotate graphml file (--igraphml, --icsv required)
-	--dtp_annotate_cpds ......... annotate graphml file (--igraphml, --icsv required)
-	--graphml2cids .............. find, list PubChem CIDs
-	--graphml2tids .............. find, list (Uniprot gene) TIDs
-	--graphmls_merge ............ merge all graphml's in --igraphml_dir 
-	--show_node_classes ......... show all node classes in file
-	--show_edge_classes ......... show all edge classes in file
-	--summary ................... summary of graphml contents
+  epilog='''\
+dtp = Drug Target Prediction;
+dtp_annotate_tgts: annotate GraphML (tgts required);
+dtp_annotate_cpds: annotate GraphML (cpds required);
+dtp_annotate: annotate GraphML (tgts and cpds required);
+graphml2cids: find, list PubChem CIDs;
+graphml2tids: find, list (Uniprot gene) TIDs;
+graphmls_merge: merge all GraphMLs in --i_graphml_dir ;
+show_node_classes: show all node classes ;
+show_edge_classes: show all edge classes;
+summary: summary of GraphML contents
+'''
+  parser = argparse.ArgumentParser(description="SLAP results GraphML post-processing utility", epilog=epilog)
+  ops = [ "summary", "dtp_annotate", "dtp_annotate_tgts", "dtp_annotate_cpds", "graphml2cids", "graphml2tids", "graphmls_merge", "show_node_classes", "show_edge_classes" ]
+  parser.add_argument("op", choices=ops, help="operation")
+  parser.add_argument("--i_graphml", dest="ifile_graphml", help="input file (GRAPHML)")
+  parser.add_argument("--i_graphml_dir", dest="idir_graphml", help="input dir (GRAPHML)")
+  parser.add_argument("--i_tgts", dest="ifile_tgts", help="input file, target IDs (CSV)")
+  parser.add_argument("--i_cpds", dest="ifile_cpds", help="input file, compound IDs (CSV)")
+  parser.add_argument("--o", dest="ofile", help="output (TSV or GraphML)")
+  parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
+  args = parser.parse_args()
 
-options:
-	--igraphml IFILE ............ input file (GRAPHML)
-	--icsv_tgts IFILE ........... input file (CSV, tgts)
-	--icsv_cpds IFILE ........... input file (CSV, cpds)
-	--igraphml_dir IDIR ......... input dir (GRAPHML)
-	--o OFILE ................... output file (CSV or GRAPHML)
-	--API_HOST HOST ............. [%(API_HOST)s]
-	--API_BASE_PATH BASEPATH .... [%(API_BASE_PATH)s]
-	--v[v[v]] ................... verbose [very [very]]
-	--h ......................... this help
-'''%{	'PROG':PROG,
-	'API_HOST':API_HOST,
-	'API_BASE_PATH':API_BASE_PATH
-	}
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  def ErrorExit(msg):
-    print >>sys.stderr,msg
-    sys.exit(1)
+  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
-  ofile=None; odir=None;
-  ifile_graphml=None;
-  idir_graphml=None;
-  ifile_csv_tgts=None;
-  ifile_csv_cpds=None;
-  dtp_annotate_tgts=False;
-  dtp_annotate_cpds=False;
-  graphml2cids=False;
-  graphml2tids=False;
-  graphmls_merge=False;
-  show_node_classes=False;
-  show_edge_classes=False;
-  summary=False;
-  verbose=0;
-  opts,pargs=getopt.getopt(sys.argv[1:],'',[
-    'igraphml=',
-    'igraphml_dir=',
-    'icsv_tgts=',
-    'icsv_cpds=',
-    'o=',
-    'ofile=', 'odir=',
-    'dtp_annotate_tgts',
-    'dtp_annotate_cpds',
-    'graphml2cids',
-    'graphml2tids',
-    'graphmls_merge',
-    'show_node_classes',
-    'show_edge_classes',
-    'summary',
-    'api_host=', 'api_base_path=',
-    'help','v','vv','vvv'])
-  if not opts: ErrorExit(usage)
-  for (opt,val) in opts:
-    if opt=='--help': ErrorExit(usage)
-    elif opt=='--o': ofile=val
-    elif opt=='--igraphml': ifile_graphml=val
-    elif opt=='--igraphml_dir': idir_graphml=val
-    elif opt=='--icsv_tgts': ifile_csv_tgts=val
-    elif opt=='--icsv_cpds': ifile_csv_cpds=val
-    elif opt=='--odir': odir=val
-    elif opt=='--dtp_annotate_tgts': dtp_annotate_tgts=True
-    elif opt=='--dtp_annotate_cpds': dtp_annotate_cpds=True
-    elif opt=='--graphml2cids': graphml2cids=True
-    elif opt=='--graphml2tids': graphml2tids=True
-    elif opt=='--graphmls_merge': graphmls_merge=True
-    elif opt=='--show_node_classes': show_node_classes=True
-    elif opt=='--show_edge_classes': show_edge_classes=True
-    elif opt=='--summary': summary=True
-    elif opt=='--v': verbose=1
-    elif opt=='--vv': verbose=2
-    elif opt=='--vvv': verbose=3
-    else: ErrorExit('Illegal option: %s\n%s'%(opt,usage))
-
-  fin_graphml=None;
-  if ifile_graphml:
-    fin_graphml=open(ifile_graphml,"r")
-    if not fin_graphml: ErrorExit('ERROR: failed to open input file: %s'%ifile_graphml)
-
-  fin_csv_tgts=None;
-  if ifile_csv_tgts:
-    fin_csv_tgts=open(ifile_csv_tgts,"r")
-    if not fin_csv_tgts: ErrorExit('ERROR: failed to open input file: %s'%ifile_csv_tgts)
-
-  fin_csv_cpds=None;
-  if ifile_csv_cpds:
-    fin_csv_cpds=open(ifile_csv_cpds,"r")
-    if not fin_csv_cpds: ErrorExit('ERROR: failed to open input file: %s'%ifile_csv_cpds)
-
-  if ofile:
-    fout=open(ofile,"w+")
-    if not fout: ErrorExit('ERROR: failed to open output file: %s'%ofile)
-  else:
-    fout=sys.stdout
+  fin_graphml = open(args.ifile_graphml, "r") if args.ifile_graphml else None
+  fin_tgts = open(args.ifile_tgts, "r") if args.ifile_tgts else None
+  fin_cpds = open(args.ifile_cpds, "r") if args.ifile_cpds else None
 
   t0=time.time()
 
-  if dtp_annotate_tgts and dtp_annotate_cpds:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    doc = AnnotateDTPathGraphmlTargets(doc,fin_csv_tgts,verbose)
-    doc = AnnotateDTPathGraphmlCompounds(doc,fin_csv_cpds,verbose)
-    GraphmlDocWrite(doc,fout)
+  if args.op=="dtp_annotate":
+    doc = ParseDTPathGraphml(fin_graphml)
+    doc = AnnotateDTPathGraphmlTargets(doc, fin_tgts)
+    doc = AnnotateDTPathGraphmlCompounds(doc, fin_cpds)
+    GraphmlDocWrite(doc, fout)
 
-  elif dtp_annotate_tgts:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    doc = AnnotateDTPathGraphmlTargets(doc,fin_csv_tgts,verbose)
-    GraphmlDocWrite(doc,fout)
+  elif args.op=="dtp_annotate_tgts":
+    doc = ParseDTPathGraphml(fin_graphml)
+    doc = AnnotateDTPathGraphmlTargets(doc, fin_tgts)
+    GraphmlDocWrite(doc, fout)
 
-  elif dtp_annotate_cpds:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    doc = AnnotateDTPathGraphmlCompounds(doc,fin_csv_cpds,verbose)
-    GraphmlDocWrite(doc,fout)
+  elif args.op=="dtp_annotate_cpds":
+    doc = ParseDTPathGraphml(fin_graphml)
+    doc = AnnotateDTPathGraphmlCompounds(doc, fin_cpds)
+    GraphmlDocWrite(doc, fout)
 
-  elif graphml2cids:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    DTPathGraphml2CIDs(doc,fout,verbose)
+  elif args.op=="graphml2cids":
+    doc = ParseDTPathGraphml(fin_graphml)
+    DTPathGraphml2CIDs(doc, fout)
 
-  elif graphml2tids:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    DTPathGraphml2TIDs(doc,fout,verbose)
+  elif args.op=="graphml2tids":
+    doc = ParseDTPathGraphml(fin_graphml)
+    DTPathGraphml2TIDs(doc, fout)
 
-  elif graphmls_merge:
-    doc = MergeDTPathGraphmlsDir(idir_graphml,verbose)
-    GraphmlDocWrite(doc,fout)
+  elif args.op=="graphmls_merge":
+    doc = MergeDTPathGraphmlsDir(idir_graphml)
+    GraphmlDocWrite(doc, fout)
 
-  elif show_node_classes:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    node_classes=ShowNodeClasses(doc,verbose)
+  elif args.op=="show_node_classes":
+    doc = ParseDTPathGraphml(fin_graphml)
+    node_classes=ShowNodeClasses(doc)
 
-  elif show_edge_classes:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    edge_classes=ShowEdgeClasses(doc,verbose)
+  elif args.op=="show_edge_classes":
+    doc = ParseDTPathGraphml(fin_graphml)
+    edge_classes=ShowEdgeClasses(doc)
 
-  elif summary:
-    doc = ParseDTPathGraphml(fin_graphml,verbose)
-    DTPathGraphmlSummary(doc,verbose)
+  elif args.op=="summary":
+    doc = ParseDTPathGraphml(fin_graphml)
+    DTPathGraphmlSummary(doc)
 
   else:
-    ErrorExit('No operation specified.\n%s'%(usage))
+    parser.error("Invalid operation: {0}".format(args.op))
 
-  if verbose>1:
-    print >>sys.stderr, ('%s: elapsed time: %s'%(PROG,time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))))
-
-  if ofile: fout.close()
-
+  logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
