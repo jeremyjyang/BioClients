@@ -61,7 +61,7 @@ to chemical compounds.
 	"get_id2rxcui",
 	"get_rxcui_status", "get_rxcui_properties", "get_rxcui_allproperties",
 	"get_rxcui_ndcs", "get_rxcui_allrelated",
-	"get_classes_atc", "get_classes_mesh", "get_classes_ndfrt",
+	"get_rxcui_classes",
 	"get_class_members", "get_spellingsuggestions"
 	]
   parser.add_argument("op", choices=ops, help='operation')
@@ -90,6 +90,7 @@ to chemical compounds.
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
   
+  ids=[];
   if args.ifile:
     fin = open(args.ifile)
     while True:
@@ -159,6 +160,9 @@ to chemical compounds.
 
   elif args.op == 'get_rxcui_allrelated':
     rxnorm.Utils.Get_RxCUI_AllRelated(BASE_URL, ids, fout)
+
+  elif args.op == "get_rxcui_classes":
+    rxnorm.Utils.Get_RxCUI_Classes(BASE_URL, ids, fout)
 
   elif args.op == 'get_class_members':
     rxnorm.Utils.Get_Class_Members(BASE_URL, ids, fout)

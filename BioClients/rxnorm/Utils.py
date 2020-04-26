@@ -213,6 +213,14 @@ def Get_RxCUI_NDCs(base_url, ids, fout):
   logging.info("n_out: %d"%(n_out))
 
 #############################################################################
+def Get_RxCUI_Classes(base_url, ids, fout):
+  n_out=0;
+  tags = ["classId", "classType", "className" ]
+  for rxcui in ids:
+    rval = rest_utils.GetURL(base_url+'/rxcui/%s/classes.json'%rxcui, parse_json=True)
+    logging.debug(json.dumps(rval, indent=4))
+
+#############################################################################
 def Get_Class_Members(base_url, class_id, rel_src, fout):
   n_out=0;
   url = (base_url+'/rxclass/%s/classMembers.json?classId=%s&relaSource=%s'%(class_id, rel_src))
