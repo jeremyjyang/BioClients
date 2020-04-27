@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-##############################################################################
-### DEPRECATED: Should use package https://github.com/chembl/chembl_webresource_client.
-##############################################################################
-### unichem_query.py - command line utility for UniChem REST API.
-### See: https://www.ebi.ac.uk/unichem/info/webservices
-##############################################################################
-### Source IDs:
-### 1: ChEMBL
-### 7: ChEBI
-### 15: SureChEMBL
-### 22: PubChem
-##############################################################################
+"""
+unichem_query.py - command line utility for UniChem REST API.
+See: https://www.ebi.ac.uk/unichem/info/webservices
+
+Source IDs:
+1: ChEMBL
+7: ChEBI
+15: SureChEMBL
+22: PubChem
+"""
 import sys,os,re,argparse,time,logging,json
 
 from ..util import rest_utils
