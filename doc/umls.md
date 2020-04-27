@@ -2,6 +2,10 @@
 
 ##  UMLS
 
+### Dependencies
+
+* Python packages: `lxml`, `pyyaml`, `pyquery` 
+
 UMLS REST API client
 UTS = UMLS Technology Services
 
