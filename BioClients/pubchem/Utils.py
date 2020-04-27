@@ -96,10 +96,10 @@ def GetSmiles2CID(base_url, smis, fout):
   for smi in smis:
     name = re.sub(r'^[\S]+\s', '', smi) if re.search(r'^[\S]+\s', smi) else ""
     smi = re.sub(r'\s.*$', '', smi)
-    rval = rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi), parse_json=True)
+    rval = rest_utils.GetURL(base_url+'/compound/smiles/%s/cids/JSON'%urllib.parse.quote(smi, ''), parse_json=True)
     cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
     for cid in cids:
-      fout.write("%s\t%s\n"%(cid, smi, name))
+      fout.write("%s\t%s\t%s\n"%(cid, smi, name))
       n_out+=1
   logging.info('SMIs: %d; CIDs out: %d'%(len(smis), n_out))
 
