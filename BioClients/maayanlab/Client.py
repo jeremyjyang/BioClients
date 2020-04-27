@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-See: https://api.jensenlab.org/About
+See: http://amp.pharm.mssm.edu/Harmonizome/documentation
 """
 ###
 import sys,os,re,argparse,time,json,logging
 #
 from ..util import rest_utils
-from .. import jensenlab
+from .. import maayanlab
 #
-API_HOST='api.jensenlab.org'
-API_BASE_PATH=''
 #
 ##############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description='JensenLab REST API client')
-  ops = ['get_disease_genes', 'get_comention_genes' ]
+  API_HOST='amp.pharm.mssm.edu'
+  API_BASE_PATH='/Harmonizome/api/1.0'
+  parser = argparse.ArgumentParser(description='MaayanLab Harmonizome REST API client')
+  ops = [ 'get_gene', 'get_gene_associations' ]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input IDs")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
@@ -34,9 +34,9 @@ if __name__=='__main__':
 
   ids=[];
   if args.ifile:
-    fin=open(args.ifile)
+    fin = open(args.ifile)
     while True:
-      line=fin.readline()
+      line = fin.readline()
       if not line: break
       if line.rstrip(): ids.append(line.rstrip())
     fin.close()
@@ -44,11 +44,11 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
   logging.info('Input queries: %d'%(len(ids)))
 
-  if args.op == "get_disease_genes":
-    jensenlab.Utils.GetDiseaseGenes(base_url, ids, fout)
+  if args.op == "get_gene":
+    maayanlab.Utils.GetGene(base_url, ids, fout)
 
-  elif args.op == "get_comention_genes":
-    jensenlab.Utils.GetPubmedComentionGenes(base_url, ids, fout)
+  elif args.op == "get_gene_associations":
+    maayanlab.Utils.GetGeneAssociations(base_url, ids, fout)
 
   else:
     parser.error("Invalid operation: %s"%args.op)
