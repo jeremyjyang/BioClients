@@ -66,13 +66,14 @@ if __name__=='__main__':
 	"get_mol",
 	"get_mol_by_inchikey",
 	"get_target",
+	"get_target_components",
 	"get_target_by_uniprot",
 	"get_assay",
 	"get_activity_by_mol",
 	"get_activity_by_assay",
 	"get_activity_by_target",
 	"get_activity_properties",
-	"get_doc"]
+	"get_document"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="input IDs (e.g. mol, assay, target, document)")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
@@ -174,10 +175,13 @@ if __name__=='__main__':
   elif args.op == "get_target":
     chembl.Utils.GetTarget(base_url, ids, fout)
 
+  elif args.op == "get_target_components":
+    chembl.Utils.GetTargetComponents(base_url, ids, fout)
+
   elif args.op == "get_target_by_uniprot":
     chembl.Utils.GetTargetByUniprot(base_url, ids, fout)
 
-  elif args.op == "get_doc":
+  elif args.op == "get_document":
     chembl.Utils.GetDocument(base_url, ids, fout)
 
   elif args.op == "search_mols_by_name":

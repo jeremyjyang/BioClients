@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Utility functions for ChEMBL REST API.
-See: https://www.ebi.ac.uk/chembldb/index.php/ws
+https://chembl.gitbook.io/chembl-interface-documentation/web-services/chembl-data-web-services
+http://chembl.blogspot.com/2015/02/using-new-chembl-web-services.html
 """
 ###
 import sys,os,re,json,urllib.parse,logging
@@ -53,9 +54,10 @@ def GetActivity(api_host, api_base_path, ids, resource, pmin, fout):
         n_act+=1
         if not tags:
           tags = list(act.keys())
-          if type(tgt[tag]) in (dict, list, tuple):
-            tags.remove(tag)
-            logging.info('Ignoring field (%s): "%s"'%(type(tgt[tag]), tag))
+          for tag in tags[:]:
+            if type(act[tag]) in (dict, list, tuple):
+              tags.remove(tag)
+              logging.info('Ignoring field (%s): "%s"'%(type(act[tag]), tag))
           fout.write('\t'.join(tags)+'\n')
         vals = [(str(act[tag]) if tag in act else '') for tag in tags]
         if pmin is not None:
@@ -171,6 +173,33 @@ def GetTarget(base_url, ids, fout):
   logging.info('n_qry: %d; n_targets: %d; n_target_components: %d; n_out: %d'%(len(ids), n_tgt, n_cmt, n_out))
 
 #############################################################################
+def GetTargetComponents(base_url, ids, fout):
+  n_tgt=0; n_out=0; tags=[]; cmt_tags=[];
+  for id_this in ids:
+    tgt = rest_utils.GetURL(base_url+'/target/%s.json'%id_this, parse_json=True)
+    if not tgt: continue
+    n_tgt+=1
+    vals = [str(tgt[tag]) if tag in tgt else '' for tag in tags]
+    cmts = tgt['target_components'] if 'target_components' in tgt and tgt['target_components'] else []
+    if not cmts: continue
+    for cmt in cmts:
+      logging.debug(json.dumps(cmt, indent=2))
+      if not tags:
+        for tag in tgt.keys():
+          if type(tgt[tag]) not in (dict, list, tuple):
+            tags.append(tag)
+        for tag in cmt.keys():
+          if type(cmt[tag]) not in (dict, list, tuple):
+            cmt_tags.append(tag)
+        fout.write('\t'.join(tags+cmt_tags)+'\n')
+
+      vals = [(str(tgt[tag]) if tag in tgt else '') for tag in tags]+[(str(cmt[tag]) if tag in cmt else '') for tag in cmt_tags]
+
+      fout.write(('\t'.join(vals))+'\n')
+      n_out+=1
+  logging.info('n_qry: %d; n_targets: %d; n_out: %d'%(len(ids), n_tgt, n_out))
+
+#############################################################################
 def GetDocument(base_url, ids, fout):
   n_pmid=0; n_doi=0; n_out=0; tags=None;
   for id_this in ids:
@@ -182,8 +211,8 @@ def GetDocument(base_url, ids, fout):
       tags = list(doc.keys())
       fout.write('\t'.join(tags)+'\n')
     logging.debug(json.dumps(doc, sort_keys=True, indent=2))
-    if 'pubmed_id' in tags and doc[tag]: n_pmid+=1
-    if 'doi' in tags and doc[tag]: n_doi+=1
+    if 'pubmed_id' in tags and doc['pubmed_id']: n_pmid+=1
+    if 'doi' in tags and doc['doi']: n_doi+=1
     vals = [str(doc[tag]) if tag in doc else '' for tag in tags]
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
@@ -592,18 +621,24 @@ def SearchMoleculeByName(base_url, ids, fout):
 
 #############################################################################
 def GetMoleculeByInchikey(base_url, ids, fout):
-  """Requires InChI key, e.g. "QFFGVLORLPOAEC-SNVBAGLBSA-N"."""
-  n_out=0;
-  tags = ['chemblId', 'stdInChiKey', 'smiles', 'molecularFormula', 'species', 'knownDrug', 'preferredCompoundName', 'synonyms', 'molecularWeight' ]
-  fout.write('\t'.join(tags)+'\n')
+  """Requires InChI key, e.g. "GHBOEFUAGSHXPO-XZOTUCIWSA-N"."""
+  n_out=0; tags=[]; struct_tags=[];
   for id_this in ids:
-    mol = rest_utils.GetURL(base_url+'/compounds/stdinchikey/%s.json'%id_this, parse_json=True)
-    if not mol: continue
-    cpd = mol['compound'] if 'compound' in mol else None
-    if not cpd: continue
-    vals = [(str(cpd[tag]) if tag in cpd else '') for tag in tags]
+    mol = rest_utils.GetURL(base_url+'/molecule/%s.json'%id_this, parse_json=True)
+    if not mol:
+      continue
+    struct = mol['molecule_structures'] if 'molecule_structures' in mol else None
+    if not struct: continue
+    if not tags:
+      for tag in mol.keys():
+        if type(mol[tag]) not in (list,dict): tags.append(tag)
+      for tag in struct.keys():
+        if type(struct[tag]) not in (list,dict): struct_tags.append(tag)
+      struct_tags.remove("molfile")
+      fout.write('\t'.join(tags+struct_tags)+'\n')
+    vals = [(str(mol[tag]) if tag in mol else '') for tag in tags]+[(str(struct[tag]) if tag in struct else '') for tag in struct_tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
-  logging.info('n_qry: %d; n_out: %d'%(len(ids), n_out))
+  logging.info('n_qry: %d; n_out: %d; n_not_found: %d'%(len(ids), n_out, len(ids)-n_out))
 
 #############################################################################
