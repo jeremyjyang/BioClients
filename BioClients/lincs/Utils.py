@@ -7,9 +7,9 @@ http://www.ilincs.org/ilincs/APIdocumentation
 (http://lincsportal.ccs.miami.edu/dcic/api/ DEPRECATED?)
 """
 ###
-import sys,os,argparse,re,time,json,logging
+import sys,os,re,json,logging
 #
-from .. import lincs
+from ..util import rest_utils
 #
 #############################################################################
 def GetGene(base_url, ids, fout):
@@ -109,73 +109,3 @@ def GetSignature(base_url, ids, ngene, fout):
   logging.info("IDs: {0}; n_gene: {1}".format(len(ids), n_gene))
 
 #############################################################################
-if __name__=='__main__':
-  API_HOST="www.ilincs.org"
-  API_BASE_PATH="/api"
-  epilog="""\
-Examples:
-NCBI Gene IDs: 207;
-PerturbagenIDs: BRD-A00100033 (get_compound);
-LINCS PertIDs: LSM-2121;
-Perturbagen-Compound IDs: LSM-2421;
-Signature IDs: LINCSCP_10260,LINCSCP_10261,LINCSCP_10262;
-Dataset IDs: EDS-1013,EDS-1014;
-Search Terms: cancer, vorinostat, MCF7.
-"""
-  parser = argparse.ArgumentParser(description='LINCS REST API client (%s)'%(API_HOST), epilog=epilog)
-  ops = ['get_gene', 'get_compound', 'get_dataset',
-	'search_dataset', 'search_signature',
-	'get_signature'
-	]
-  parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--i", dest="ifile", help="input file, IDs")
-  parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--ids", help="input IDs, comma-separated")
-  parser.add_argument("--searchTerm", dest="searchTerm", help="Entity searchTerm e.g. Rock1)")
-  parser.add_argument("--lincs", action="store_true", help="LINCS datasets only")
-  parser.add_argument("--ngene", type=int, default=50, help="top genes per signature")
-  parser.add_argument("--nmax", type=int, help="max results")
-  parser.add_argument("--skip", type=int, help="skip results")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
-  parser.add_argument("-v", "--verbose", action="count", default=0)
-
-  args = parser.parse_args()
-
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
-
-  base_url =' http://'+args.api_host+args.api_base_path
-
-  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
-
-  ids=[];
-  if args.ifile:
-    fin = open(args.ifile)
-    while True:
-      line = fin.readline()
-      if not line: break
-      ids.append(line.strip())
-  elif args.ids:
-    ids = re.split('[,\s]+', args.ids.strip())
-
-  if args.op == 'get_gene':
-    lincs.Utils.GetGene(base_url, ids, fout)
-
-  elif args.op == 'get_compound':
-    lincs.Utils.GetCompound(base_url, ids, fout)
-
-  elif args.op == 'get_dataset':
-    lincs.Utils.GetDataset(base_url, ids, fout)
-
-  elif args.op == 'search_datasets':
-    lincs.Utils.SearchDataset(base_url, args.searchTerm, args.lincs, fout)
-
-  elif args.op == 'search_signatures':
-    lincs.Utils.SearchSignature(base_url, ids, args.lincs, fout)
-
-  elif args.op == 'get_signature':
-    lincs.Utils.GetSignature(base_url, ids, args.ngene, fout)
-
-  else:
-    parser.error('Invalid operation: %s'%args.op)
-
