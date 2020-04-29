@@ -1,4 +1,4 @@
-# `BioClients`
+# `BioClients` <img align="right" src="/doc/images/BioClients_logo.png" height="120">
 
 Python package for access to online biomedical resources,
 usually via REST APIs. Modules generally include
