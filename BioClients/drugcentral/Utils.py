@@ -6,9 +6,9 @@ import os,sys,re,logging
 import psycopg2,psycopg2.extras
 
 #############################################################################
-def Connect(dbhost, dbname, dbusr, dbpw):
+def Connect(dbhost, dbport, dbname, dbusr, dbpw):
   """Connect to db; specify default cursor type DictCursor."""
-  dsn = ("host='%s' dbname='%s' user='%s' password='%s'"%(dbhost, dbname, dbusr, dbpw))
+  dsn = ("host='%s' port='%s' dbname='%s' user='%s' password='%s'"%(dbhost, dbport, dbname, dbusr, dbpw))
   dbcon = psycopg2.connect(dsn)
   dbcon.cursor_factory = psycopg2.extras.DictCursor
   return dbcon

@@ -8,7 +8,7 @@ from .. import drugcentral
 
 #############################################################################
 if __name__=='__main__':
-  DBHOST="localhost"; DBSCHEMA="public"; DBNAME="drugcentral"; 
+  DBHOST="localhost"; DBPORT="5432"; DBSCHEMA="public"; DBNAME="drugcentral"; 
   DBUSR="drugman"; DBPW="dosage"; 
   parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility")
   ops = [
@@ -34,6 +34,7 @@ if __name__=='__main__':
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--dbhost", default=DBHOST)
+  parser.add_argument("--dbport", default=DBPORT)
   parser.add_argument("--dbname", default=DBNAME)
   parser.add_argument("--dbschema", default=DBSCHEMA)
   parser.add_argument("--dbusr", default=DBUSR)
@@ -58,8 +59,9 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    dbcon = drugcentral.Utils.Connect(args.dbhost, args.dbname, args.dbusr, args.dbpw)
+    dbcon = drugcentral.Utils.Connect(args.dbhost, args.dbport, args.dbname, args.dbusr, args.dbpw)
   except Exception as e:
+    logging.error("Connect failed.")
     parser.error("{0}".format(str(e)))
 
   if args.op=='describe':
