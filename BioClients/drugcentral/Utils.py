@@ -39,16 +39,20 @@ def Describe(dbcon, dbschema, fout):
 #############################################################################
 def Counts(dbcon, dbschema, fout):
   '''Listing the table rowcounts.'''
+  n_table=0; n_row=0;
   cur = dbcon.cursor()
   cur.execute(("SELECT table_name FROM information_schema.tables WHERE table_schema = %s ORDER BY table_name"), (dbschema,))
   fout.write("schema\ttable\trowcount\n")
   cur2 = dbcon.cursor()
   for row in cur:
+    n_table+=1
     cur2.execute("SELECT count(*) FROM {0}.{1}".format(dbschema, row[0]))
     row2 = cur2.fetchone()
+    n_row+=row2[0]
     fout.write("\t".join([dbschema, row[0], str(row2[0])])+"\n")
   cur2.close()
   cur.close()
+  logging.info("Totals: tables: {0}; rows: {1}".format(n_table, n_row))
 
 #############################################################################
 def ListStructures(dbcon, dbschema, fout):
