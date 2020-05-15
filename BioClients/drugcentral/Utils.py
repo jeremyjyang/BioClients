@@ -227,6 +227,31 @@ def GetStructureBySynonym(dbcon, ids, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
+def GetStructureIds(dbcon, ids, fout):
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  sql="""\
+SELECT
+	struct_id,
+	id_type,
+	identifier AS id
+FROM
+	identifier
+WHERE 
+	struct_id = %s
+"""
+  for id_this in ids:
+    cur.execute(sql, (id_this,))
+    for row in cur:
+      if not tags:
+        tags = list(row.keys())
+        fout.write("\t".join(tags)+"\n")
+      vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+      fout.write("\t".join(vals)+"\n")
+      n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
 def GetStructureProducts(dbcon, ids, fout):
   n_out=0; tags=None;
   cur = dbcon.cursor()

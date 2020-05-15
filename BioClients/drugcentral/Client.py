@@ -16,6 +16,7 @@ if __name__=='__main__':
 	"get_structure",
 	"get_structure_by_synonym",
 	"get_structure_by_indication",
+	"get_structure_ids",
 	"get_structure_products",
 	"get_product",
 	"get_product_structures",
@@ -101,6 +102,9 @@ if __name__=='__main__':
 
   elif args.op=='get_structure_by_synonym':
     drugcentral.Utils.GetStructureBySynonym(dbcon, ids, fout)
+
+  elif args.op=='get_structure_ids':
+    drugcentral.Utils.GetStructureIds(dbcon, ids, fout)
 
   elif args.op=='get_structure_products':
     drugcentral.Utils.GetStructureProducts(dbcon, ids, fout)
