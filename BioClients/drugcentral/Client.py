@@ -2,14 +2,12 @@
 """
 DrugCentral PostgreSql db client.
 """
-import os,sys,argparse,re,time,logging
+import os,sys,argparse,re,time,yaml,logging
 
 from .. import drugcentral
 
 #############################################################################
 if __name__=='__main__':
-  DBHOST="localhost"; DBPORT="5432"; DBSCHEMA="public"; DBNAME="drugcentral"; 
-  DBUSR="drugman"; DBPW="dosage"; 
   parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility")
   ops = [
 	"describe",
@@ -33,16 +31,29 @@ if __name__=='__main__':
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--dbhost", default=DBHOST)
-  parser.add_argument("--dbport", default=DBPORT)
-  parser.add_argument("--dbname", default=DBNAME)
-  parser.add_argument("--dbschema", default=DBSCHEMA)
-  parser.add_argument("--dbusr", default=DBUSR)
-  parser.add_argument("--dbpw", default=DBPW)
+  parser.add_argument("--dbhost")
+  parser.add_argument("--dbport")
+  parser.add_argument("--dbname")
+  parser.add_argument("--dbusr")
+  parser.add_argument("--dbpw")
+  parser.add_argument("--param_file", default=os.environ['HOME']+"/.drugcentral.yaml")
+  parser.add_argument("--dbschema", default="public")
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+
+
+  params={};
+  with open(args.param_file, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  if args.dbhost: params['DBHOST'] = args.dbhost 
+  if args.dbport: params['DBPORT'] = args.dbport 
+  if args.dbname: params['DBNAME'] = args.dbname 
+  if args.dbusr: params['DBUSR'] = args.dbusr 
+  if args.dbpw: params['DBPW'] = args.dbpw 
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
@@ -59,7 +70,7 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    dbcon = drugcentral.Utils.Connect(args.dbhost, args.dbport, args.dbname, args.dbusr, args.dbpw)
+    dbcon = drugcentral.Utils.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
   except Exception as e:
     logging.error("Connect failed.")
     parser.error("{0}".format(str(e)))
