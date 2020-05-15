@@ -8,7 +8,7 @@ from .. import drugcentral
 
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility")
+  parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility", epilog="Search via --ids as regular expressions, e.g.  \"^Alzheimer\"")
   ops = [
 	"describe",
 	"counts",

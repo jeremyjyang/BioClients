@@ -147,7 +147,7 @@ JOIN
 	structures s ON omop.struct_id = s.id
 WHERE
 	omop.relationship_name = 'indication'
-	AND (omop.concept_name SIMILAR TO '{0}' OR omop.snomed_full_name SIMILAR TO '{0}')
+	AND (omop.concept_name ~* '{0}' OR omop.snomed_full_name ~* '{0}')
 """.format(term)
     cur.execute(sql)
     for row in cur:
