@@ -23,7 +23,7 @@ usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE] [--dbhost DBHOST]
                  [--dbport DBPORT] [--dbname DBNAME] [--dbusr DBUSR]
                  [--dbpw DBPW] [--param_file PARAM_FILE] [--dbschema DBSCHEMA]
                  [-v]
-                 {describe,counts,version,get_structure,get_structure_by_synonym,get_structure_by_indication,get_structure_ids,get_structure_products,get_product,get_product_structures,get_indication_structures,list_products,list_structures,list_active_ingredients,list_indications,search_indications,search_products}
+                 {describe,counts,version,get_structure,get_structure_by_synonym,get_structure_by_indication,get_structure_ids,get_structure_products,get_product,get_product_structures,get_indication_structures,list_products,list_structures,list_structures2smiles,list_structures2molfile,list_active_ingredients,list_indications,search_indications,search_products}
 
 DrugCentral PostgreSql client utility
 
