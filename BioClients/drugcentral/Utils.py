@@ -71,6 +71,31 @@ def ListStructures(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
+def ListStructures2Smiles(dbcon, dbschema, fout):
+  n_out=0; 
+  cur = dbcon.cursor()
+  cur.execute("SELECT smiles, id, name FROM {0}.structures WHERE smiles IS NOT NULL".format(dbschema))
+  for row in cur:
+    vals = [row["smiles"], str(row["id"]), row["name"]]
+    fout.write("\t".join(vals)+"\n")
+    n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
+def ListStructures2Molfile(dbcon, dbschema, fout):
+  n_out=0;
+  cur = dbcon.cursor()
+  cur.execute("SELECT molfile, id, name FROM {0}.structures WHERE molfile IS NOT NULL".format(dbschema))
+  for row in cur:
+    molfile = re.sub(r'^[\s]*\n', str(row["id"])+"\n", row["molfile"])
+    fout.write(molfile)
+    fout.write("> <DRUGCENTRAL_STRUCT_ID>\n"+str(row["id"])+"\n\n")
+    fout.write("> <NAME>\n"+row["name"]+"\n\n")
+    fout.write("$$$$\n")
+    n_out+=1
+  logging.info("n_out: {0}".format(n_out))
+
+#############################################################################
 def ListProducts(dbcon, dbschema, fout):
   n_out=0; tags=None;
   cur = dbcon.cursor()

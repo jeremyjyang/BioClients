@@ -23,6 +23,8 @@ if __name__=='__main__':
 	"get_indication_structures",
 	"list_products",
 	"list_structures",
+	"list_structures2smiles",
+	"list_structures2molfile",
 	"list_active_ingredients",
 	"list_indications",
 	"search_indications",
@@ -87,6 +89,12 @@ if __name__=='__main__':
 
   elif args.op=='list_structures':
     drugcentral.Utils.ListStructures(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_structures2smiles':
+    drugcentral.Utils.ListStructures2Smiles(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_structures2molfile':
+    drugcentral.Utils.ListStructures2Molfile(dbcon, args.dbschema, fout)
 
   elif args.op=='list_products':
     drugcentral.Utils.ListProducts(dbcon, args.dbschema, fout)
