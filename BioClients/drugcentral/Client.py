@@ -89,7 +89,9 @@ if __name__=='__main__':
     drugcentral.Utils.Version(dbcon, args.dbschema, fout)
 
   elif args.op=='list_structures':
-    drugcentral.Utils.ListStructures(dbcon, args.dbschema, fout)
+    #drugcentral.Utils.ListStructures(dbcon, args.dbschema, fout)
+    df = drugcentral.Utils.ListStructures(dbcon, args.dbschema)
+    logging.debug("df.shape[0] = {}".format(df.shape[0]))
 
   elif args.op=='list_structures2smiles':
     drugcentral.Utils.ListStructures2Smiles(dbcon, args.dbschema, fout)

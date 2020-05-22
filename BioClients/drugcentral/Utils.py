@@ -3,6 +3,7 @@
 DrugCentral db utility functions.
 """
 import os,sys,re,logging
+import pandas,pandas.io.sql
 import psycopg2,psycopg2.extras
 
 #############################################################################
@@ -14,20 +15,24 @@ def Connect(dbhost, dbport, dbname, dbusr, dbpw):
   return dbcon
 
 #############################################################################
-def Version(dbcon, dbschema, fout):
+def Version(dbcon, dbschema="public", fout=None):
+  sql = ("SELECT * FROM {0}.dbversion".format(dbschema))
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   cur = dbcon.cursor()
-  cur.execute("SELECT * FROM {0}.dbversion".format(dbschema))
+  cur.execute(sql)
   row = cur.fetchone()
   tags = list(row.keys())
   fout.write("\t".join(tags)+"\n")
   fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
 
 #############################################################################
-def MetaListdbs(dbcon, fout):
+def MetaListdbs(dbcon, fout=None):
   """Pg meta-command: list dbs from pg_database."""
+  sql = ("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   tags=None;
   cur = dbcon.cursor()
-  cur.execute("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
+  cur.execute(sql)
   for row in cur:
     if not tags:
       tags = list(row.keys())
@@ -35,7 +40,7 @@ def MetaListdbs(dbcon, fout):
     fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
 
 #############################################################################
-def Describe(dbcon, dbschema, fout):
+def Describe(dbcon, dbschema="public", fout=None):
   '''Describing the schema.'''
   cur = dbcon.cursor()
   cur.execute(("SELECT table_name FROM information_schema.tables WHERE table_schema = %s"), (dbschema,))
@@ -49,7 +54,7 @@ def Describe(dbcon, dbschema, fout):
   cur.close()
 
 #############################################################################
-def Counts(dbcon, dbschema, fout):
+def Counts(dbcon, dbschema="public", fout=None):
   '''Listing the table rowcounts.'''
   n_table=0; n_row=0;
   cur = dbcon.cursor()
@@ -67,26 +72,28 @@ def Counts(dbcon, dbschema, fout):
   logging.info("Totals: tables: {0}; rows: {1}".format(n_table, n_row))
 
 #############################################################################
-def ListStructures(dbcon, dbschema, fout):
+def ListStructures(dbcon, dbschema="public", fout=None):
+  sql = ("SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM {}.structures".format(dbschema))
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
-  cur.execute("SELECT * FROM {0}.structures".format(dbschema))
+  cur.execute(sql)
   for row in cur:
     if not tags:
       tags = list(row.keys())
-      tags.remove("molfile")
-      tags.remove("molimg")
       fout.write("\t".join(tags)+"\n")
     vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
     fout.write("\t".join(vals)+"\n")
     n_out+=1
-  logging.info("n_out: {0}".format(n_out))
+  logging.info("n_out: {}".format(n_out))
 
 #############################################################################
-def ListStructures2Smiles(dbcon, dbschema, fout):
+def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
+  sql = ("SELECT smiles, id, name FROM {0}.structures WHERE smiles IS NOT NULL".format(dbschema))
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; 
   cur = dbcon.cursor()
-  cur.execute("SELECT smiles, id, name FROM {0}.structures WHERE smiles IS NOT NULL".format(dbschema))
+  cur.execute(sql)
   for row in cur:
     vals = [row["smiles"], str(row["id"]), row["name"]]
     fout.write("\t".join(vals)+"\n")
@@ -94,7 +101,7 @@ def ListStructures2Smiles(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def ListStructures2Molfile(dbcon, dbschema, fout):
+def ListStructures2Molfile(dbcon, dbschema="public", fout=None):
   n_out=0;
   cur = dbcon.cursor()
   cur.execute("SELECT molfile, id, name FROM {0}.structures WHERE molfile IS NOT NULL".format(dbschema))
@@ -108,10 +115,12 @@ def ListStructures2Molfile(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def ListProducts(dbcon, dbschema, fout):
+def ListProducts(dbcon, dbschema="public", fout=None):
+  sql = ("SELECT * FROM {0}.product".format(dbschema))
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
-  cur.execute("SELECT * FROM {0}.product".format(dbschema))
+  cur.execute(sql)
   for row in cur:
     if not tags:
       tags = list(row.keys())
@@ -122,10 +131,12 @@ def ListProducts(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def ListActiveIngredients(dbcon, dbschema, fout):
+def ListActiveIngredients(dbcon, dbschema="public", fout=None):
+  sql = ("SELECT * FROM {0}.active_ingredient".format(dbschema))
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
-  cur.execute("SELECT * FROM {0}.active_ingredient".format(dbschema))
+  cur.execute(sql)
   for row in cur:
     if not tags:
       tags = list(row.keys())
@@ -136,9 +147,7 @@ def ListActiveIngredients(dbcon, dbschema, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def ListIndications(dbcon, fout):
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
+def ListIndications(dbcon, fout=None):
   sql="""\
 SELECT DISTINCT
 	omop.concept_id omop_concept_id,
@@ -154,6 +163,9 @@ JOIN
 WHERE
 	omop.relationship_name = 'indication'
 """
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
   cur.execute(sql)
   for row in cur:
     if not tags:
@@ -165,7 +177,7 @@ WHERE
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def SearchIndications(dbcon, terms, fout):
+def SearchIndications(dbcon, terms, fout=None):
   """Search names via Pg regular expression (SIMILAR TO)."""
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -197,7 +209,7 @@ WHERE
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetIndicationStructures(dbcon, ids, fout):
+def GetIndicationStructures(dbcon, ids, fout=None):
   """Input OMOP conceptIds."""
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -232,7 +244,7 @@ WHERE
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetStructure(dbcon, ids, fout):
+def GetStructure(dbcon, ids, fout=None):
   n_out=0; tags=None;
   cur = dbcon.cursor()
   for id_this in ids:
@@ -249,7 +261,7 @@ def GetStructure(dbcon, ids, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetStructureBySynonym(dbcon, ids, fout):
+def GetStructureBySynonym(dbcon, ids, fout=None):
   n_out=0; tags=None;
   cur = dbcon.cursor()
   for id_this in ids:
@@ -264,7 +276,7 @@ def GetStructureBySynonym(dbcon, ids, fout):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetStructureIds(dbcon, ids, fout):
+def GetStructureIds(dbcon, ids, fout=None):
   n_out=0; tags=None;
   cur = dbcon.cursor()
   sql="""\
@@ -289,7 +301,7 @@ WHERE
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetStructureProducts(dbcon, ids, fout):
+def GetStructureProducts(dbcon, ids, fout=None):
   n_out=0; tags=None;
   cur = dbcon.cursor()
   sql="""\
@@ -327,7 +339,7 @@ WHERE
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
-def GetProductStructures(dbcon, ids, fout):
+def GetProductStructures(dbcon, ids, fout=None):
   n_out=0; tags=None;
   cur = dbcon.cursor()
   sql="""\
