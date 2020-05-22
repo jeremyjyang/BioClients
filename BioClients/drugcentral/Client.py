@@ -48,11 +48,7 @@ if __name__=='__main__':
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
 
-  params={};
-  with open(args.param_file, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
+  params = drugcentral.ReadParamFile(args.param_file)
   if args.dbhost: params['DBHOST'] = args.dbhost 
   if args.dbport: params['DBPORT'] = args.dbport 
   if args.dbname: params['DBNAME'] = args.dbname 
