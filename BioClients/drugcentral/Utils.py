@@ -23,6 +23,18 @@ def Version(dbcon, dbschema, fout):
   fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
 
 #############################################################################
+def MetaListdbs(dbcon, fout):
+  """Pg meta-command: list dbs from pg_database."""
+  tags=None;
+  cur = dbcon.cursor()
+  cur.execute("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
+  for row in cur:
+    if not tags:
+      tags = list(row.keys())
+      fout.write("\t".join(tags)+"\n")
+    fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
+
+#############################################################################
 def Describe(dbcon, dbschema, fout):
   '''Describing the schema.'''
   cur = dbcon.cursor()

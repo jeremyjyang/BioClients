@@ -28,7 +28,8 @@ if __name__=='__main__':
 	"list_active_ingredients",
 	"list_indications",
 	"search_indications",
-	"search_products"
+	"search_products",
+	"meta_listdbs"
 	]
   parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input ID file")
@@ -128,6 +129,9 @@ if __name__=='__main__':
 
   elif args.op=='get_indication_structures':
     drugcentral.Utils.GetIndicationStructures(dbcon, ids, fout)
+
+  elif args.op=='meta_listdbs':
+    drugcentral.Utils.MetaListdbs(dbcon, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))
