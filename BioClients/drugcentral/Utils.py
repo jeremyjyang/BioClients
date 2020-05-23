@@ -219,8 +219,12 @@ SELECT
 	ddi.drug_class1,
 	ddi.drug_class2,
 	ddi.source_id,
+	drug_class1.id drug_class_id1,
 	drug_class1.source source1,
-	drug_class2.source source2
+	drug_class1.is_group is_group1,
+	drug_class2.id drug_class_id2,
+	drug_class2.source source2,
+	drug_class2.is_group is_group2
 FROM
 	ddi
 JOIN drug_class drug_class1 ON drug_class1.name = ddi.drug_class1
