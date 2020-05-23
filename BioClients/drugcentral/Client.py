@@ -27,6 +27,7 @@ if __name__=='__main__':
 	"list_structures2molfile",
 	"list_active_ingredients",
 	"list_indications",
+	"list_ddis",
 	"search_indications",
 	"search_products",
 	"meta_listdbs"
@@ -103,6 +104,9 @@ if __name__=='__main__':
 
   elif args.op=='list_indications':
     drugcentral.Utils.ListIndications(dbcon, fout)
+
+  elif args.op=='list_ddis':
+    drugcentral.Utils.ListDrugdruginteractions(dbcon, fout)
 
   elif args.op=='get_structure':
     drugcentral.Utils.GetStructure(dbcon, ids, fout)

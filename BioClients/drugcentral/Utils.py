@@ -212,6 +212,34 @@ WHERE
   logging.info("n_out: {}".format(n_out))
 
 #############################################################################
+def ListDrugdruginteractions(dbcon, fout=None):
+  sql="""\
+SELECT
+	ddi.id AS ddi_id,
+	ddi.drug_class1,
+	ddi.drug_class2,
+	ddi.source_id,
+	drug_class1.source source1,
+	drug_class2.source source2
+FROM
+	ddi
+JOIN drug_class drug_class1 ON drug_class1.name = ddi.drug_class1
+JOIN drug_class drug_class2 ON drug_class2.name = ddi.drug_class2
+"""
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  cur.execute(sql)
+  for row in cur:
+    if not tags:
+      tags = list(row.keys())
+      fout.write("\t".join(tags)+"\n")
+    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+    fout.write("\t".join(vals)+"\n")
+    n_out+=1
+  logging.info("n_out: {}".format(n_out))
+
+#############################################################################
 def SearchIndications(dbcon, terms, fout=None):
   """Search names via Pg regular expression (SIMILAR TO)."""
   n_out=0; tags=None; df_out=None;
