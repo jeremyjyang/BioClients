@@ -26,7 +26,7 @@ $ python3 setup.py install
 ## Dependencies
 
 * Python 3.6+
-* Python packages: `pandas`, `requests`, `urllib`, `json`, `xml`, etc.
+* Python packages: `pandas`, `requests`, `urllib`, `json`, `xml`, `yaml`, `psycopg2`,  `tqdm`, etc.
 
 ## Modules
 
@@ -46,7 +46,7 @@ and CSV/TSV are likewise simple in many respects, yet a great deal
 of conceptual and technological progress is reflected. XML and JSON
 can represent arbitrarily complex data objects, comprised of nested lists,
 dictionaries, and trees of primary types. CSV/TSV represents tables of
-rows and columns, the relational db view, flattened as needed for many
-applications (e.g. ML) but related by common keys. Transforming REST JSON
-results to CSV/TSV, as these clients generally do, projects data structures
-to tables useful for many applications.
+rows and columns, related by common keys, reflecting the development
+of SQL and relational databases. Transforming JSON to CSV/TSV, as these
+clients generally do, projects data objects to tables useful for many
+applications (e.g. machine learning).

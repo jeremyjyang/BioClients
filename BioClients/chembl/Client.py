@@ -106,7 +106,7 @@ if __name__=='__main__':
     fin.close()
   elif args.ids:
     ids = re.split('[, ]+', args.ids.strip())
-  logging.info('Input IDs: %d'%(len(ids)))
+  if len(ids)>0: logging.info('Input IDs: %d'%(len(ids)))
 
   if args.op[:3]=="get" and not (args.ifile or args.ids):
     parser.error('--i or --ids required for operation {0}.'.format(args.op))
