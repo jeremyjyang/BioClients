@@ -4,10 +4,19 @@ Utility functions for BioGRID REST API.
 See: http://wiki.thebiogrid.org/doku.php/biogridrest
 """
 ###
-import sys,os,re,json,time,logging
+import sys,os,re,json,time,logging,yaml
 #
 from ..util import rest_utils
 #
+##############################################################################
+def ReadParamFile(fparam):
+  params={};
+  with open(fparam, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  return params
+
 ##############################################################################
 def ListOrganisms(base_url, params, fout):
   n_all=0; n_out=0; n_err=0;

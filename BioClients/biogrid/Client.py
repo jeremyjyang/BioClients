@@ -56,13 +56,8 @@ if __name__=='__main__':
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
-  params={};
-  with open(args.param_file, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
-  if args.api_key:
-    params['API_KEY'] = args.api_key
+  params = biogrid.ReadParamFile(args.param_file)
+  if args.api_key: params['API_KEY'] = args.api_key
 
   search_params = {
 	'inc_interspecies': args.inc_interspecies,

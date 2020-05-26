@@ -2,7 +2,7 @@
 """
 DrugCentral PostgreSql db client.
 """
-import os,sys,argparse,re,time,yaml,logging
+import os,sys,argparse,re,time,logging
 
 from .. import drugcentral
 

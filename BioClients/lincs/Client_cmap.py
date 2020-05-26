@@ -24,6 +24,15 @@ from ..util import rest_utils
 N_CHUNK=200
 
 #############################################################################
+def ReadParamFile(fparam):
+  params={};
+  with open(fparam, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  return params
+
+#############################################################################
 def ListDatatypes(base_url, params):
   headers = {"Accept":"application/json", "user_key":params['user_key']}
   url = (base_url+'/dataTypes')
@@ -347,21 +356,13 @@ Credentials config file should be at $HOME/.clueapi.yaml.
 
   args = parser.parse_args()
 
-  with open(args.param_file, 'r') as fh:
-    params = {}
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
+  params = ReadParamFile(args.param_file)
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   base_url = 'https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, "w+")
-    if not fout: parser.error('Cannot open: %s'%args.ofile)
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
   if args.ifile:
     fin = open(args.ifile)

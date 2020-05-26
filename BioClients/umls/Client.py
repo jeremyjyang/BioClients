@@ -92,24 +92,15 @@ if __name__=='__main__':
 
   base_url='https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, "w+")
-    if not fout: parser.error('Cannot open: %s'%args.ofile)
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
-  params={};
-  if os.path.exists(args.param_file):
-    with open(args.param_file, 'r') as fh:
-      for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-        for k,v in param.items():
-          params[k] = v
-  api_key = args.api_key if args.api_key else params['API_KEY'] if 'API_KEY' in params else ''
-  if not api_key:
+  params = umls.ReadParamFile(args.param_file)
+  if args.api_key: params['API_KEY'] = args.api_key
+  if not params['API_KEY']:
     parser.error('Please specify valid API_KEY via --api_key or --param_file') 
 
   api_auth_url = 'https://'+args.api_auth_host+args.api_auth_endpoint
-  auth = umls.Utils.Authentication(api_key, args.api_auth_service, api_auth_url, API_HEADERS)
+  auth = umls.Utils.Authentication(params['API_KEY'], args.api_auth_service, api_auth_url, API_HEADERS)
   auth.setVerbosity(args.verbose)
 
   ids=[];

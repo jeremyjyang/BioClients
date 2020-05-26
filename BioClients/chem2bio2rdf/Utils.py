@@ -43,8 +43,17 @@ Problems with c2b2r:
 
 """
 ###
-import os,sys,re,time,math,logging
+import os,sys,re,time,math,logging,yaml
 import psycopg2,psycopg2.extras
+
+#############################################################################
+def ReadParamFile(fparam):
+  params={};
+  with open(fparam, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  return params
 
 #############################################################################
 def Connect(dbhost, dbname, dbusr, dbpw):
@@ -108,7 +117,7 @@ def DescribeSchema(dbcon, dbschema, substr):
   logging.info("table count: %d"%n_table)
 
 #############################################################################
-def DescribeCounts(dbcon, dbschema):
+def DescribeCounts(dbcon, dbschema="public"):
   '''Return human readable text listing the table rowcounts.'''
   cur=dbcon.cursor()
   sql=("SELECT table_name FROM information_schema.tables WHERE table_schema='%s' AND table_name ILIKE '%%c2b2r_%%' ORDER BY table_name"%dbschema)

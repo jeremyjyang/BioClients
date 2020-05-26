@@ -24,17 +24,16 @@ Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 """
 ###
 import sys,os,os.path,time,argparse,logging,hashlib
-import string,re,json,yaml
+import string,re,json
 
 from .. import brenda
 
-API_HOST = "www.brenda-enzymes.org"
-API_BASE_PATH = "/soap"
-
-API_WSDL_URL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
-
 #############################################################################
 if __name__=='__main__':
+  API_HOST = "www.brenda-enzymes.org"
+  API_BASE_PATH = "/soap"
+  API_WSDL_URL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
+
   epilog='''\
 OPERATIONS:
     get = get record;
@@ -94,14 +93,9 @@ Example Organisms:
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
-  params={};
-  if os.path.exists(args.param_file):
-    with open(args.param_file, 'r') as fh:
-      for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-        for k,v in param.items():
-          params[k] = v
-  api_user = args.api_user if args.api_user else params['user_name'] if 'user_name' in params else ''
-  api_key = args.api_key if args.api_key else params['user_key'] if 'user_key' in params else ''
+  params = drugcentral.ReadParamFile(args.param_file)
+  if args.api_user: params['user_name'] = args.api_user
+  if args.api_key: params['user_key'] = args.api_key
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
@@ -112,15 +106,12 @@ Example Organisms:
   if not CLIENT:
     logging.error("SOAP Client instantiation failed.")
 
-  password = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
-  API_PARAMS = [api_user, password]
+  password = hashlib.sha256(params['user_key'].encode("utf-8")).hexdigest()
+  API_PARAMS = [params['user_name'], password]
 
   organism = None if args.organism.lower()=='all' else args.organism
 
-  if args.ofile:
-    fout = open(ofile, "w")
-  else:
-    fout = sys.stdout
+  fout = open(ofile, "w") if args.ofile else sys.stdout
 
   ecns=[]
   if args.ifile:

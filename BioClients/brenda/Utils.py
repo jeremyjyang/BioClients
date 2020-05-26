@@ -24,9 +24,18 @@ Ref:	BRENDA in 2015: exciting developments in its 25th year of existence.
 Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 '''
 #############################################################################
-import sys,os,time,string,re,json,logging,zeep
+import sys,os,time,string,re,json,logging,zeep,yaml
 
 from ..util import rest_utils
+
+#############################################################################
+def ReadParamFile(fparam):
+  params={};
+  with open(fparam, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  return params
 
 #############################################################################
 def SoapAPIClient(wsdl_url):

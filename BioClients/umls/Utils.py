@@ -108,6 +108,15 @@ UMLS_COMMON_FIELDS=['classType','name','ui','atomCount','definitions','atoms','d
 UMLS_OPTIONAL_FIELDS=['parents','children','relations','descendants']
 #
 #############################################################################
+def ReadParamFile(fparam):
+  params={};
+  with open(fparam, 'r') as fh:
+    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
+      for k,v in param.items():
+        params[k] = v
+  return params
+
+#############################################################################
 class Authentication:
   def __init__(self, apikey, service, url, headers):
     self.apikey=apikey
