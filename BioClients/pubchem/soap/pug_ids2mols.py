@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 '''
-Retrieve compounds by SID or CID from PubChem/PUG.
-(Supercedes pug_sids2mols.py, pug_cids2mols.py.)
-
-Jeremy J Yang
+Retrieve compounds by SID or CID from PubChem/PUG (circa 2010).
 '''
 import sys,os,re,urllib,time,getopt,tempfile
 import pug_utils

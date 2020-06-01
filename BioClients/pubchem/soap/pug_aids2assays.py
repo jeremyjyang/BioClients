@@ -1,13 +1,7 @@
 #!/usr/bin/env python
-#############################################################################
-### pug_aids2assays.py - retrieve bioassays by AID from PubChem/PUG
-### 
-### to do:
-###   [ ] --sids ... selected sids
-### 
-### Jeremy J Yang
-###  2 Nov 2011
-#############################################################################
+"""
+pug_aids2assays.py - retrieve bioassays by AID from PubChem/PUG (circa 2010)
+"""
 import sys,os,re,urllib,time,getopt,tempfile,gzip
 import pug_utils
 

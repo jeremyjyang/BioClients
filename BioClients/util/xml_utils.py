@@ -11,7 +11,7 @@ from xml.parsers import expat
 #############################################################################
 def DOM_NodeText(node):
   #logging.info('DEBUG: type(node) = %s'%str(type(node)))
-  if type(node) in (ElementTree.Element,ElementTree.ElementTree):
+  if type(node) in (ElementTree.Element, ElementTree.ElementTree):
     return DOM_NodeText_ET(node)
   else:
     return DOM_NodeText_minidom(node)
@@ -29,14 +29,14 @@ def DOM_NodeText_minidom(node):
   return ''
 
 #############################################################################
-def DOM_GetLeafValsByTagName(root,tag):
-  if type(root) in (ElementTree.Element,ElementTree.ElementTree):
-    return DOM_GetLeafValsByTagName_ET(root,tag)
+def DOM_GetLeafValsByTagName(root, tag):
+  if type(root) in (ElementTree.Element, ElementTree.ElementTree):
+    return DOM_GetLeafValsByTagName_ET(root, tag)
   else:
-    return DOM_GetLeafValsByTagName_minidom(root,tag)
+    return DOM_GetLeafValsByTagName_minidom(root, tag)
 
 #############################################################################
-def DOM_GetLeafValsByTagName_ET(root,tag):
+def DOM_GetLeafValsByTagName_ET(root, tag):
   vals=[]
   for node in root.iter(tag):
     txt=DOM_NodeText(node)
@@ -44,7 +44,7 @@ def DOM_GetLeafValsByTagName_ET(root,tag):
   return vals
 
 #############################################################################
-def DOM_GetLeafValsByTagName_minidom(root,tag):
+def DOM_GetLeafValsByTagName_minidom(root, tag):
   vals=[]
   for node in root.getElementsByTagName(tag):
     txt=DOM_NodeText(node)
@@ -52,42 +52,42 @@ def DOM_GetLeafValsByTagName_minidom(root,tag):
   return vals
 
 #############################################################################
-def DOM_GetAttr(root,tag,attname):
-  if type(root) in (ElementTree.Element,ElementTree.ElementTree):
-    return DOM_GetAttr_ET(root,tag,attname)
+def DOM_GetAttr(root, tag, attname):
+  if type(root) in (ElementTree.Element, ElementTree.ElementTree):
+    return DOM_GetAttr_ET(root, tag, attname)
   else:
-    return DOM_GetAttr_minidom(root,tag,attname)
+    return DOM_GetAttr_minidom(root, tag, attname)
 
 #############################################################################
-def DOM_GetAttr_ET(root,tag,attname):
+def DOM_GetAttr_ET(root, tag, attname):
   vals=[]
   for node in root.iter(tag):
-    if node.attrib.has_key(attname):
+    if attname in node.attrib:
       vals.append(node.attrib[attname])
   return vals
 
 #############################################################################
-def DOM_GetAttr_minidom(root,tag,attname):
+def DOM_GetAttr_minidom(root, tag, attname):
   vals=[]
   for node in root.getElementsByTagName(tag):
-    if node.attributes.has_key(attname):
+    if attname in node.attributes:
       vals.append(node.attributes[attname].value)
   return vals
 
 #############################################################################
-def DOM_GetNodeAttr(node,attname):
-  if type(node) in (ElementTree.Element,ElementTree.ElementTree):
-    return DOM_GetNodeAttr_ET(node,attname)
+def DOM_GetNodeAttr(node, attname):
+  if type(node) in (ElementTree.Element, ElementTree.ElementTree):
+    return DOM_GetNodeAttr_ET(node, attname)
   else:
-    return DOM_GetNodeAttr_minidom(node,attname)
+    return DOM_GetNodeAttr_minidom(node, attname)
 
 #############################################################################
 def DOM_GetNodeAttr_ET(node, attname):
-  return node.attrib[attname] if node.attrib.has_key(attname) else None
+  return node.attrib[attname] if attname in node.attrib else None
 
 #############################################################################
 def DOM_GetNodeAttr_minidom(node, attname):
-  return node.attributes[attname].value if node.attributes.has_key(attname) else None
+  return node.attributes[attname].value if attname in node.attributes else None
 
 #############################################################################
 def XpathFind(xp, root):
@@ -112,7 +112,7 @@ def Describe(fin):
     event, elem = ee
     n_elem+=1
     if event == 'start':
-      if not tags.has_key(elem.tag):
+      if elem.tag not in tags:
         tags[elem.tag] = 0
       tags[elem.tag] += 1
     logging.debug('event:%6s, elem.tag:%6s, elem.text:%6s'%(event, elem.tag, elem.text))
@@ -135,22 +135,14 @@ if __name__=='__main__':
   parser.add_argument("--force", type=bool, help="ignore UTF-8 encoding errors")
   parser.add_argument("--o", dest="ofile", help="output XML file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
-
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   codecs_mode = "ignore" if args.force else "replace"
 
-  if args.ifile:
-    fin = open(args.ifile, "r")
-  else:
-    fin = sys.stdin
-
-  if args.ofile:
-    fout = open(args.ofile, "w")
-  else:
-    fout = sys.stdout
+  fin = open(args.ifile, "r") if args.ifile else sys.stdin
+  fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.op == "describe":
     Describe(fin)
@@ -161,7 +153,6 @@ if __name__=='__main__':
     except Exception as e:
       parser.error('ElementTree.parse(): %s'%str(e))
     fin.close()
-
     root.write(fout, encoding="UTF-8", xml_declaration=True)
 
   elif args.op == "match_xpath":
@@ -170,7 +161,6 @@ if __name__=='__main__':
     except Exception as e:
       parser.error('ElementTree.parse(): %s'%str(e))
     fin.close()
-
     if not (xp and ifile):
       parser.error('--i and --xpath required.')
     nodes = XpathFind(xp, root)

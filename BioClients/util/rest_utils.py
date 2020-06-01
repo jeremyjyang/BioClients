@@ -32,6 +32,8 @@ def RequestURL(url, headers, data, usr, pw, parse_json, parse_xml, nmax_retry, v
   '''Use internally, not externally.  Called by GetURL() and PostURL().  Only Basic authentication supported.'''
   if data and type(data) is dict:
     data = urllib.parse.urlencode(data).encode('utf-8')
+  elif data and type(data) in (str,): #Ok for SOAP/XML?
+    data = data.encode('utf-8')
   else:
     data = None
   req = urllib.request.Request(url=url, headers=headers, data=data)
