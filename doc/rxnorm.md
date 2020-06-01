@@ -5,10 +5,11 @@
 From the NIH National Library of Medicine (NLM).
 
 * <https://www.nlm.nih.gov/research/umls/rxnorm/>
+* <https://www.nlm.nih.gov/research/umls/rxnorm/docs/>
+* <https://mor.nlm.nih.gov/RxNav/>
 * <https://mor.nlm.nih.gov/download/rxnav/RxNormAPIs.html>
 * <https://rxnav.nlm.nih.gov/RxNormAPIs.html>
 * <https://rxnav.nlm.nih.gov/RxNormAPIREST.html>
-* <https://www.nlm.nih.gov/research/umls/rxnorm/docs/>
 
  TERM TYPES
  TTY    Name
@@ -51,6 +52,7 @@ python3 -m BioClients.rxnorm.Client list_classes --class_types 'MESHPA,ATC1-4'
 Requiring names:
 
 ```
+python3 -m BioClients.rxnorm.Client get_name --ids "metformin"
 python3 -m BioClients.rxnorm.Client get_name --ids "prozac,tamiflu"
 python3 -m BioClients.rxnorm.Client get_name2rxcui --ids "prozac,tamiflu"
 ```
@@ -64,6 +66,7 @@ Requiring RxCUI IDs:
 ```
 python3 -m BioClients.rxnorm.Client get_rxcui_status --ids "131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_properties --ids "131725,213269"
+python3 -m BioClients.rxnorm.Client get_rxcui_allproperties --ids "6809,131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_ndcs --ids "131725,213269"
 python3 -m BioClients.rxnorm.Client get_rxcui_allrelated --ids "131725,213269"
 ```

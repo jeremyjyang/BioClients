@@ -29,7 +29,7 @@ https://www.nlm.nih.gov/research/umls/rxnorm/docs/
  DFG	Dose Form Group
 """
 ###
-import sys,os,re,argparse,time,logging,json
+import sys,os,re,argparse,time,logging
 
 from .. import rxnorm
 #
@@ -44,7 +44,7 @@ if __name__=='__main__':
 get_id2rxcui requires --idtype.
 get_spellingsuggestions requires --name.
 get_class_members requires --class_id and --rel_src.
-Example names: "prozac", "tamiflu", "minoxidil".
+Example names: "prozac", "tamiflu", "metformin".
 Example RXCUIs: 131725, 213269.
 Example IDs: C2709711 (UMLSCUI).
 Note that RxCUIs generally refer to drug products. Term Types
@@ -133,7 +133,7 @@ to chemical compounds.
     rxnorm.Utils.List_ClassTypes(BASE_URL, fout)
 
   elif args.op == 'list_classes':
-    class_types = re.split(r'[,\s]+', args.class_types.strip())
+    class_types = re.split(r'[,\s]+', args.class_types.strip()) if args.class_types else None
     rxnorm.Utils.List_Classes(BASE_URL, class_types, fout)
 
   elif args.op == 'get_id2rxcui':
