@@ -19,7 +19,7 @@ if __name__=='__main__':
   POLL_WAIT=10; MAX_WAIT=300;
   SIM_CUTOFF=0.80;
   NMAX=100;
-  SEARCHTYPES = ["substructure", "similarity", "exact"]
+  SEARCHTYPES = ["substructure", "similarity", "exact", "standardize"]
 
   parser = argparse.ArgumentParser(description="PubChem PUG SOAP client: sub|sim|exact search, fetch smiles|sdfs")
   parser.add_argument("--o", dest="ofile", help="output smiles|sdf file (w/ CIDs)")
@@ -33,6 +33,7 @@ if __name__=='__main__':
   parser.add_argument("--mlsmr", help="MLSMR mols only")
   parser.add_argument("--nmax", type=int, default=NMAX, help="max hits returned")
   parser.add_argument("--max_wait", type=int, default=MAX_WAIT, help="max wait for query")
+  parser.add_argument("--poll_wait", type=int, default=POLL_WAIT, help="polling wait interval")
   parser.add_argument("--pugurl", default=PUGURL)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
@@ -63,58 +64,51 @@ if __name__=='__main__':
 
   t0=time.time()	## start timer
 
-  status,reqid,qkey,wenv,error = pubchem.soap.Utils.QueryPug_struct(args.pugurl, args.qsmi, args.searchtype, args.sim_cutoff, args.active, args.mlsmr, args.nmax)
+  pugreq = pubchem.soap.Utils.SubmitQuery_Structural(args.pugurl, args.qsmi, args.searchtype, args.sim_cutoff, args.active, args.mlsmr, args.nmax)
 
-  if status not in ('success', 'queued', 'running'):
-    parser.error('Query failed; quitting (status=%s,error="%s").'%(status, error))
-  logging.info('Query status: %s'%status)
+  ### error status values include: "input-error", "server-error"
+  if pugreq.status not in ("success", "queued", "running"):
+    logging.error("""Query failed; quitting (status={}, error="{}").""".format(pugreq.status, pugreq.error))
+    sys.exit()
+  logging.info("Query status: {}".format(pugreq.status))
 
-  if not reqid and not qkey:
+  if not pugreq.reqid and not pugreq.qkey:
     parser.error('Query ok but no ID.')
 
   i_poll=0
-  while not qkey:
+  while not pugreq.qkey:
     if time.time()-t0>args.max_wait:
-      pubchem.soap.Utils.PollPug(args.pugurl, reqid, 'cancel')
+      pugreq.cancel()
       logging.error('Max wait exceeded ({} sec); quitting.'.format(args.max_wait))
-    logging.info('Polling PUG [ID={}]...'.format(reqid))
-    status,reqid_new,url,qkey,wenv,error = pubchem.soap.Utils.PollPug(args.pugurl, reqid, 'status')
-    if reqid_new: reqid=reqid_new
-    if qkey: break
-    logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), POLL_WAIT, status))
-    logging.info(error)
-    if re.search('No result found', error, re.I):
+    logging.info('Polling PUG [{}]...'.format(pugreq.reqid))
+    pugreq.getStatus()
+    if pugreq.qkey: break
+    logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), args.poll_wait, pugreq.status))
+    logging.info(pugreq.error)
+    if re.search('No result found', pugreq.error, re.I):
       sys.exit()
-    time.sleep(POLL_WAIT)
+    time.sleep(args.poll_wait)
     i_poll+=1
 
-  status,reqid,url,qkey,wenv,error = pubchem.soap.Utils.QueryPug_qkey(args.pugurl, qkey, wenv, fmt, do_gz)
+  pugreq2 = pubchem.soap.Utils.MonitorQuery(args.pugurl, pugreq.qkey, pugreq.wenv, fmt, do_gz)
   i_poll=0
-  while not url:
+  while not pugreq2.url:
     if time.time()-t0>args.max_wait:
-      pubchem.soap.Utils.PollPug(args.pugurl, reqid, 'cancel')
+      pugreq2.cancel()
       logging.error('Max wait exceeded ({} sec); quitting.'.format(args.max_wait))
-    logging.info('Polling PUG [ID={}]...'.format(reqid))
-    status,reqid,url,qkey,wenv,error = pubchem.soap.Utils.PollPug(args.pugurl, reqid, 'status')
-    if url: break
- 
-    logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), POLL_WAIT, status))
-    time.sleep(POLL_WAIT)
+    logging.info('Polling PUG [{}]...'.format(pugreq2.reqid))
+    pugreq2.getStatus()
+    if pugreq2.url: break
+    logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), args.poll_wait, pugreq2.status))
+    time.sleep(args.poll_wait)
     i_poll+=1
 
-  logging.info('Query elapsed time: {}'.format(ElapsedTime(t0)))
-  if args.ofile:
-    logging.info('URL: {}'.format(url))
-    logging.info('Downloading to {}...'.format(args.ofile))
-
-  nbytes = pubchem.soap.Utils.DownloadUrl(url, fout)
-
-  logging.info('Format: {}{}'.format( fmt, (' (gzipped)' if do_gz else '')))
+  pubchem.soap.Utils.DownloadResults(pugreq2.url, fout)
 
   if args.ofile:
-    nbytes = os.stat(args.ofile).st_size
-    logging.info('{} ({:.2f}MB)'.format(args.ofile, nbytes/1e6))
+    logging.info('URL: {} downloaded to {} ({:.2f}MB)'.format(pugreq2.url, args.ofile, os.stat(args.ofile).st_size/1e6))
   fout.close()
+  logging.info('Format: {}{}'.format(fmt, (' (gzipped)' if do_gz else '')))
 
   logging.info('Elapsed time: {}'.format(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
 
