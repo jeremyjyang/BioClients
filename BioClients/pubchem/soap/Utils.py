@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 Utility functions for PUG-SOAP API (pre-REST) (~2010).
+See Save Query button for template XML at
+https://pubchem.ncbi.nlm.nih.gov/search/search.cgi
+And at
+https://pubchem.ncbi.nlm.nih.gov/standardize/standardize.cgi
 """
 import sys,os,io,re,urllib.request,time,logging
 
@@ -10,12 +14,16 @@ from xml.etree import ElementTree
 from ...util import rest_utils
 from ...util import xml_utils
 
-XMLHEADER=("""<?xml version="1.0" encoding="UTF-8"?>""")
+XMLHEADER=("""\
+<?xml version="1.0"?>
+<!DOCTYPE PCT-Data PUBLIC "-//NCBI//NCBI PCTools/EN" "https://pubchem.ncbi.nlm.nih.gov/pug/pug.dtd">
+""")
 
 SOAP_ACTIONS = {
 	"exact":"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
 	"substructure":"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
-	"similarity":"http://pubchem.ncbi.nlm.nih.gov/SimilaritySearch2D"
+	"similarity":"http://pubchem.ncbi.nlm.nih.gov/SimilaritySearch2D",
+	"standardize":"http://pubchem.ncbi.nlm.nih.gov/Standardize"
 	}
 
 #############################################################################
@@ -27,6 +35,8 @@ Error status values: "server-error"
 
   def __init__(self, pugurl, pugxml):
 
+    self.pugurl = pugurl
+    self.pugxml = pugxml
     self.reqid = None
     self.status = None
     self.url = None
@@ -34,7 +44,7 @@ Error status values: "server-error"
     self.wenv = None
     self.error = None
     self.ntries = None
-    self.pugurl = pugurl
+    self.out_smi = None
     self.parsePugXml(pugxml)
     self.qxml_template="""\
 <PCT-Data><PCT-Data_input>
@@ -58,6 +68,7 @@ Error status values: "server-error"
     self.parsePugXml(pugxml)
 
   def parsePugXml(self, pugxml):
+    logging.debug(pugxml)
     try:
       elt = ElementTree.parse(io.StringIO(pugxml)) #ElementTree instance
     except Exception as e:
@@ -75,6 +86,9 @@ Error status values: "server-error"
     self.qkey = qkeys[0] if qkeys else None
     wenvs = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Entrez_webenv')
     self.wenv = wenvs[0] if wenvs else None
+    #Standardize:
+    out_smis = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Structure_structure_string')
+    self.out_smi = out_smis[0] if out_smis else None
 
 #############################################################################
 def SubmitQuery_Structural(pugurl, smiles, searchtype, sim_cutoff, active=False, mlsmr=False, nmax=10000):
@@ -90,9 +104,9 @@ def SubmitQuery_Structural(pugurl, smiles, searchtype, sim_cutoff, active=False,
   if searchtype.lower()=='similarity':
     qxml+="""\
 <PCT-QueryCompoundCS_type_similar><PCT-CSSimilarity>
-  <PCT-CSSimilarity_threshold>{SIM_CUTOFF}</PCT-CSSimilarity_threshold>
+  <PCT-CSSimilarity_threshold>{SIM_CUTOFF:d}</PCT-CSSimilarity_threshold>
 </PCT-CSSimilarity></PCT-QueryCompoundCS_type_similar>
-""".format(SIM_CUTOFF=(sim_cutoff*100))
+""".format(SIM_CUTOFF=(int(sim_cutoff*100)))
   elif searchtype.lower()=='substructure':
     qxml+="""\
 <PCT-QueryCompoundCS_type_subss><PCT-CSStructure>
@@ -141,9 +155,38 @@ def SubmitQuery_Structural(pugurl, smiles, searchtype, sim_cutoff, active=False,
   logging.debug("Requesting: pugurl: {}; searchtype: {}; smiles: {}".format(pugurl, searchtype, smiles))
   if searchtype.lower()=='similarity':
     logging.debug("Similarity cutoff: {}".format(sim_cutoff))
-
   pugxml = rest_utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS[searchtype]})
+  return PugSoapRequest(pugurl, pugxml)
 
+#############################################################################
+def SubmitQuery_Standardize(pugurl, smiles):
+  qxml="""\
+<PCT-Data>
+  <PCT-Data_input>
+    <PCT-InputData>
+      <PCT-InputData_standardize>
+        <PCT-Standardize>
+          <PCT-Standardize_structure>
+            <PCT-Structure>
+              <PCT-Structure_structure>
+                <PCT-Structure_structure_string>{SMILES}</PCT-Structure_structure_string>
+              </PCT-Structure_structure>
+              <PCT-Structure_format>
+                <PCT-StructureFormat value="smiles"/>
+              </PCT-Structure_format>
+            </PCT-Structure>
+          </PCT-Standardize_structure>
+          <PCT-Standardize_oformat>
+            <PCT-StructureFormat value="smiles"/>
+          </PCT-Standardize_oformat>
+        </PCT-Standardize>
+      </PCT-InputData_standardize>
+    </PCT-InputData>
+  </PCT-Data_input>
+</PCT-Data>
+""".format(SMILES=smiles)
+  logging.debug("Requesting: pugurl: {}; smiles: {}".format(pugurl, smiles))
+  pugxml = rest_utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS["standardize"]})
   return PugSoapRequest(pugurl, pugxml)
 
 #############################################################################
@@ -170,9 +213,13 @@ def MonitorQuery(pugurl, qkey, webenv, fmt='smiles', do_gz=False):
 #############################################################################
 def DownloadResults(pugurl, fout, ntries=10):
   pugout = rest_utils.GetURL(pugurl, nmax_retry=ntries, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
-  if type(pugout) is str:
+  if fout == sys.stdout:
+    fout.write(pugout)
+  elif type(pugout) is bytes:
+    fout.write(pugout)
+  elif type(pugout) is str:
     fout.write(pugout.encode("utf-8"))
-  else: # expect bytes
+  else: # ?
     fout.write(pugout)
 
 #############################################################################

@@ -24,7 +24,7 @@ if __name__=='__main__':
   parser = argparse.ArgumentParser(description="PubChem PUG SOAP client: sub|sim|exact search, fetch smiles|sdfs")
   parser.add_argument("--o", dest="ofile", help="output smiles|sdf file (w/ CIDs)")
   parser.add_argument("--qsmi", help="input query smiles (or smarts)")
-  parser.add_argument("--fmt", choices=["smiles", "sdf"], help="[or via filename]")
+  parser.add_argument("--ofmt", choices=["smiles", "sdf"], help="output format [or via filename]")
   parser.add_argument("--gz", action="store_true", help="output gzipped [default via filename]")
   parser.add_argument("--out_cids", action="store_true", help="output CIDs (only w/ smiles output)")
   parser.add_argument("--searchtype", choices=SEARCHTYPES, default="exact", help="search type")
@@ -42,9 +42,9 @@ if __name__=='__main__':
 
   if not args.qsmi:
     parser.error('SMILES required\n'+usage)
-  logging.info('query: "%s"'%args.qsmi)
+  logging.info('Query: "{}"'.format(args.qsmi))
 
-  fmt = args.fmt if args.fmt else None
+  ofmt = args.ofmt if args.ofmt else None
 
   do_gz = args.gz if args.gz else False
 
@@ -56,27 +56,27 @@ if __name__=='__main__':
       ext = re.sub('^.*\.', '', args.ofile[:-3])
     else:
       ext = re.sub('^.*\.', '', args.ofile)
-    if not args.fmt: fmt = ext
+    if not args.ofmt: ofmt = ext
 
-  if not fmt: fmt = "smiles"
-  elif fmt[:3].lower()=='smi': fmt='smiles'
-  elif fmt[:3].lower() in ('sdf', 'mol', 'mdl'): fmt='sdf'
+  if not ofmt: ofmt = "smiles"
+  elif ofmt[:3].lower()=='smi': ofmt='smiles'
+  elif ofmt[:3].lower() in ('sdf', 'mol', 'mdl'): ofmt='sdf'
 
   t0=time.time()	## start timer
 
-  pugreq = pubchem.soap.Utils.SubmitQuery_Structural(args.pugurl, args.qsmi, args.searchtype, args.sim_cutoff, args.active, args.mlsmr, args.nmax)
+  if args.searchtype == "standardize":
+    pugreq = pubchem.soap.Utils.SubmitQuery_Standardize(args.pugurl, args.qsmi)
+  else:
+    pugreq = pubchem.soap.Utils.SubmitQuery_Structural(args.pugurl, args.qsmi, args.searchtype, args.sim_cutoff, args.active, args.mlsmr, args.nmax)
 
   ### error status values include: "input-error", "server-error"
   if pugreq.status not in ("success", "queued", "running"):
     logging.error("""Query failed; quitting (status={}, error="{}").""".format(pugreq.status, pugreq.error))
     sys.exit()
-  logging.info("Query status: {}".format(pugreq.status))
+  logging.info("Query [{}] status: {}".format(pugreq.reqid, pugreq.status))
 
-  if not pugreq.reqid and not pugreq.qkey:
-    parser.error('Query ok but no ID.')
-
-  i_poll=0
-  while not pugreq.qkey:
+  while pugreq.status != "success": 
+    time.sleep(args.poll_wait)
     if time.time()-t0>args.max_wait:
       pugreq.cancel()
       logging.error('Max wait exceeded ({} sec); quitting.'.format(args.max_wait))
@@ -84,15 +84,16 @@ if __name__=='__main__':
     pugreq.getStatus()
     if pugreq.qkey: break
     logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), args.poll_wait, pugreq.status))
-    logging.info(pugreq.error)
-    if re.search('No result found', pugreq.error, re.I):
+    if pugreq.error: logging.info(pugreq.error)
+    if pugreq.error and re.search('No result found', pugreq.error, re.I):
       sys.exit()
-    time.sleep(args.poll_wait)
-    i_poll+=1
 
-  pugreq2 = pubchem.soap.Utils.MonitorQuery(args.pugurl, pugreq.qkey, pugreq.wenv, fmt, do_gz)
-  i_poll=0
-  while not pugreq2.url:
+  if args.searchtype == "standardize":
+    fout.write(pugreq.out_smi+"\n")
+    sys.exit()
+
+  pugreq2 = pubchem.soap.Utils.MonitorQuery(args.pugurl, pugreq.qkey, pugreq.wenv, ofmt, do_gz)
+  while True:
     if time.time()-t0>args.max_wait:
       pugreq2.cancel()
       logging.error('Max wait exceeded ({} sec); quitting.'.format(args.max_wait))
@@ -101,14 +102,13 @@ if __name__=='__main__':
     if pugreq2.url: break
     logging.info('{} elapsed; {} sec wait; status={}'.format(ElapsedTime(t0), args.poll_wait, pugreq2.status))
     time.sleep(args.poll_wait)
-    i_poll+=1
 
   pubchem.soap.Utils.DownloadResults(pugreq2.url, fout)
 
   if args.ofile:
     logging.info('URL: {} downloaded to {} ({:.2f}MB)'.format(pugreq2.url, args.ofile, os.stat(args.ofile).st_size/1e6))
   fout.close()
-  logging.info('Format: {}{}'.format(fmt, (' (gzipped)' if do_gz else '')))
+  logging.info('Format: {}{}'.format(ofmt, (' (gzipped)' if do_gz else '')))
 
   logging.info('Elapsed time: {}'.format(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
 
