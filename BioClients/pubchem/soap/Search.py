@@ -23,7 +23,7 @@ if __name__=='__main__':
 
   parser = argparse.ArgumentParser(description="PubChem PUG SOAP client: sub|sim|exact search, fetch smiles|sdfs")
   parser.add_argument("--o", dest="ofile", help="output smiles|sdf file (w/ CIDs)")
-  parser.add_argument("--qsmi", help="input query smiles (or smarts)")
+  parser.add_argument("--qsmi", required=True, help="input query smiles (or smarts)")
   parser.add_argument("--ofmt", choices=["smiles", "sdf"], help="output format [or via filename]")
   parser.add_argument("--gz", action="store_true", help="output gzipped [default via filename]")
   parser.add_argument("--out_cids", action="store_true", help="output CIDs (only w/ smiles output)")
@@ -40,8 +40,6 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if not args.qsmi:
-    parser.error('SMILES required\n'+usage)
   logging.info('Query: "{}"'.format(args.qsmi))
 
   ofmt = args.ofmt if args.ofmt else None

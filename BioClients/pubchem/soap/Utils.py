@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Utility functions for PUG-SOAP API (pre-REST) (~2010).
+https://pubchemdocs.ncbi.nlm.nih.gov/pug-soap
 See Save Query button for template XML at
 https://pubchem.ncbi.nlm.nih.gov/search/search.cgi
 And at
