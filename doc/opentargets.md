@@ -16,3 +16,4 @@ pip3 install opentargets
 * <https://docs.targetvalidation.org/data-sources/genetic-associations>
 * <https://platform-api.opentargets.io/v3/platform>
 * <https://platform-api.opentargets.io/v3/platform/docs/swagger-ui>
+* <https://pypi.org/project/opentargets/>

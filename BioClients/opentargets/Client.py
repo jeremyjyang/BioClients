@@ -5,9 +5,9 @@ http://opentargets.readthedocs.io/
 """
 import sys,os,re,time,argparse,json,csv,logging
 
-import opentargets as ot
+from opentargets import OpenTargetsClient
 
-from .. import opentargets
+from .. import opentargets #BioClients module.
 
 #############################################################################
 if __name__=='__main__':
@@ -45,12 +45,12 @@ Search terms: prostate, alzheimer, lymphoma
       line = fin.readline()
       if not line: break
       if line.rstrip(): ids.append(line.rstrip())
-    logging.debug('Input queries: {}'.format(len(ids)))
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
+  if ids: logging.info('Input IDs: {}'.format(len(ids)))
 
-  otclient = ot.OpenTargetsClient()
+  otclient = OpenTargetsClient()
 
   logging.debug(otclient.get_stats().info)
 
@@ -59,6 +59,7 @@ Search terms: prostate, alzheimer, lymphoma
     opentargets.Utils.SearchAssociations(otclient, ids, args.idtype, args.minscore, args.skip, args.nmax, fout)
 
   elif args.op=='getEvidence':
+    parser.error('Unimplemented operation: {}'.format(args.op))
     if not ids: parser.error('--i or --ids required.')
     #opentargets.Utils.Target2Disease_Evidence(otclient, tid, args.did, fout)
 
