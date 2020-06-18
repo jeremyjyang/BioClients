@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.tinx`
 
 ## TIN-X (Target Importance and Novelty Explorer)
 

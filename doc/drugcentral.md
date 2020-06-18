@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.drugcentral`
 
 ## DrugCentral (`drugcentral.org`)
 

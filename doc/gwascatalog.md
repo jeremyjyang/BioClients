@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.gwascatalog`
 
 ## GWAS Catalog
 

@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.brenda`
 
 ## BRENDA
 

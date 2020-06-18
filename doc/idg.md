@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.idg`
 
 ## IDG - Illuminating the Druggable Genome
 

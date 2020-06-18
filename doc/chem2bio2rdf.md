@@ -1,4 +1,4 @@
-# BioClients
+# `BioClients.chem2bio2rdf`
 
 ## Chem2Bio2RDF
 
