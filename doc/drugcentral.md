@@ -15,25 +15,25 @@ programmatic access to an available db instance, which may be deployed
 locally, or may be available publicly with configuration details
 at <http://drugcentral.org> (this service in beta at time of writing).
 
-Operations available include:
+Operations include:
 
-* list_products - List all drug products.
-* list_structures - List all drug structures.
-* list_structures2smiles - List all drug structures as SMILES file.
-* list_structures2molfile - List all drug structures as MDL molfile.
-* list_active_ingredients - List all active ingredients.
-* list_indications - List all indications.
-* list_ddis - List all drug-drug interactions.
-* get_structure - Get structure by struct_id.
-* get_structure_by_synonym - Get structure by synonym.
-* get_structure_ids - Get all IDs for structures.
-* get_structure_products - Get all products for structures.
-* get_structure_atcs - Get all ATC classes for structures.
-* get_product - Get product by product_id.
-* get_product_structures - Get structures for product.
-* get_indication_structures - Get all structures for indication.
-* search_indications - Search indications by regular expression.
-* search_products - Search products by regular expression.
+* __list_products__ - List all drug products.
+* __list_structures__ - List all drug structures.  
+* __list_structures2smiles__ - List all drug structures as SMILES file.
+* __list_structures2molfile__ - List all drug structures as MDL molfile.
+* __list_active_ingredients__ - List all active ingredients.
+* __list_indications__ - List all indications.
+* __list_ddis__ - List all drug-drug interactions.
+* __get_structure__ - Get structure by struct_id.
+* __get_structure_by_synonym__ - Get structure by synonym.
+* __get_structure_ids__ - Get all IDs for structures.
+* __get_structure_products__ - Get all products for structures.
+* __get_structure_atcs__ - Get all ATC classes for structures.
+* __get_product__ - Get product by product_id.
+* __get_product_structures__ - Get structures for product.
+* __get_indication_structures__ - Get all structures for indication.
+* __search_indications__ - Search indications by regular expression.
+* __search_products__ - Search products by regular expression.
 
 All results are TSV format except as noted.
 
@@ -75,4 +75,3 @@ Search via --ids as regular expressions, e.g. "^Alzheimer"
 
 Db credentials are normally stored in a configuration file at
 `$HOME/.drugcentral.yaml`.
-
