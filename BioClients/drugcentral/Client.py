@@ -15,7 +15,6 @@ if __name__=='__main__':
 	"version",
 	"get_structure",
 	"get_structure_by_synonym",
-	"get_structure_by_indication",
 	"get_structure_ids",
 	"get_structure_products",
 	"get_structure_atcs",
