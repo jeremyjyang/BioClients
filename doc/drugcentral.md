@@ -13,7 +13,9 @@ DrugCentral employs a backend PostgreSql db, freely available at
 <http://drugcentral.org/download>. The BioClients API provides
 programmatic access to an available db instance, which may be deployed
 locally, or may be available publicly with configuration details
-at <http://drugcentral.org> (this service in beta at time of writing).
+at <http://drugcentral.org> (this service in beta at time of writing, 
+available at: dbhost=unmtid-dbs.net, dbport=5433, dbname=drugcentral,
+dbuser=drugman, dbpw=dosage).
 
 Operations include:
 
