@@ -76,4 +76,12 @@ Search via --ids as regular expressions, e.g. "^Alzheimer"
 ### Database credentials
 
 Db credentials are normally stored in a configuration file at
-`$HOME/.drugcentral.yaml`.
+`$HOME/.drugcentral.yaml`, formatted thus:
+
+```
+DBHOST: "====Replace-with-HOST===="
+DBPORT: "====Replace-with-PORT===="
+DBNAME: "====Replace-with-NAME===="
+DBUSR: "====Replace-with-USERNAME===="
+DBPW: "====Replace-with-PASSWORD===="
+```
