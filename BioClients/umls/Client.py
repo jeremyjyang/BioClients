@@ -67,7 +67,7 @@ if __name__=='__main__':
   parser.add_argument("--id", help="ID (ex:C0018787)")
   parser.add_argument("--idfile", help="input IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--idsrc", help="query ID source (default: CUI)")
+  parser.add_argument("--idsrc", default="CUI", help="query ID source (default: CUI)")
   parser.add_argument("--searchType", choices=searchTypes, default='words')
   parser.add_argument("--inputType", choices=inputTypes, default='atom')
   parser.add_argument("--returnIdType", choices=returnIdTypes, default='concept')
@@ -136,31 +136,28 @@ if __name__=='__main__':
     umls.Utils.GetConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
 
   elif args.op == 'getRelations':
-    if args.idsrc and args.idsrc!='CUI':
+    if args.idsrc!='CUI':
       parser.error('getRelations requires --idsrc CUI.')
     umls.Utils.GetRelations(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
   elif args.op == 'getAtoms':
-    if args.idsrc and args.idsrc!='CUI':
+    if args.idsrc!='CUI':
       parser.error('getAtoms requires --idsrc CUI.')
     umls.Utils.GetAtoms(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
   elif args.op == 'cui2Code':
-    if args.idsrc and args.idsrc!='CUI':
+    if args.idsrc!='CUI':
       parser.error('cui2Code requires --idsrc CUI.')
-    i_cui=0; n_code=0;
+    n_atom=0;
     for cui in ids:
-      i_cui+=1
-      fout.write('%d.\t%s:'%(i_cui,cui))
       codes = umls.Utils.Cui2Code(base_url, args.version, auth, cui, args.srcs, fout)
-      n_code_this=0;
       for src in sorted(codes.keys()):
-        for i,atom in enumerate(sorted(list(codes[src]))):
-          fout.write('%s:\t%d.\t%s\t%s'%(src, i+1, atom.code, atom.name))
-          n_code_this+=1
-      n_code+=n_code_this
-    logging.info('n_cui: %d'%i_cui)
-    logging.info('n_code: %d'%n_code)
+        atoms = sorted(list(codes[src]))
+        for atom in atoms:
+          fout.write('%s\t%s\t%s\t%s\n'%(cui, src, atom.code, atom.name))
+      n_atom += len(atoms)
+    logging.info('n_cui: %d'%len(ids))
+    logging.info('n_atom: %d'%n_atom)
 
   elif args.op == 'search':
     if not args.searchQuery:

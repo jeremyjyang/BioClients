@@ -97,6 +97,7 @@ UTS = UMLS Technology Services
 ###  SY : source asserted synonymy.
 #############################################################################
 import sys,os,re,yaml,json,csv,logging,requests,time
+from functools import total_ordering
 #
 from lxml import etree
 from pyquery import PyQuery
@@ -217,12 +218,24 @@ class SourceList:
     return False
 
 #############################################################################
+@total_ordering
 class Atom:
-  def __init__(self,cui,src,code,name):
+  def __init__(self, cui, src, code, name):
     self.cui = cui
     self.src = src
     self.code = code
     self.name = name
+
+  def __eq__(self, other):
+    return ((self.cui, self.src, self.code) == (other.cui, other.src, other.code))
+
+  def __ne__(self, other):
+    return not (self == other)
+
+  def __lt__(self, other):
+    return ((self.cui, self.src, self.code) < (other.cui, other.src, other.code))
+  def __hash__(self):
+    return id(self)
 
 #############################################################################
 def GetConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
@@ -299,7 +312,7 @@ def GetConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
 def Cui2Code(base_url, ver, auth, cui, srcs, fout):
   n_atom=0; codes={};
   pNum=1;
-  url=base_url+('/content/%s/CUI/%s/atoms'%(ver,cui))
+  url = base_url+('/content/%s/CUI/%s/atoms'%(ver,cui))
   params={}
   if srcs: params['sabs']=srcs
   tgt = auth.gettgt()
@@ -307,7 +320,11 @@ def Cui2Code(base_url, ver, auth, cui, srcs, fout):
     params['pageNumber']=pNum
     response = UmlsApiGet(url, auth, tgt, params=params)
     response.encoding = 'utf-8'
-    items = json.loads(response.text)
+    try:
+      items = json.loads(response.text)
+    except Exception as e:
+      logging.error(str(e))
+      break
     logging.debug (json.dumps(items, indent=4))
     atoms = items["result"]
     for atom in atoms:
