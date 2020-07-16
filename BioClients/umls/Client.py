@@ -54,11 +54,14 @@ if __name__=='__main__':
   API_AUTH_HOST="utslogin.nlm.nih.gov"
   API_AUTH_ENDPOINT='/cas/v1/api-key'
   API_HEADERS={"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent":"python" }
-  SRCS_FILE='/home/data/UMLS/data/umls_sources.csv'
-
-  parser = argparse.ArgumentParser(description='UMLS REST API client utility', epilog='CUI = Concept Unique Identifier')
-  ops = ['getConcept', 'getAtoms', 'getRelations', 'search', 'searchByTUI', 
-	'listSources',  'cui2Code']
+  SRCS_PREFERRED= "ATC,HPO,ICD10,ICD10CM,ICD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO"
+  EPILOG="""\
+All get* operations require --idsrc CUI, CUIs as inputs.
+CUI = Concept Unique Identifier;
+Preferred/default sources: {srcs_preferred}
+""".format(srcs_preferred=SRCS_PREFERRED)
+  parser = argparse.ArgumentParser(description='UMLS REST API client utility', epilog=EPILOG)
+  ops = ['getCodes', 'getAtoms', 'getRelations', 'listSources', 'xrefConcept', 'search', 'searchByTUI']
   searchTypes = ['exact', 'words', 'leftTruncation', 'rightTruncation', 'approximate',
 	'normalizedString']
   inputTypes = ['atom', 'code', 'sourceConcept', 'sourceDescriptor', 'sourceUi', 'tty']
@@ -71,8 +74,7 @@ if __name__=='__main__':
   parser.add_argument("--searchType", choices=searchTypes, default='words')
   parser.add_argument("--inputType", choices=inputTypes, default='atom')
   parser.add_argument("--returnIdType", choices=returnIdTypes, default='concept')
-  parser.add_argument("--srcs", help='list of sources to include in response')
-  #parser.add_argument("--umls_srcs_file", help="list of all UMLS sources")
+  parser.add_argument("--srcs", default=SRCS_PREFERRED, help='sources to include in response')
   parser.add_argument("--searchQuery", help='string or code')
   parser.add_argument("--skip", default=0, type=int)
   parser.add_argument("--nmax", default=0, type=int)
@@ -87,6 +89,9 @@ if __name__=='__main__':
   parser.add_argument("-v", "--verbose", default=0, action="count")
 
   args = parser.parse_args()
+
+  if args.op[:3] == 'get' and args.idsrc!='CUI':
+    parser.error('Operation "{}" requires --idsrc CUI.'.format(args.op))
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
@@ -106,8 +111,6 @@ if __name__=='__main__':
   ids=[];
   if args.idfile:
     fin = open(args.idfile)
-    if not fin:
-      parser.error('Cannot open: %s'%args.idfile)
     while True:
       line=fin.readline()
       if not line: break
@@ -116,6 +119,8 @@ if __name__=='__main__':
     fin.close()
   elif args.id:
     ids.append(args.id)
+
+  t0 = time.time()
 
   srclist = umls.Utils.SourceList()
   srclist.initFromApi(base_url, args.version, auth)
@@ -132,32 +137,17 @@ if __name__=='__main__':
       fout.write('%s\t%s\t%s\n'%(abbr, name, prefname))
     logging.info('n_src: %d'%len(srclist.sources))
 
-  elif args.op == 'getConcept':
-    umls.Utils.GetConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
+  elif args.op == 'xrefConcept':
+    umls.Utils.XrefConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
 
   elif args.op == 'getRelations':
-    if args.idsrc!='CUI':
-      parser.error('getRelations requires --idsrc CUI.')
     umls.Utils.GetRelations(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
   elif args.op == 'getAtoms':
-    if args.idsrc!='CUI':
-      parser.error('getAtoms requires --idsrc CUI.')
     umls.Utils.GetAtoms(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
 
-  elif args.op == 'cui2Code':
-    if args.idsrc!='CUI':
-      parser.error('cui2Code requires --idsrc CUI.')
-    n_atom=0;
-    for cui in ids:
-      codes = umls.Utils.Cui2Code(base_url, args.version, auth, cui, args.srcs, fout)
-      for src in sorted(codes.keys()):
-        atoms = sorted(list(codes[src]))
-        for atom in atoms:
-          fout.write('%s\t%s\t%s\t%s\n'%(cui, src, atom.code, atom.name))
-      n_atom += len(atoms)
-    logging.info('n_cui: %d'%len(ids))
-    logging.info('n_atom: %d'%n_atom)
+  elif args.op == 'getCodes':
+    umls.Utils.GetCodes(base_url, args.version, auth, ids, args.srcs, fout)
 
   elif args.op == 'search':
     if not args.searchQuery:
@@ -165,8 +155,9 @@ if __name__=='__main__':
     umls.Utils.Search(base_url, args.version, auth, args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, fout)
 
   elif args.op == 'searchByTUI':
-    parser.error('ERROR: searchByTUI NOT IMPLEMENTED YET.')
+    parser.error('{} NOT IMPLEMENTED YET.'.format(args.op))
 
   else:
     parser.error('Invalid operation: %s'%args.op)
 
+  logging.info(('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
