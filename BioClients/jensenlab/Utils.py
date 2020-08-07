@@ -23,9 +23,9 @@ def GetDiseaseGenes(base_url, channel, ids, nmax, fout):
       logging.debug(json.dumps(gene, indent=2))
       if not tags:
         tags = list(gene.keys())
-        fout.write("\t".join(tags)+"\n")
+        fout.write("queryId\t"+("\t".join(tags))+"\n")
       vals = [(str(gene[tag]) if tag in gene else "") for tag in tags]
-      fout.write("\t".join(vals)+"\n")
+      fout.write(str(id_this)+"\t"+("\t".join(vals))+"\n")
       n_out+=1
   logging.info("n_out: %d"%(n_out))
 
