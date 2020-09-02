@@ -17,6 +17,7 @@ if __name__=='__main__':
 	"get_structure_by_synonym",
 	"get_structure_ids",
 	"get_structure_products",
+	"get_structure_orangebook_products",
 	"get_structure_atcs",
 	"get_product",
 	"get_product_structures",
@@ -123,6 +124,9 @@ if __name__=='__main__':
 
   elif args.op=='get_structure_products':
     drugcentral.Utils.GetStructureProducts(dbcon, ids, fout)
+
+  elif args.op=='get_structure_orangebook_products':
+    drugcentral.Utils.GetStructureOBProducts(dbcon, ids, fout)
 
   elif args.op=='get_structure_atcs':
     drugcentral.Utils.GetStructureAtcs(dbcon, ids, fout)

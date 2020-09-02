@@ -472,6 +472,47 @@ WHERE
   else: return df_out
 
 #############################################################################
+def GetStructureOBProducts(dbcon, ids, fout=None):
+  n_out=0; tags=None; df_out=None;
+  cur = dbcon.cursor()
+  sql="""\
+SELECT DISTINCT
+	s.id struct_id,
+	s.name struct_name,
+	s.smiles,
+	s.inchikey,
+	ob.id ob_id,
+	ob.product_no ob_product_no,
+	ob.ingredient,
+	ob.dose_form,
+	ob.route,
+	ob.strength,
+	ob.appl_type,
+	ob.appl_no
+FROM
+	structures s
+	JOIN struct2obprod s2ob ON s2ob.struct_id = s.id
+	JOIN ob_product ob ON ob.id = s2ob.prod_id
+WHERE 
+	s.id = '{}'
+"""
+  for id_this in ids:
+    if fout:
+      cur.execute(sql.format(id_this))
+      for row in cur:
+        if not tags:
+          tags = list(row.keys())
+          fout.write("\t".join(tags)+"\n")
+        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+        fout.write("\t".join(vals)+"\n")
+        n_out+=1
+    else:
+      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
+      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
+  if fout: logging.info("n_out: {}".format(n_out))
+  else: return df_out
+
+#############################################################################
 def GetStructureAtcs(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
