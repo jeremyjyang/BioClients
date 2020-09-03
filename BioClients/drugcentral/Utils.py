@@ -182,6 +182,31 @@ def ListActiveIngredients(dbcon, dbschema="public", fout=None):
   logging.info("n_out: {0}".format(n_out))
 
 #############################################################################
+def ListXrefTypes(dbcon, fout=None):
+  sql="""\
+SELECT DISTINCT
+	id AS "dc_xref_type_id",
+	type AS "dc_xref_type",
+	description AS "dc_xref_type_description"
+FROM
+	id_type
+ORDER BY
+	dc_xref_type
+"""
+  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
+  n_out=0; tags=None;
+  cur = dbcon.cursor()
+  cur.execute(sql)
+  for row in cur:
+    if not tags:
+      tags = list(row.keys())
+      fout.write("\t".join(tags)+"\n")
+    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+    fout.write("\t".join(vals)+"\n")
+    n_out+=1
+  logging.info("n_out: {}".format(n_out))
+
+#############################################################################
 def ListIndications(dbcon, fout=None):
   sql="""\
 SELECT DISTINCT
@@ -370,6 +395,30 @@ def GetStructure(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
   sql = ("""SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM structures WHERE id = '{}'""")
+  for id_this in ids:
+    if fout:
+      cur.execute(sql.format(id_this))
+      for row in cur:
+        if not tags:
+          tags = list(row.keys())
+          fout.write("\t".join(tags)+"\n")
+        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
+        fout.write("\t".join(vals)+"\n")
+        n_out+=1
+    else:
+      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
+      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
+  if fout: logging.info("n_out: {}".format(n_out))
+  else: return df_out
+
+#############################################################################
+def GetStructureByXref(dbcon, xref_type, ids, fout=None):
+  if not xref_type:
+    logging.error("xref_type required.")
+    return None
+  n_out=0; tags=None; df_out=None;
+  cur = dbcon.cursor()
+  sql = ("""SELECT idn.identifier xref, idn.id_type xref_type, s.id dc_struct_id, s.name dc_struct_name FROM structures AS s JOIN identifier AS idn ON idn.struct_id=s.id WHERE idn.id_type = '"""+xref_type+"""' AND idn.identifier = '{}'""")
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))

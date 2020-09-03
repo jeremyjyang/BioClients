@@ -15,6 +15,7 @@ if __name__=='__main__':
 	"version",
 	"get_structure",
 	"get_structure_by_synonym",
+	"get_structure_by_xref",
 	"get_structure_ids",
 	"get_structure_products",
 	"get_structure_orangebook_products",
@@ -30,6 +31,7 @@ if __name__=='__main__':
 	"list_indications",
 	"list_indication_targets",
 	"list_ddis",
+	"list_xref_types",
 	"search_indications",
 	"search_products",
 	"meta_listdbs"
@@ -37,6 +39,7 @@ if __name__=='__main__':
   parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
+  parser.add_argument("--xref_type", help="xref ID type")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--dbhost")
   parser.add_argument("--dbport")
@@ -113,11 +116,17 @@ if __name__=='__main__':
   elif args.op=='list_ddis':
     drugcentral.Utils.ListDrugdruginteractions(dbcon, fout)
 
+  elif args.op=='list_xref_types':
+    drugcentral.Utils.ListXrefTypes(dbcon, fout)
+
   elif args.op=='get_structure':
     drugcentral.Utils.GetStructure(dbcon, ids, fout)
 
   elif args.op=='get_structure_by_synonym':
     drugcentral.Utils.GetStructureBySynonym(dbcon, ids, fout)
+
+  elif args.op=="get_structure_by_xref":
+    drugcentral.Utils.GetStructureByXref(dbcon, args.xref_type, ids, fout)
 
   elif args.op=='get_structure_ids':
     drugcentral.Utils.GetStructureIds(dbcon, ids, fout)
