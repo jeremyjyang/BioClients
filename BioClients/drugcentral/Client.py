@@ -16,7 +16,7 @@ if __name__=='__main__':
 	"get_structure",
 	"get_structure_by_synonym",
 	"get_structure_by_xref",
-	"get_structure_ids",
+	"get_structure_xrefs",
 	"get_structure_products",
 	"get_structure_orangebook_products",
 	"get_structure_atcs",
@@ -128,8 +128,8 @@ if __name__=='__main__':
   elif args.op=="get_structure_by_xref":
     drugcentral.Utils.GetStructureByXref(dbcon, args.xref_type, ids, fout)
 
-  elif args.op=='get_structure_ids':
-    drugcentral.Utils.GetStructureIds(dbcon, ids, fout)
+  elif args.op=='get_structure_xrefs':
+    drugcentral.Utils.GetStructureXrefs(dbcon, ids, fout)
 
   elif args.op=='get_structure_products':
     drugcentral.Utils.GetStructureProducts(dbcon, ids, fout)

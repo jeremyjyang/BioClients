@@ -185,13 +185,13 @@ def ListActiveIngredients(dbcon, dbschema="public", fout=None):
 def ListXrefTypes(dbcon, fout=None):
   sql="""\
 SELECT DISTINCT
-	id AS "dc_xref_type_id",
-	type AS "dc_xref_type",
-	description AS "dc_xref_type_description"
+	id AS xref_type_id,
+	type AS xref_type,
+	description AS xref_type_description
 FROM
 	id_type
 ORDER BY
-	dc_xref_type
+	xref_type
 """
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
@@ -457,10 +457,10 @@ def GetStructureBySynonym(dbcon, ids, fout=None):
   else: return df_out
 
 #############################################################################
-def GetStructureIds(dbcon, ids, fout=None):
+def GetStructureXrefs(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
-  sql = ("""SELECT struct_id, id_type, identifier AS id FROM identifier WHERE struct_id = '{}'""")
+  sql = ("""SELECT struct_id, id_type AS xref_type, identifier AS xref FROM identifier WHERE struct_id = '{}'""")
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))

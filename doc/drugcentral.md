@@ -25,10 +25,12 @@ Operations include:
 * __list_structures2molfile__ - List all drug structures as MDL molfile.
 * __list_active_ingredients__ - List all active ingredients.
 * __list_indications__ - List all indications.
+* __list_xref_types__ - List all xref types.
 * __list_ddis__ - List all drug-drug interactions.
 * __get_structure__ - Get structure by struct_id.
 * __get_structure_by_synonym__ - Get structure by synonym.
-* __get_structure_ids__ - Get all IDs for structures.
+* __get_structure_by_xref__ - Get structure by xref ID.
+* __get_structure_xrefs__ - Get all xref IDs for structures.
 * __get_structure_products__ - Get all products for structures.
 * __get_structure_atcs__ - Get all ATC classes for structures.
 * __get_product__ - Get product by product_id.
@@ -47,19 +49,21 @@ $ python3 -m BioClients.drugcentral.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE] [--dbhost DBHOST]
                  [--dbport DBPORT] [--dbname DBNAME] [--dbusr DBUSR]
                  [--dbpw DBPW] [--param_file PARAM_FILE] [--dbschema DBSCHEMA]
+                 [--xref_type XREF_TYPE]
                  [-v]
                  {describe, counts, version, get_structure, get_structure_by_synonym, get_structure_ids, get_structure_products, get_structure_atcs, get_product, get_product_structures, get_indication_structures, list_products, list_structures, list_structures2smiles, list_structures2molfile, list_active_ingredients, list_indications, list_ddis, search_indications, search_products, meta_listdbs}
 
 DrugCentral PostgreSql client utility
 
 positional arguments:
-  {describe, counts, version, get_structure, get_structure_by_synonym, get_structure_ids, get_structure_products, get_structure_atcs, get_product, get_product_structures, get_indication_structures, list_products, list_structures, list_structures2smiles, list_structures2molfile, list_active_ingredients, list_indications, list_ddis, search_indications, search_products, meta_listdbs}
+  {describe, counts, version, get_structure, get_structure_by_synonym, get_structure_by_xref, get_structure_xrefs, get_structure_products, get_structure_atcs, get_product, get_product_structures, get_indication_structures, list_products, list_structures, list_structures2smiles, list_structures2molfile, list_active_ingredients, list_indications, list_ddis, list_xref_types, search_indications, search_products, meta_listdbs}
                         operation
 
 optional arguments:
   -h, --help            show this help message and exit
   --i IFILE             input ID file
   --ids IDS             input IDs (comma-separated)
+  --xref_type XREFTYPE  xref ID type
   --o OFILE             output (TSV)
   --dbhost DBHOST
   --dbport DBPORT
