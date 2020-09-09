@@ -43,9 +43,10 @@ def GetTargetByUniprot(base_url, ids, fout):
 #############################################################################
 def GetActivity(api_host, api_base_path, ids, resource, pmin, fout):
   '''Get activity data and necessary references only, due to size concerns.  resource = assay|target|molecule.  Filter on pChEMBL value, standardized negative log molar half-max response activity.'''
-  n_act=0; n_out=0; n_pval=0; n_pval_ok=0; tags=None;
+  n_act=0; n_out=0; n_pval=0; n_pval_ok=0; tags=None; tq=None;
   for id_this in ids:
-    url_next =( api_base_path+'/activity.json?%s_chembl_id=%s&limit=%d'%(resource,id_this,NCHUNK))
+    if tq is not None: tq.update()
+    url_next = (api_base_path+'/activity.json?%s_chembl_id=%s&limit=%d'%(resource, id_this, NCHUNK))
     while True:
       rval = rest_utils.GetURL('https://'+api_host+url_next, parse_json=True)
       acts = rval['activities'] if 'activities' in rval else []
@@ -77,8 +78,8 @@ def GetActivity(api_host, api_base_path, ids, resource, pmin, fout):
           fout.write('\t'.join(vals)+'\n')
           n_out+=1
       total_count = rval['page_meta']['total_count'] if 'page_meta' in rval and 'total_count' in rval['page_meta'] else None
-      if n_act%1000==0: logging.info('%d/%s act/total'%(n_act, total_count))
       url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
+      if not tq: tq = tqdm.tqdm(total=len(ids), unit=resource+"s")
       if not url_next: break
   logging.info('n_qry: %d; n_act: %d; n_out: %d'%(len(ids), n_act, n_out))
   if pmin is not None:
@@ -265,7 +266,7 @@ def ListCellLines(api_host, api_base_path, fout):
 
 #############################################################################
 def ListOrganisms(api_host, api_base_path, fout):
-  n_out=0; tags=None; tq=None;
+  n_out=0; tags=None;
   url_next = (api_base_path+'/organism.json')
   while True:
     rval = rest_utils.GetURL('https://'+api_host+url_next, parse_json=True)
@@ -286,7 +287,7 @@ def ListOrganisms(api_host, api_base_path, fout):
 
 #############################################################################
 def ListProteinClasses(api_host, api_base_path, fout):
-  n_out=0; tags=None; tq=None;
+  n_out=0; tags=None;
   url_next = (api_base_path+'/protein_class.json')
   while True:
     rval = rest_utils.GetURL('https://'+api_host+url_next, parse_json=True)

@@ -74,15 +74,15 @@ if __name__=='__main__':
 	"get_activity_by_target",
 	"get_activity_properties",
 	"get_document"]
-  parser.add_argument("op", choices=ops, help='operation')
+  parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--ids", help="input IDs (e.g. mol, assay, target, document)")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=None)
   parser.add_argument("--dev_phase", type=int, choices=list(range(5)), default=None, help="molecule development phase")
-  parser.add_argument("--assay_source" , help="source_id")
-  parser.add_argument("--assay_type" , help="{0}".format(str(assay_types)))
+  parser.add_argument("--assay_source", help="source_id")
+  parser.add_argument("--assay_type", help="{0}".format(str(assay_types)))
   parser.add_argument("--pmin", type=float, help="min pChEMBL activity value (9 ~ 1nM *C50)")
   parser.add_argument("--include_phenotypic", action="store_true", help="else pChembl required")
   parser.add_argument("--api_host", default=API_HOST)
