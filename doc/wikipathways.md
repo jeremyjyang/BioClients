@@ -4,8 +4,6 @@
 
 Access to WikiPathways REST API.
 
-UniprotKB = Uniprot Knowledge Base
-
 * <http://www.wikipathways.org>
 
 ```
