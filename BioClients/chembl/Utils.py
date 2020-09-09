@@ -138,7 +138,6 @@ def ListTargets(api_host, api_base_path, skip, nmax, fout):
     if nmax and n_out>=nmax: break
     total_count = rval['page_meta']['total_count'] if 'page_meta' in rval and 'total_count' in rval['page_meta'] else None
     if not tq: tq = tqdm.tqdm(total=total_count, unit="tgts")
-    if n_tgt%1000==0: logging.info('%d/%s tgt/total'%(n_tgt, total_count))
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
   logging.info('n_targets: %d; n_target_components: %d; n_out: %d'%(n_tgt, n_cmt, n_out))
@@ -146,13 +145,15 @@ def ListTargets(api_host, api_base_path, skip, nmax, fout):
 #############################################################################
 def GetTarget(base_url, ids, fout):
   '''One row per target.  Ignore synonyms. If one-component, single protein, include UniProt accession.'''
-  n_tgt=0; n_cmt=0; n_out=0; tags=None;
+  n_tgt=0; n_cmt=0; n_out=0; tags=None; tq=None;
   for id_this in ids:
     tgt = rest_utils.GetURL(base_url+'/target/%s.json'%id_this, parse_json=True)
     if not tgt:
       logging.error('Not found: "%s"'%id_this)
       continue
     n_tgt+=1
+    if not tq: tq = tqdm.tqdm(total=len(ids), unit="tgts")
+    if tq is not None: tq.update()
     if n_tgt==1 or not tags:
       tags = sorted(tgt.keys())
       for tag in tags[:]:
@@ -502,10 +503,12 @@ def SearchAssays(api_host, api_base_path, asrc, atype, skip, nmax, fout):
 ##############################################################################
 def GetMolecule(base_url, ids, fout):
   '''Ignore molecule_synonyms.'''
-  n_out=0; tags=None; struct_tags=None; prop_tags=None;
+  n_out=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
   for id_this in ids:
     mol = rest_utils.GetURL(base_url+'/molecule/%s.json'%id_this, parse_json=True)
     if not mol: continue
+    if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
+    tq.update()
     if not tags:
       tags = sorted(list(mol.keys()))
       for tag in tags[:]:
