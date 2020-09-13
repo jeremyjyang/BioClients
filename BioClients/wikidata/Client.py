@@ -42,10 +42,10 @@ if __name__=="__main__":
   if args.op == 'test':
     wikidata.Utils.Test(fout)
 
-  elif args.op == 'listDrugTargetPairs':
+  elif args.op == 'list_DrugTargetPairs':
     wikidata.Utils.ListDrugTargetPairs(fout)
 
-  elif args.op == 'listGeneDiseasePairs':
+  elif args.op == 'list_GeneDiseasePairs':
     wikidata.Utils.ListGeneDiseasePairs(fout)
 
   else:
