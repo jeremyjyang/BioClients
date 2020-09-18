@@ -26,6 +26,7 @@ def Connect(dbhost, dbport, dbname, dbusr, dbpw):
 #############################################################################
 def Version(dbcon, dbschema="public", fout=None):
   sql = ("SELECT * FROM {0}.dbversion".format(dbschema))
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   cur = dbcon.cursor()
   cur.execute(sql)
@@ -38,6 +39,7 @@ def Version(dbcon, dbschema="public", fout=None):
 def MetaListdbs(dbcon, fout=None):
   """Pg meta-command: list dbs from pg_database."""
   sql = ("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   tags=None;
   cur = dbcon.cursor()
@@ -109,6 +111,7 @@ def Counts(dbcon, dbschema="public", fout=None):
 #############################################################################
 def ListStructures(dbcon, dbschema="public", fout=None):
   sql = ("SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM {}.structures".format(dbschema))
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -125,6 +128,7 @@ def ListStructures(dbcon, dbschema="public", fout=None):
 #############################################################################
 def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
   sql = ("SELECT smiles, id, name FROM {0}.structures WHERE smiles IS NOT NULL".format(dbschema))
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; 
   cur = dbcon.cursor()
@@ -152,6 +156,7 @@ def ListStructures2Molfile(dbcon, dbschema="public", fout=None):
 #############################################################################
 def ListProducts(dbcon, dbschema="public", fout=None):
   sql = ("SELECT * FROM {0}.product".format(dbschema))
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -168,6 +173,7 @@ def ListProducts(dbcon, dbschema="public", fout=None):
 #############################################################################
 def ListActiveIngredients(dbcon, dbschema="public", fout=None):
   sql = ("SELECT * FROM {0}.active_ingredient".format(dbschema))
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -193,6 +199,7 @@ FROM
 ORDER BY
 	xref_type
 """
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -223,6 +230,7 @@ JOIN
 WHERE
 	omop.relationship_name = 'indication'
 """
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -267,6 +275,7 @@ FROM
 WHERE
 	omop.relationship_name = 'indication'
 """
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -299,6 +308,7 @@ FROM
 JOIN drug_class drug_class1 ON drug_class1.name = ddi.drug_class1
 JOIN drug_class drug_class2 ON drug_class2.name = ddi.drug_class2
 """
+  logging.debug("SQL: {}".format(sql))
   if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
   n_out=0; tags=None;
   cur = dbcon.cursor()
@@ -334,6 +344,7 @@ WHERE
 	omop.relationship_name = 'indication'
 	AND (omop.concept_name ~* '{0}' OR omop.snomed_full_name ~* '{0}')
 """.format(term)
+    logging.debug("SQL: {}".format(sql))
     if fout:
       cur.execute(sql)
       for row in cur:
@@ -374,6 +385,7 @@ WHERE
 	omop.relationship_name = 'indication'
 	AND omop.concept_id = '{}'
 """
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -395,6 +407,7 @@ def GetStructure(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
   sql = ("""SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM structures WHERE id = '{}'""")
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -419,6 +432,7 @@ def GetStructureByXref(dbcon, xref_type, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
   sql = ("""SELECT idn.identifier xref, idn.id_type xref_type, s.id dc_struct_id, s.name dc_struct_name FROM structures AS s JOIN identifier AS idn ON idn.struct_id=s.id WHERE idn.id_type = '"""+xref_type+"""' AND idn.identifier = '{}'""")
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -440,6 +454,7 @@ def GetStructureBySynonym(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
   sql = ("""SELECT str.id, str.name structure_name, syn.name synonym FROM structures AS str JOIN synonyms AS syn ON syn.id=str.id WHERE syn.name = '{}'""")
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -461,6 +476,7 @@ def GetStructureXrefs(dbcon, ids, fout=None):
   n_out=0; tags=None; df_out=None;
   cur = dbcon.cursor()
   sql = ("""SELECT struct_id, id_type AS xref_type, identifier AS xref FROM identifier WHERE struct_id = '{}'""")
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -504,6 +520,7 @@ JOIN
 WHERE 
 	s.id = '{}'
 """
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -545,6 +562,7 @@ FROM
 WHERE 
 	s.id = '{}'
 """
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -590,6 +608,7 @@ JOIN
 WHERE 
 	s.id = '{}'
 """
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))
@@ -630,6 +649,7 @@ JOIN
 WHERE 
 	p.id = '{}'
 """
+  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
     if fout:
       cur.execute(sql.format(id_this))

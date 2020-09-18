@@ -36,7 +36,7 @@ if __name__=='__main__':
 	"search_products",
 	"meta_listdbs"
 	]
-  parser.add_argument("op", choices=ops, help="operation")
+  parser.add_argument("op", choices=ops, help="OPERATION (select one)")
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--xref_type", help="xref ID type")
@@ -53,8 +53,8 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-
-  params = drugcentral.ReadParamFile(args.param_file)
+  if os.path.isfile(args.param_file):
+    params = drugcentral.ReadParamFile(args.param_file)
   if args.dbhost: params['DBHOST'] = args.dbhost 
   if args.dbport: params['DBPORT'] = args.dbport 
   if args.dbname: params['DBNAME'] = args.dbname 
@@ -62,6 +62,8 @@ if __name__=='__main__':
   if args.dbpw: params['DBPW'] = args.dbpw 
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
+
+  t0 = time.time()
 
   ids=[]
   if args.ifile:
@@ -159,3 +161,5 @@ if __name__=='__main__':
     parser.error("Invalid operation: {0}".format(args.op))
 
   dbcon.close()
+  logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
+

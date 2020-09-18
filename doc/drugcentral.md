@@ -83,9 +83,9 @@ Db credentials are normally stored in a configuration file at
 `$HOME/.drugcentral.yaml`, formatted thus:
 
 ```
-DBHOST: "====Replace-with-HOST===="
-DBPORT: "====Replace-with-PORT===="
-DBNAME: "====Replace-with-NAME===="
-DBUSR: "====Replace-with-USERNAME===="
-DBPW: "====Replace-with-PASSWORD===="
+DBHOST: "====Replace_with_HOST===="
+DBPORT: "====Replace_with_PORT===="
+DBNAME: "====Replace_with_NAME===="
+DBUSR:  "====Replace_with_USERNAME===="
+DBPW:   "====Replace_with_PASSWORD===="
 ```
