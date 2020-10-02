@@ -10,14 +10,12 @@ import os,sys,re,time,argparse,logging
 from xml.etree import ElementTree
 from xml.parsers import expat
 
-from ..util import xml_utils
-
-PROG=os.path.basename(sys.argv[0])
+from .. import util
 
 #############################################################################
 def PubMed_Docsum2Tsv(tree, fout):
   '''From summary xml, extract 1st occurance of selected fields.'''
-  docsums = xml_utils.XpathFind('/eSummaryResult/DocSum', tree)
+  docsums = util.xml.XpathFind('/eSummaryResult/DocSum', tree)
   tags = ['PubDate', 'EPubDate', 'Source', 'Title', 'ISSN', 'PubTypeList', 'FullJournalName',
 	'LastAuthor', 'SO', 'DOI', 'ELocationID',
 	'pmc'] ##pmc is special
@@ -26,14 +24,14 @@ def PubMed_Docsum2Tsv(tree, fout):
     pubdata = {}
     for cnode in docsum.childNodes:
       if cnode.nodeName == 'Id':
-        pubdata['Id'] = xml_utils.DOM_NodeText(cnode)
+        pubdata['Id'] = util.xml.DOM_NodeText(cnode)
       for tag in tags:
-        if cnode.nodeName == 'Item' and xml_utils.DOM_GetNodeAttr(cnode, 'Name')==tag:
-          pubdata[tag] = xml_utils.DOM_NodeText(cnode)
-        if cnode.nodeName == 'Item' and xml_utils.DOM_GetNodeAttr(cnode, 'Name')=="ArticleIds":
+        if cnode.nodeName == 'Item' and util.xml.DOM_GetNodeAttr(cnode, 'Name')==tag:
+          pubdata[tag] = util.xml.DOM_NodeText(cnode)
+        if cnode.nodeName == 'Item' and util.xml.DOM_GetNodeAttr(cnode, 'Name')=="ArticleIds":
           for cnode2 in cnode.childNodes:
-            if cnode2.nodeName == 'Item' and xml_utils.DOM_GetNodeAttr(cnode2, 'Name')=="pmc":
-              pubdata['pmc'] = xml_utils.DOM_NodeText(cnode2)
+            if cnode2.nodeName == 'Item' and util.xml.DOM_GetNodeAttr(cnode2, 'Name')=="pmc":
+              pubdata['pmc'] = util.xml.DOM_NodeText(cnode2)
     for j,tag in enumerate(['Id']+tags):
       fout.write('\t' if j>0 else '')
       fout.write('"%s"'%(pubdata[tag] if pubdata.has_key(tag) else ''))
@@ -44,7 +42,7 @@ def PubMed_Docsum2Tsv(tree, fout):
 #############################################################################
 def PubMed_Doc2Tsv(tree, fout):
   '''From full xml, extract 1st occurance of selected fields.'''
-  citations = xml_utils.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation', tree)
+  citations = util.xml.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation', tree)
   xps = [	#relative xpaths
 	'PMID',
 	'Article/Journal/JournalIssue/PubDate/Year',
@@ -58,8 +56,8 @@ def PubMed_Doc2Tsv(tree, fout):
   fout.write(('\t'.join(map(lambda p:os.path.basename(p), xps)))+'\n')
   for citation in citations:
     for j,xp in enumerate(xps):
-      nodes = xml_utils.XpathFind(xp, citation)
-      datum = xml_utils.DOM_NodeText(nodes[0]) if nodes else ''
+      nodes = util.xml.XpathFind(xp, citation)
+      datum = util.xml.DOM_NodeText(nodes[0]) if nodes else ''
       fout.write('\t' if j>0 else '')
       fout.write('"%s"'%(datum))
     fout.write('\n')
@@ -69,36 +67,36 @@ def PubMed_Doc2Tsv(tree, fout):
 #############################################################################
 def PubMed_Doc2AuthorList(tree, fout):
   '''From full xml for one pub, extract author list.'''
-  authors = xml_utils.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/AuthorList/Author', tree)
+  authors = util.xml.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation/Article/AuthorList/Author', tree)
   for author in authors:
-    n = xml_utils.XpathFind('LastName', author)
-    lname = xml_utils.DOM_NodeText(n[0])
-    fname = xml_utils.DOM_NodeText(xml_utils.XpathFind('ForeName', author)[0])
-    affiliations = xml_utils.XpathFind('AffiliationInfo/Affiliation', author)
+    n = util.xml.XpathFind('LastName', author)
+    lname = util.xml.DOM_NodeText(n[0])
+    fname = util.xml.DOM_NodeText(util.xml.XpathFind('ForeName', author)[0])
+    affiliations = util.xml.XpathFind('AffiliationInfo/Affiliation', author)
     affs=[]
     for affiliation in affiliations:
-      affs.append(xml_utils.DOM_NodeText(affiliation))
+      affs.append(util.xml.DOM_NodeText(affiliation))
     fout.write('"%s"\t"%s"\t"%s"\n'%(lname, fname, ('; '.join(affs))))
   logging.info('n_authors: %d'%len(authors))
 
 #############################################################################
 def PubMed_Docsum2AbstractText(tree, pmid, fout, verbose):
   '''From summary xml, extract title and abstract.'''
-  articles = xml_utils.XpathFind('/PubmedArticleSet/PubmedArticle', tree)
+  articles = util.xml.XpathFind('/PubmedArticleSet/PubmedArticle', tree)
   title=None; abstract=None;
   for article in articles:
     try:
-      pmid_this = int(xml_utils.DOM_GetLeafValsByTagName(article, 'PMID')[0])
+      pmid_this = int(util.xml.DOM_GetLeafValsByTagName(article, 'PMID')[0])
     except Exception as e:
       logging.error('PMID not found: %s'%str(e))
       continue
     if pmid_this==int(pmid):
       try:
-        title = xml_utils.DOM_GetLeafValsByTagName(article, 'ArticleTitle')[0]
+        title = util.xml.DOM_GetLeafValsByTagName(article, 'ArticleTitle')[0]
       except Exception as e:
         logging.info('ERROR: ArticleTitle not found: %s'%str(e))
       try:
-        abstract = xml_utils.DOM_GetLeafValsByTagName(article, 'AbstractText')[0]
+        abstract = util.xml.DOM_GetLeafValsByTagName(article, 'AbstractText')[0]
       except Exception as e:
         logging.info('ERROR: AbstractText not found: %s'%str(e))
       break
@@ -113,21 +111,21 @@ def PubMed_Docsum2AbstractText(tree, pmid, fout, verbose):
 #############################################################################
 def PubMed_Doc2AbstractText(tree, pmid, fout, verbose):
   '''From full xml, extract title and abstract.'''
-  citations = xml_utils.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation', tree)
+  citations = util.xml.XpathFind('/PubmedArticleSet/PubmedArticle/MedlineCitation', tree)
   title=None; abstract=None;
   for citation in citations:
     try:
-      pmid_this = int(xml_utils.DOM_GetLeafValsByTagName(citation, 'PMID')[0])
+      pmid_this = int(util.xml.DOM_GetLeafValsByTagName(citation, 'PMID')[0])
     except Exception as e:
       logging.info('ERROR: PMID not found: %s'%str(e))
       continue
     if pmid_this==int(pmid):
       try:
-        title = xml_utils.DOM_GetLeafValsByTagName(citation, 'ArticleTitle')[0]
+        title = util.xml.DOM_GetLeafValsByTagName(citation, 'ArticleTitle')[0]
       except Exception as e:
         logging.info('ERROR: ArticleTitle not found: %s'%str(e))
       try:
-        abstract = xml_utils.DOM_GetLeafValsByTagName(citation, 'AbstractText')[0]
+        abstract = util.xml.DOM_GetLeafValsByTagName(citation, 'AbstractText')[0]
       except Exception as e:
         logging.info('ERROR: AbstractText not found: %s'%str(e))
       break
@@ -141,26 +139,21 @@ def PubMed_Doc2AbstractText(tree, pmid, fout, verbose):
 
 #############################################################################
 if __name__=='__main__':
-
   parser = argparse.ArgumentParser(description='process PubMed XML (summaries or full), typically obtained via Entrez eUtils.')
   ops=['summary2tsv', 'summary2abstract', 'full2tsv', 'full2abstract', 'full2authorlist']
   parser.add_argument("op", choices=ops, help="operation")
+  parser.add_argument("--i", dest="ifile", required=True, help="input file, XML")
   parser.add_argument("--ids", help="PubMed IDs, comma-separated (ex:25533513)")
   parser.add_argument("--idfile", help="input file, PubMed IDs")
-  parser.add_argument("--i", dest="ifile", help="input file, XML")
   parser.add_argument("--nmax", help="max to return")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--odir", help="output directory")
   parser.add_argument("-v", "--verbose", default=0, action="count")
-
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if not args.ifile:
-    parser.error('-i required')
-
-  fin = open(ifile)
+  fin = open(args.ifile)
 
   pmids=[]
   if args.idfile:
@@ -178,10 +171,7 @@ if __name__=='__main__':
       logging.info('input IDs: %d'%(len(ids)))
     fin_ids.close()
 
-  if args.ofile:
-    fout = open(args.ofile, "w")
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   try:
     tree = ElementTree.parse(fin)

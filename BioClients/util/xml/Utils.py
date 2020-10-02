@@ -101,15 +101,16 @@ def XpathFind(xp, root):
 def Describe(fin):
   tags={}
   et_itrabl = ElementTree.iterparse(fin, events=("start", "end")) #iterable
-  et_itr = iter(et_itrabl) #iterator
-  event, root = et_itr.next() #root element
+  #et_itr = iter(et_itrabl) #iterator
+  #event, root = et_itr.next() #root element
   n_elem=0; n_term=0;
-  while True:
-    try:
-      ee = et_itr.next()
-    except Exception as e:
-      break
-    event, elem = ee
+  #while True:
+  #  try:
+  #    ee = et_itr.next()
+  #  except Exception as e:
+  #    break
+  #  event, elem = ee
+  for event,elem in et_itrabl:
     n_elem+=1
     if event == 'start':
       if elem.tag not in tags:
@@ -125,19 +126,23 @@ def Describe(fin):
     logging.info('%24s: %6d'%(tag, tags[tag]))
 
 #############################################################################
-if __name__=='__main__':
-  parser = argparse.ArgumentParser(description='XML utility', epilog='clean: UTF-8 encoding compliant')
+def XML2TSV(entity_tag, fin, fout):
+  return None
 
-  ops = ['match_xpath', 'describe', 'clean']
-  parser.add_argument("op", choices=ops, help='operation')
+#############################################################################
+if __name__=="__main__":
+  parser = argparse.ArgumentParser(description="XML utility", epilog="clean: UTF-8 encoding compliant")
+  ops = ["match_xpath", "describe", "clean", "xml2tsv"]
+  parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input XML file")
   parser.add_argument("--xpath", help="xpath pattern")
+  parser.add_argument("--xml2tsv_entity_tag", help="tag of entity to be enumerated")
   parser.add_argument("--force", type=bool, help="ignore UTF-8 encoding errors")
   parser.add_argument("--o", dest="ofile", help="output XML file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  logging.basicConfig(format="%(levelname)s:%(message)s", level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   codecs_mode = "ignore" if args.force else "replace"
 
@@ -151,7 +156,7 @@ if __name__=='__main__':
     try:
       root = ElementTree.parse(fin)
     except Exception as e:
-      parser.error('ElementTree.parse(): %s'%str(e))
+      parser.error("ElementTree.parse(): %s"%str(e))
     fin.close()
     root.write(fout, encoding="UTF-8", xml_declaration=True)
 
@@ -159,15 +164,20 @@ if __name__=='__main__':
     try:
       root = ElementTree.parse(fin)
     except Exception as e:
-      parser.error('ElementTree.parse(): %s'%str(e))
+      parser.error("ElementTree.parse(): %s"%str(e))
     fin.close()
     if not (xp and ifile):
-      parser.error('--i and --xpath required.')
+      parser.error("--i and --xpath required.")
     nodes = XpathFind(xp, root)
-    fout.write('"xpath","match"\n')
+    fout.write("xpath\tmatch\n")
     for i,node in enumerate(nodes):
-      fout.write('"%s","%s"\n'%(xp, DOM_NodeText(node)))
-    logging.info('matches: %d'%len(nodes))
+      fout.write("%s\t%s\n"%(xp, DOM_NodeText(node)))
+    logging.info("matches: %d"%len(nodes))
+
+  elif args.op == "xml2tsv":
+    if not args.xml2tsv_entity_tag:
+      parser.error("--xml2tsv_entity_tag required.")
+    XML2TSV(args.xml2tsv_entity_tag, fin, fout)
 
   else:
-    parser.error('Invalid operation. %s'%(args.op))
+    parser.error("Invalid operation. %s"%(args.op))
