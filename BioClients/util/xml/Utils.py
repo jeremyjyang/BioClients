@@ -46,12 +46,12 @@ def Describe(fin):
     logging.info('{}: {}'.format(tag, tags[tag]))
 
 #############################################################################
-def XML2TSV(xpath, fin, fout):
+def XML2TSV(xp, ns, fin, fout):
   n_entity=0; tags=[];
   tree = ElementTree.parse(fin)
   root = tree.getroot()
   logging.debug('root.tag <{}>'.format(root.tag))
-  itr = root.iter(xpath) 
+  itr = root.iter(xp)
   for elem in itr:
     logging.debug('elem.tag <{}>'.format(elem.tag))
     n_entity+=1
@@ -68,15 +68,16 @@ def XML2TSV(xpath, fin, fout):
   logging.info('n_entity <{}>: {}'.format(xpath, n_entity))
 
 #############################################################################
-def MatchXPath(xp, fin):
-  tree = ElementTree.parse(fin)
-  root = tree.getroot()
-  nodes = root.findall(xp)
+def MatchXPath(xp, ns, fin):
+  n_node=0;
   fout.write("xpath\tmatch\n")
-  i_node=0;
-  for node in nodes:
-    fout.write("%s\t%s\n"%(xp, node.text))
-  logging.info("matches: {}".format(i_node))
+  tree = ElementTree.parse(fin)
+  itr = tree.iterfind(xp)
+  for node in itr:
+    n_node+=1;
+    txt = node.text if node.text else ''
+    fout.write("{}\t{}\n".format(xp, txt))
+  logging.info("matches: {}".format(n_node))
 
 #############################################################################
 if __name__=="__main__":
@@ -85,6 +86,7 @@ if __name__=="__main__":
   parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input XML file")
   parser.add_argument("--xpath", help="xpath pattern")
+  parser.add_argument("--namespace", help="XML namespace")
   parser.add_argument("--force", type=bool, help="ignore UTF-8 encoding errors")
   parser.add_argument("--o", dest="ofile", help="output XML file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -115,12 +117,12 @@ if __name__=="__main__":
   elif args.op == "match_xpath":
     if not (args.xpath and args.ifile):
       parser.error("--xpath required.")
-    MatchXPath(args.xpath, fin) 
+    MatchXPath(args.xpath, args.namespace, fin) 
 
   elif args.op == "xml2tsv":
     if not args.xpath:
       parser.error("--xpath required.")
-    XML2TSV(args.xpath, fin, fout)
+    XML2TSV(args.xpath, args.namespace, fin, fout)
 
   else:
     parser.error("Invalid operation. %s"%(args.op))
