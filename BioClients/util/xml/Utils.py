@@ -49,9 +49,8 @@ def Describe(fin):
 def XML2TSV(xp, ns, fin, fout):
   n_entity=0; tags=[];
   tree = ElementTree.parse(fin)
-  root = tree.getroot()
-  logging.debug('root.tag <{}>'.format(root.tag))
-  itr = root.iter(xp)
+  logging.debug('root.tag <{}>'.format(tree.getroot().tag))
+  itr = tree.iterfind(xp)
   for elem in itr:
     logging.debug('elem.tag <{}>'.format(elem.tag))
     n_entity+=1
@@ -65,7 +64,7 @@ def XML2TSV(xp, ns, fin, fout):
       logging.debug('subelem.tag <{}>; text=\"{}\"'.format(subelem.tag, val))
       vals[re.sub(r'^{.*}', '', subelem.tag)] = val
     fout.write("\t".join([vals[tag] if tag in vals else "" for tag in tags])+"\n")
-  logging.info('n_entity <{}>: {}'.format(xpath, n_entity))
+  logging.info('n_entity <{}>: {}'.format(xp, n_entity))
 
 #############################################################################
 def MatchXPath(xp, ns, fin):
