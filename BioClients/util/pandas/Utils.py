@@ -54,7 +54,7 @@ def SetHeader(df, coltags, delim, fout):
 #############################################################################
 if __name__=='__main__':
   verstr = ('Python: {}; pandas: {}'.format(sys.version.split()[0], pandas.__version__))
-  parser = argparse.ArgumentParser(description='Pandas utilities for simple datafile transformations.', epilog=verstr)
+  parser = argparse.ArgumentParser(prog="BioClients.util.pandas.Utils", description='Pandas utilities for simple datafile transformations.', epilog=verstr)
   ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
 	'pickle', 'sample', 'set_header', 'remove_header']
