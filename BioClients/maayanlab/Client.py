@@ -5,7 +5,6 @@ See: http://amp.pharm.mssm.edu/Harmonizome/documentation
 ###
 import sys,os,re,argparse,time,json,logging
 #
-from ..util import rest_utils
 from .. import maayanlab
 #
 #

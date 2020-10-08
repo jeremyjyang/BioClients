@@ -8,13 +8,13 @@ https://api.jensenlab.org/Experiments?type1=-26&id1=DOID:10652&type2=9606&limit=
 """
 import sys,os,re,json,time,logging
 
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def GetDiseaseGenes(base_url, channel, ids, nmax, fout):
   n_out=0; tags=None;
   for id_this in ids:
-    rval = rest_utils.GetURL(base_url+'/{CHANNEL}?type1=-26&id1={DOID}&type2=9606&limit={NMAX}&format=json'.format(CHANNEL=channel, DOID=id_this, NMAX=nmax), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/{CHANNEL}?type1=-26&id1={DOID}&type2=9606&limit={NMAX}&format=json'.format(CHANNEL=channel, DOID=id_this, NMAX=nmax), parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?
@@ -34,7 +34,7 @@ def GetPubmedComentionGenes(base_url, ids, fout):
   """Search by co-mentioned terms."""
   n_out=0; tags=None;
   for id_this in ids:
-    rval = rest_utils.GetURL(base_url+'/Textmining?query={0}[tiab]&type2=9606&limit=10&format=json'.format(id_this), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/Textmining?query={0}[tiab]&type2=9606&limit=10&format=json'.format(id_this), parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?

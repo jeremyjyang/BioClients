@@ -6,7 +6,7 @@ NCBI CBB REST client (Computational Biology Branch)
 ### 
 import sys,os,re,json,argparse,time,logging
 #
-from .. import rest_utils
+from .. import rest
 #
 API_HOST='www.ncbi.nlm.nih.gov'
 API_BASE_PATH='/CBBresearch/Lu/Demo/RESTful/tmTool.cgi'
@@ -23,7 +23,7 @@ def GetLinks(pmids, bioconcept, base_url, fout):
   fout.write('pmid\tsourcedb\tbioconcept\ttext\tcount\n')
   for pmid in pmids:
     try:
-      rval=rest_utils.GetURL(base_url+'/%s/%d/JSON'%(bioconcept, pmid), headers=HEADERS, parse_json=True)
+      rval=rest.Utils.GetURL(base_url+'/%s/%d/JSON'%(bioconcept, pmid), headers=HEADERS, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue

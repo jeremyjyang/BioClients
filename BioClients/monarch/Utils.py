@@ -47,13 +47,13 @@ https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3653101/
 import sys,os,re,json,logging
 import urllib,urllib.parse
 #
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def GetDisease(base_url, ids, fout):
   n_out=0; tags=None;
   for id_this in ids:
-    disease = rest_utils.GetURL(base_url+'/disease/%s.json'%(id_this), parse_json=True)
+    disease = rest.Utils.GetURL(base_url+'/disease/%s.json'%(id_this), parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags:
       tags = list(disease.keys())
@@ -72,7 +72,7 @@ def GetDisease(base_url, ids, fout):
 def GetDiseaseRelationships(base_url, ids, fout):
   n_out=0; tags=None;
   for id_this in ids:
-    disease = rest_utils.GetURL(base_url+'/disease/%s.json'%(id_this), parse_json=True)
+    disease = rest.Utils.GetURL(base_url+'/disease/%s.json'%(id_this), parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     disease_id = disease["id"] if "id" in disease else ""
     rels = disease["relationships"] if "relationships" in disease else []
@@ -94,7 +94,7 @@ def GetGene(base_url, ids, fout):
   n_out=0; tags=None;
   #fout.write('gid,gsymb,species_id,species,iri,synonyms\n')
   for gid in ids:
-    gene = rest_utils.GetURL(base_url+'/gene/%s.json'%(gid), parse_json=True)
+    gene = rest.Utils.GetURL(base_url+'/gene/%s.json'%(gid), parse_json=True)
     logging.debug((json.dumps(gene, indent=2, sort_keys=False)))
 
     #gsymb = rval['label'] if 'label' in rval else ''
@@ -127,7 +127,7 @@ def ComparePhenotype(base_url, idAs, idsB, fout):
   fout.write('idA,typeA,labelA,taxonA,idB,typeB,labelB,taxonB,url,matchidA,matchlabelA,matchidB,matchlabelB,matchidLCS,matchlabelLCS,matchicA,matchicB,matchicLCS\n')
   for idA in idAs:
     url_this = base_url+'/compare/%s/%s.json'%(idA,','.join(idsB))
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     logging.debug((json.dumps(rval,indent=2, sort_keys=False)))
 
     A = rval['a'] if 'a' in rval else {}

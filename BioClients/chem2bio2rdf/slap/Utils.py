@@ -14,7 +14,7 @@ import urllib,urllib.parse,json,csv
 from xml.etree import ElementTree
 from xml.parsers import expat
 
-from ...util import rest_utils
+from ...util import rest
 #
 #############################################################################
 ### Scrape HTML for predicted-target table for CSV
@@ -33,7 +33,7 @@ def Drug2Targets(base_url,cids,fout):
     n_cid+=1
     logging.info('%9s: '%(cid))
     try:
-      rval=rest_utils.GetURL(base_url+'/cid=%s'%(cid))
+      rval=rest.Utils.GetURL(base_url+'/cid=%s'%(cid))
     except Exception as e:
       logging.error('Exception: %s'%(e))
       n_not_found+=1
@@ -89,7 +89,7 @@ def Drug2BioSimilarDrugs(base_url,cids,fout):
     n_cid+=1
     logging.info('%9s: '%(cid))
     try:
-      rval=rest_utils.GetURL(base_url+'/cid=%s'%(cid))
+      rval=rest.Utils.GetURL(base_url+'/cid=%s'%(cid))
     except Exception as e:
       logging.error('Exception: %s'%(e))
       n_not_found+=1
@@ -147,7 +147,7 @@ def Target2Drugs(base_url,tids,fout):
     n_tid+=1
     logging.info('%9s: '%(tid))
     try:
-      rval=rest_utils.GetURL(base_url+'/target=%s'%(tid))
+      rval=rest.Utils.GetURL(base_url+'/target=%s'%(tid))
     except Exception as e:
       logging.error('Exception: %s'%(e))
       n_not_found+=1
@@ -244,7 +244,7 @@ def DrugTargetPaths(base_url, cids, tids, cid_skip, cid_nmax, tid_skip, tid_nmax
       #######################################################################
       logging.info('%9s: %9s:'%(cid,tid))
       try:
-        rval=rest_utils.GetURL(base_url+'/%s:%s'%(cid,tid))
+        rval=rest.Utils.GetURL(base_url+'/%s:%s'%(cid,tid))
       except Exception as e:
         logging.error('HTTP Error (%s): %s'%(res,e))
       txt=('%s'%(str(rval)))
@@ -314,7 +314,7 @@ def DrugTargetPaths(base_url, cids, tids, cid_skip, cid_nmax, tid_skip, tid_nmax
 #############################################################################
 def DDSimilarity(base_url,cid1,cid2,fout):
   '''Drug-drug similarity query'''
-  htm = rest_utils.GetURL(base_url+'/sim_%s:%s'%(cid1,cid2))
+  htm = rest.Utils.GetURL(base_url+'/sim_%s:%s'%(cid1,cid2))
   logging.debug('htm = "%s"'%htm)
 
 #############################################################################

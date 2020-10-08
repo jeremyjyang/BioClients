@@ -6,7 +6,7 @@ See: http://wiki.thebiogrid.org/doku.php/biogridrest
 ###
 import sys,os,re,json,time,logging,yaml
 #
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def ReadParamFile(fparam):
@@ -22,7 +22,7 @@ def ListOrganisms(base_url, params, fout):
   n_all=0; n_out=0; n_err=0;
   url=base_url+'/organisms/?accesskey=%s'%params['API_KEY']
   url+=('&format=tab2')
-  rval=rest_utils.GetURL(url, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_json=False)
   txt = rval
   lines = txt.splitlines()
   fout.write('organism_id, organism"\n')
@@ -37,7 +37,7 @@ def ListIdTypes(base_url, params, fout):
   n_all=0; n_out=0; n_err=0;
   url=base_url+'/identifiers/?accesskey=%s'%params['API_KEY']
   url+=('&format=tab2')
-  rval=rest_utils.GetURL(url, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_json=False)
   txt = rval
   lines = txt.splitlines()
   for line in lines:
@@ -55,7 +55,7 @@ def GetInteractions(base_url, params, ids, fout):
   for iid in ids:
     url=base_url+'/interactions/%s?'%iid
     url+=('&accesskey=%s&format=json'%params['API_KEY'])
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2, sort_keys=False)+'\n')
 
     if type(rval) is not dict:
@@ -100,7 +100,7 @@ def SearchInteractions(base_url, params, ids, search_params, fout):
 
   while True:
     url_this=url+('&start=%d&max=%d'%(skip, chunk))
-    rval=rest_utils.GetURL(url_this, parse_json=True)
+    rval=rest.Utils.GetURL(url_this, parse_json=True)
     logging.debug(json.dumps(rval, indent=2, sort_keys=False)+'\n')
     if not rval: break
     if type(rval) is not dict:

@@ -11,7 +11,7 @@ Source IDs:
 """
 import sys,os,re,argparse,time,logging,json
 
-from ..util import rest_utils
+from ..util import rest
 #
 PROG=os.path.basename(sys.argv[0])
 #
@@ -30,7 +30,7 @@ def GetMapping(base_url, ids, src_id, dst_id, fout):
   for id_query in ids:
     n_qry+=1
     logging.info('query: "%s"'%id_query)
-    rval=rest_utils.GetURL(base_url+'/src_compound_id/%s/%d/%d'%(id_query, src_id, dst_id), parse_json=True)
+    rval=rest.Utils.GetURL(base_url+'/src_compound_id/%s/%d/%d'%(id_query, src_id, dst_id), parse_json=True)
     logging.debug('%s'%json.dumps(rval, sort_keys=True, indent=2))
     mols = rval
     ok=False
@@ -61,7 +61,7 @@ def GetStructure(base_url, ids, src_id, fout):
   for id_query in ids:
     n_qry+=1
     logging.info('query: "%s"'%id_query)
-    rval = rest_utils.GetURL(base_url+'/structure/%s/%d'%(id_query, src_id), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/structure/%s/%d'%(id_query, src_id), parse_json=True)
     logging.debug('%s'%json.dumps(rval, sort_keys=True, indent=2))
     mols = rval
     ok=False
@@ -88,7 +88,7 @@ def GetByInchikeys(base_url, inchikeys, fout):
     rval=None; chemb_id='';
     inchikey = re.sub(r'^InChIKey=', '', inchikey)
     logging.info('query: "%s"'%inchikey)
-    rval = rest_utils.GetURL(base_url+'/inchikey/%s'%inchikey, parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/inchikey/%s'%inchikey, parse_json=True)
     chembl_id = None
     if rval:
       logging.debug('%s'%json.dumps(rval, sort_keys=True, indent=2))
@@ -104,7 +104,7 @@ def GetByInchikeys(base_url, inchikeys, fout):
 
 #############################################################################
 def ListSources(base_url):
-  rval = rest_utils.GetURL(base_url+'/src_ids', parse_json=True)
+  rval = rest.Utils.GetURL(base_url+'/src_ids', parse_json=True)
   src_ids=[]
   for s in rval:
     if 'src_id' in s :
@@ -121,7 +121,7 @@ def ListSources(base_url):
 
 ##############################################################################
 def GetSourceInfo(base_url, src_id):
-  rval=rest_utils.GetURL(base_url+'/sources/%s'%src_id, parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/sources/%s'%src_id, parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   info = rval[0] if (rval and len(rval)==1) else {}
   return info

@@ -102,7 +102,7 @@ from functools import total_ordering
 from lxml import etree
 from pyquery import PyQuery
 #
-from ..util import rest_utils
+from ..util import rest
 #
 ## elements common to 'Concept' and 'SourceAtomCluster' class
 UMLS_COMMON_FIELDS=['classType','name','ui','atomCount','definitions','atoms','defaultPreferredAtom']

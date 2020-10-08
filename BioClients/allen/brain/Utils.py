@@ -22,11 +22,11 @@
 import sys,os,re,time,logging
 import urllib.parse,json
 
-from ...util import rest_utils
+from ...util import rest
 #
 ##############################################################################
 def ShowInfo(base_url, fout):
-  rval = rest_utils.GetURL(base_url+'/data/enumerate.json', parse_json=True)
+  rval = rest.Utils.GetURL(base_url+'/data/enumerate.json', parse_json=True)
   print(json.dumps(rval, sort_keys=True, indent=2))
 
 
@@ -39,7 +39,7 @@ def ListProbes(base_url, qrys, fout):
       logging.debug('start_row = %d, num_rows = %d, total_rows = %d'%(start_row, num_rows, total_rows))
       url_this = (base_url+"/data/query.json?start_row=%d&criteria=model::Probe,rma::criteria,gene[acronym$eq'%s']"%(start_row+num_rows, qry))
       try:
-        rval = rest_utils.GetURL(url_this, parse_json=True)
+        rval = rest.Utils.GetURL(url_this, parse_json=True)
       except Exception as e:
         logging.error(e)
         continue

@@ -5,7 +5,7 @@
 ##############################################################################
 import sys,os,re,json,time,logging
 
-from ..util import rest_utils
+from ..util import rest
 #
 OFMTS={'XML':'application/xml','JSON':'application/json'}
 #
@@ -37,7 +37,7 @@ GENE_TAGS=[
 def GetGene(qry, ftype, base_url):
   rval=None
   try:
-    rval=rest_utils.GetURL(base_url+'/fetch/%s/%s'%(ftype.lower(), qry), headers=HEADERS, parse_json=True)
+    rval=rest.Utils.GetURL(base_url+'/fetch/%s/%s'%(ftype.lower(), qry), headers=HEADERS, parse_json=True)
   except Exception as e:
     logging.error('%s'%(e))
   if type(rval) is not dict: return None
@@ -109,7 +109,7 @@ def SearchGenes(qrys, ftype, base_url, fout):
     logging.debug('%d. query: %s'%(n_in, qry))
     url = (base_url+'/search%s/*%s*'%((('/'+ftype.lower()) if ftype else ''), qry))
     try:
-      rval=rest_utils.GetURL(url, headers=HEADERS, parse_json=True)
+      rval=rest.Utils.GetURL(url, headers=HEADERS, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
 
@@ -126,7 +126,7 @@ def SearchGenes(qrys, ftype, base_url, fout):
 ##############################################################################
 def SearchableFieldsList(base_url):
   try:
-    rval=rest_utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
+    rval=rest.Utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
   except Exception as e:
     logging.error('%s'%(e))
   fields = rval['searchableFields'] if 'searchableFields' in rval else None

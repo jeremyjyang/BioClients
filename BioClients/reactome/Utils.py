@@ -6,7 +6,7 @@ https://reactome.org/ContentService/data/pathways/top/9606
 """
 import sys,os,re,json,time,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 #
 OFMTS={'XML':'application/xml','JSON':'application/json'}
@@ -18,7 +18,7 @@ def ListToplevelPathways(base_url, fout):
   n_out=0;
   species="9606";
   try:
-    rval = rest_utils.GetURL(base_url+'/data/pathways/top/%s'%(species), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/data/pathways/top/%s'%(species), parse_json=True)
   except Exception as e:
     logging.error('%s'%(e))
   pathways = rval
@@ -36,7 +36,7 @@ def ListToplevelPathways(base_url, fout):
 def ListDiseases(base_url, fout):
   n_out=0;
   try:
-    rval = rest_utils.GetURL(base_url+'/getDiseases')
+    rval = rest.Utils.GetURL(base_url+'/getDiseases')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','displayName','definition','schemaClass']
@@ -55,7 +55,7 @@ def ListDiseases(base_url, fout):
 def ListProteins(base_url, fout):
   n_out=0;
   try:
-    rval = rest_utils.GetURL(base_url+'/getUniProtRefSeqs')
+    rval = rest.Utils.GetURL(base_url+'/getUniProtRefSeqs')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','species','name','displayName','description','definition','schemaClass']
@@ -79,7 +79,7 @@ def ListCompounds(base_url, fout):
     return
   n_out=0;
   try:
-    rval = rest_utils.GetURL(base_url+'/getReferenceMolecules')
+    rval = rest.Utils.GetURL(base_url+'/getReferenceMolecules')
   except Exception as e:
     logging.error('%s'%(e))
   tags=['identifier','dbId','name','displayName','formula','schemaClass']
@@ -121,7 +121,7 @@ def GetCompound(base_url, cid, fout):
 ##############################################################################
 def GetEntity(base_url, ids, ctype, fout):
   for id_this in ids:
-    rval=rest_utils.GetURL(base_url+'/queryById/%s/%s'%(ctype, id_this), parse_json=True)
+    rval=rest.Utils.GetURL(base_url+'/queryById/%s/%s'%(ctype, id_this), parse_json=True)
     fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
 ##############################################################################
@@ -129,7 +129,7 @@ def PathwaysForEntities(base_url, ids, fout):
   n_all=0; n_out=0; n_err=0;
   d=('ID='+(','.join(ids))) ##plain text POST body, e.g. "ID=170075,176374,68557"
 
-  rval=rest_utils.PostURL(base_url+'/pathwaysForEntities', data=d, headers=HEADERS, parse_json=True)
+  rval=rest.Utils.PostURL(base_url+'/pathwaysForEntities', data=d, headers=HEADERS, parse_json=True)
   #fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   pathways = rval
@@ -156,7 +156,7 @@ def PathwaysForGenes(base_url, ids, fout):
   n_all=0; n_out=0; n_err=0;
   d=(','.join(ids)) ##plain text POST body
 
-  rval=rest_utils.PostURL(base_url+'/queryHitPathways', data=d, headers=HEADERS, parse_json=True)
+  rval=rest.Utils.PostURL(base_url+'/queryHitPathways', data=d, headers=HEADERS, parse_json=True)
   #fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   pathways = rval
@@ -181,7 +181,7 @@ def PathwaysForGenes(base_url, ids, fout):
 ##############################################################################
 def PathwayParticipants(base_url, id_query, fout):
   n_all=0; n_out=0; n_err=0;
-  rval = rest_utils.GetURL(base_url+'/pathwayParticipants/%s'%(id_query), parse_json=True)
+  rval = rest.Utils.GetURL(base_url+'/pathwayParticipants/%s'%(id_query), parse_json=True)
   fout.write(json.dumps(rval, sort_keys=True, indent=2)+'\n')
 
   if not (rval and type(rval) is types.ListType):

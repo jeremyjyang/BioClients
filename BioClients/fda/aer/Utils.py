@@ -31,7 +31,7 @@ OpenFDA Adverse Events Reports REST API utility functions.
 """
 import sys,os,re,time,json,logging
 #
-from ...util import rest_utils
+from ...util import rest
 #
 REST_RETRY_NMAX=10
 REST_RETRY_WAIT=5
@@ -43,7 +43,7 @@ DRUG_NAME_FIELDS = ['generic_name','brand_name','substance_name']
 def GetCounts(base_url, tfrom, tto):
   txt=''
   try:
-    rval=rest_utils.GetURL(base_url+'?search=receivedate:[%s+TO+%s]&count=receivedate'%(tfrom,tto))
+    rval=rest.Utils.GetURL(base_url+'?search=receivedate:[%s+TO+%s]&count=receivedate'%(tfrom,tto))
     txt+=('%s\n'%(str(rval)))
   except Exception as e:
     logging.error('%s'%(e))
@@ -53,7 +53,7 @@ def GetCounts(base_url, tfrom, tto):
 def Info(base_url):
   url=(base_url+'?search=(serious:1)&limit=1')
   try:
-    rval=rest_utils.GetURL(url,parse_json=True)
+    rval=rest.Utils.GetURL(url,parse_json=True)
   except Exception as e:
     logging.error('%s'%(e))
     return None
@@ -68,7 +68,7 @@ Sample first n records.  However no guarantee sampling contains all fields.
   n=100
   url=(base_url+'?search=(serious:1)&limit=%d'%n)
   try:
-    rval=rest_utils.GetURL(url,parse_json=True)
+    rval=rest.Utils.GetURL(url,parse_json=True)
   except Exception as e:
     logging.error('%s'%(e))
     return None
@@ -171,7 +171,7 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
 
     logging.debug('url="%s"'%url_this)
     try:
-      rval=rest_utils.GetURL(url_this,parse_json=True)
+      rval=rest.Utils.GetURL(url_this,parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       break

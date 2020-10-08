@@ -6,13 +6,13 @@
 import sys,os,re,time,logging
 import urllib.parse
 #
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def ListOrganisms(base_url, fout):
   n_all=0; n_out=0; n_err=0;
   url=base_url+'/listOrganisms?format=json'
-  rval=rest_utils.GetURL(url, parse_json=True)
+  rval=rest.Utils.GetURL(url, parse_json=True)
   organisms = rval['organisms']
   fout.write('Organism\n')
   for organism in organisms:
@@ -26,7 +26,7 @@ def ListPathways(base_url, params, fout):
   url = base_url+'/listPathways?format=json'
   if params['human']:
     url+=('&organism=%s'%urllib.parse.quote('Homo sapiens'))
-  rval=rest_utils.GetURL(url, parse_json=True)
+  rval=rest.Utils.GetURL(url, parse_json=True)
   pathways = rval['pathways']
   tags=[];
   for pathway in pathways:
@@ -46,6 +46,6 @@ def GetPathway(base_url, id_query, ofmt, fout):
     url = base_url+'/getPathway?pwId=%s&revision=0'%id_query
   else:
     url = base_url+'/index.php?method=getPathwayAs&fileType=%s&pwId=%s&revision=0'%(ofmt.lower(), id_query)
-  rval = rest_utils.GetURL(url, parse_json=False)
+  rval = rest.Utils.GetURL(url, parse_json=False)
   fout.write(rval)
 

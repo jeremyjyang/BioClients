@@ -9,14 +9,14 @@ interaction measurements.
 """
 import sys,os,re,numpy,json,argparse,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='hb.flatironinstitute.org'
 API_BASE_PATH='/api'
 #
 ##############################################################################
 def ListDatasets(base_url, fout):
-  rval=rest_utils.GetURL(base_url+'/datasets', parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/datasets', parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   datasets = rval
   tags=[];
@@ -37,7 +37,7 @@ def ListDatasets(base_url, fout):
 
 ##############################################################################
 def ListDatatypes(base_url, fout):
-  rval=rest_utils.GetURL(base_url+'/datatypes', parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/datatypes', parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   datatypes = rval
   tags=[];
@@ -58,7 +58,7 @@ def ListDatatypes(base_url, fout):
 
 ##############################################################################
 def ListTerms(base_url, fout):
-  rval=rest_utils.GetURL(base_url+'/terms', parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/terms', parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   terms = rval
   tags=[];
@@ -79,7 +79,7 @@ def ListTerms(base_url, fout):
 
 ##############################################################################
 def ListGenes(base_url, fout):
-  rval=rest_utils.GetURL(base_url+'/genes', parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/genes', parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   genes = rval
   for gene in genes:
@@ -93,7 +93,7 @@ def GetFuncNet(base_url, tissue, genes, maxsize, prior, minwt, fout):
   d = {'tissue':tissue, 'genes':('+'.join(genes))}
   if prior: d['prior'] = prior
   if maxsize: d['size'] = maxsize
-  rval=rest_utils.PostURL(url,data=d,parse_json=True)
+  rval=rest.Utils.PostURL(url,data=d,parse_json=True)
 
   if not rval: return
   logging.debug(json.dumps(rval,sort_keys=True,indent=2))
@@ -120,7 +120,7 @@ def GetFuncNet(base_url, tissue, genes, maxsize, prior, minwt, fout):
 def GetFuncNetEvidence(base_url, tissue, source, target, fout):
   url=base_url+'/networks/evidence'
   d = {'tissue':tissue, 'source':source, 'target':target }
-  rval=rest_utils.PostURL(url,data=d,parse_json=True)
+  rval=rest.Utils.PostURL(url,data=d,parse_json=True)
   logging.debug(json.dumps(rval,sort_keys=True,indent=2))
   tags_dataset = ["dataset", "description", "posterior", "slug", "title", "urltype", "version"]
   fout.write(','.join(tags_dataset)+'\n')

@@ -26,8 +26,6 @@ Ref: http://en.wikipedia.org/wiki/Enzyme_inhibitor
 #############################################################################
 import sys,os,time,string,re,json,logging,zeep,yaml
 
-from ..util import rest_utils
-
 #############################################################################
 def ReadParamFile(fparam):
   params={};

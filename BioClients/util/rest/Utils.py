@@ -6,12 +6,9 @@ Commonly used functions for REST client applications.
 * HTTP headers and POST data handled.
 
 '''
-import sys,os,io,re,time,logging
+import sys,os,io,re,time,logging,base64,json
 import urllib,urllib.request,urllib.parse
-import base64
-import json
-from xml.etree import ElementTree
-from xml.parsers import expat
+from xml.etree import ElementTree as ET
 #
 REST_TIMEOUT=10
 REST_RETRY_NMAX=10
@@ -116,8 +113,7 @@ def ParseXml(xml_str):
   """ElementTree.fromstring() returns root Element. ElementTree.parse() returns ElementTree."""
   etree=None;
   try:
-    #root = ElementTree.fromstring(xml_str)
-    etree = ElementTree.parse(io.StringIO(xml_str))
+    etree = ET.parse(io.StringIO(xml_str))
   except Exception as e:
     logging.warn('XML parse error: %s'%e)
     return False

@@ -13,7 +13,7 @@
 ##############################################################################
 import sys,os,re,json,argparse,time,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='api.lincscloud.org'
 API_BASE_PATH='/a2'
@@ -26,7 +26,7 @@ def GeneInfo(id_query, base_url, api_key):
   logging.debug(url)
   rval=None
   try:
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
   except Exception as e:
     logging.info('HTTP Error (%s): %s'%(res,e))
   return rval
@@ -38,7 +38,7 @@ def PertInfo(id_query,base_url,api_key):
   logging.debug(url)
   rval=None
   try:
-    rval=rest_utils.GetURL(url,parse_json=True)
+    rval=rest.Utils.GetURL(url,parse_json=True)
   except Exception as e:
     logging.info('HTTP Error (%s): %s'%(res,e))
   return rval
@@ -71,7 +71,7 @@ def PertList_Bioactive(base_url, api_key, fout, nskip=0, nmax=0, nchunk=100):
   while True:
     url_this=url+('&sk=%d&l=%d'%(nskip, nchunk))
     logging.debug(url_this)
-    rval=rest_utils.GetURL(url_this, parse_json=True)
+    rval=rest.Utils.GetURL(url_this, parse_json=True)
     if not rval:
       logging.error('no response: %s'%url)
       break

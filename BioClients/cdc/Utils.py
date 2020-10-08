@@ -7,7 +7,7 @@
 import sys,os,re,json,csv,logging
 import urllib.parse,requests
 #
-from ..util import rest_utils
+from ..util import rest
 #
 #############################################################################
 def ListResources(base_url, resource, fout):
@@ -15,7 +15,7 @@ def ListResources(base_url, resource, fout):
   url=base_url+'/%s'%resource
   while True:
     url_this='%s?offset=%d&max=%d'%(url, offset, nchunk)
-    rval=rest_utils.GetURL(url_this, parse_json=True)
+    rval=rest.Utils.GetURL(url_this, parse_json=True)
     try:
       rscs = rval['results']
       pag = rval['meta']['pagination']

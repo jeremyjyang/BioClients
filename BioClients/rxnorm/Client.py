@@ -32,6 +32,7 @@ https://www.nlm.nih.gov/research/umls/rxnorm/docs/
 import sys,os,re,argparse,time,logging
 
 from .. import rxnorm
+from ..util import rest
 #
 API_HOST='rxnav.nlm.nih.gov'
 API_BASE_PATH='/REST'
@@ -108,7 +109,7 @@ to chemical compounds.
     parser.error('%s requires --i or --ids'%args.op)
 
   if args.op == 'version':
-    rval = rest_utils.GetURL(BASE_URL+'/version.json', parse_json=True)
+    rval = rest.Utils.GetURL(BASE_URL+'/version.json', parse_json=True)
     print(rval['version'])
 
   elif args.op == 'list_idtypes':

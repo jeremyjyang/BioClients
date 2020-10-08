@@ -63,7 +63,7 @@
 ###
 import sys,os,re,argparse,time,json,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='www.disgenet.org'
 API_BASE_PATH='/api'
@@ -74,7 +74,7 @@ def GetDiseaseGDAs(base_url, ids, source, fout):
   for id_this in ids:
     url = base_url+"/gda/disease/%s?source=%s"%(id_this, source)
     try:
-      rval = rest_utils.GetURL(url, parse_json=True)
+      rval = rest.Utils.GetURL(url, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -96,7 +96,7 @@ def GetGeneGDAs(base_url, ids, source, fout):
   for id_this in ids:
     url = base_url+"/gda/gene/%s?source=%s"%(id_this, source)
     try:
-      rval = rest_utils.GetURL(url, parse_json=True)
+      rval = rest.Utils.GetURL(url, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -117,7 +117,7 @@ def GetUniprotGDAs(base_url, ids, source, fout):
   for id_this in ids:
     url = base_url+"/gda/uniprot/%s?source=%s"%(id_this, source)
     try:
-      rval = rest_utils.GetURL(url, parse_json=True)
+      rval = rest.Utils.GetURL(url, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -136,7 +136,7 @@ def GetDiseases(base_url, source, dtype, dclass, nmax, fout):
   tags=[]; n_out=0;
   url = base_url+"/disease/source/%s?format=tsv&limit=%d"%(source, nmax)
   try:
-    dss = rest_utils.GetURL(url, parse_json=False)
+    dss = rest.Utils.GetURL(url, parse_json=False)
     #logging.debug(dss)
   except Exception as e:
     logging.error('%s'%(e))

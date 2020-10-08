@@ -3,13 +3,10 @@
 ### pubchem_rdf.py - utility app for the PubChem RDF REST API.
 ### (Apparently no public Sparql endpoint exists.)
 ### https://pubchem.ncbi.nlm.nih.gov/rdf
-### 
-### Jeremy Yang
-### 28 Sep 2015
 ##############################################################################
 import sys,os,re,getopt,types,codecs
 #
-import rest_utils
+from ...util import rest
 #
 PROG=os.path.basename(sys.argv[0])
 #
@@ -36,7 +33,7 @@ def GetData(base_uri,pfx,ids,ofmt,fout,verbose):
   i=0;
   for id_query in ids:
     url=(base_uri+'/%s%d.%s'%(pfx,id_query,OFMTS[ofmt.upper()]['ext']))
-    res=rest_utils.GetURL(url,headers={'Accept':'%s'%OFMTS[ofmt.upper()]['mime']},verbose=verbose)
+    res=rest.Utils.GetURL(url,headers={'Accept':'%s'%OFMTS[ofmt.upper()]['mime']},verbose=verbose)
     if not res:
       break
     elif type(res) in types.StringTypes:
@@ -80,7 +77,7 @@ def GetEndpoint(base_uri,sids,aids,ofmt,fout,verbose):
   for sid in sids:
     for aid in aids:
       url=(base_uri+'/endpoint/SID%d_AID%d.%s'%(sid,aid,OFMTS[ofmt.upper()]['ext']))
-      res=rest_utils.GetURL(url,headers={'Accept':'%s'%OFMTS[ofmt.upper()]['mime']},verbose=verbose)
+      res=rest.Utils.GetURL(url,headers={'Accept':'%s'%OFMTS[ofmt.upper()]['mime']},verbose=verbose)
       if not res:
         break
       elif type(res) in types.StringTypes:

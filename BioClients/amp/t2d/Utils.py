@@ -10,11 +10,11 @@ DEPICT software (Pers, TH, et al., 2015)
 ###
 import sys,os,re,json,time,logging
 #
-from ...util import rest_utils
+from ...util import rest
 #
 #############################################################################
 def ListTissues(base_url, fout):
-  rval = rest_utils.GetURL(base_url+'/graph/tissue/list/object', parse_json=True)
+  rval = rest.Utils.GetURL(base_url+'/graph/tissue/list/object', parse_json=True)
   tissues = rval["data"] if "data" in rval else []
   tags = None; n_out=0;
   for tissue in tissues:
@@ -29,7 +29,7 @@ def ListTissues(base_url, fout):
 
 #############################################################################
 def ListPhenotypes(base_url, fout):
-  rval=rest_utils.GetURL(base_url+'/graph/phenotype/list/object', parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/graph/phenotype/list/object', parse_json=True)
   phenotypes = rval["data"] if "data" in rval else []
   tags = None; n_out=0;
   for phenotype in phenotypes:
@@ -45,7 +45,7 @@ def ListPhenotypes(base_url, fout):
 ##############################################################################
 def DepictGenePathway(base_url, gene, phenotype, max_pval, fout):
   url = base_url+('/testcalls/depict/genepathway/object?gene=%s&phenotype=%s&lt_value=%f'%(gene, phenotype, max_pval))
-  rval = rest_utils.GetURL(url, parse_json=True)
+  rval = rest.Utils.GetURL(url, parse_json=True)
   pathways = rval["data"] if "data" in rval else []
   tags = None; n_out=0;
   for pathway in pathways:

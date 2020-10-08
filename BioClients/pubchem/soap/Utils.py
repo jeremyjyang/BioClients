@@ -12,8 +12,8 @@ import sys,os,io,re,urllib.request,time,logging
 from xml.etree import ElementTree
 #from xml.parsers import expat
 
-from ...util import rest_utils
-from ...util import xml_utils
+from ...util import rest
+from ...util import xml
 
 XMLHEADER=("""\
 <?xml version="1.0"?>
@@ -60,12 +60,12 @@ Error status values: "server-error"
 
   def getStatus(self):
     logging.debug("Connecting {}...".format(self.pugurl))
-    pugxml = rest_utils.PostURL(self.pugurl, data=(XMLHEADER+self.qxml_template.format(REQID=self.reqid, MODE="status")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
+    pugxml = rest.Utils.PostURL(self.pugurl, data=(XMLHEADER+self.qxml_template.format(REQID=self.reqid, MODE="status")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
     self.parsePugXml(pugxml)
 
   def cancel(self):
     logging.debug("Connecting {}...".format(self.pugurl))
-    pugxml = rest_utils.PostURL(self.pugurl, data=(XMLHEADER+qxml_template.format(REQID=self.reqid, MODE="cancel")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
+    pugxml = rest.Utils.PostURL(self.pugurl, data=(XMLHEADER+qxml_template.format(REQID=self.reqid, MODE="cancel")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
     self.parsePugXml(pugxml)
 
   def parsePugXml(self, pugxml):
@@ -75,20 +75,20 @@ Error status values: "server-error"
     except Exception as e:
       logging.info('XML parse error: {}; xml="{}"'.format(e, pugxml))
       sys.exit(1)
-    statuss = xml_utils.DOM_GetAttr(elt, 'PCT-Status', 'value')
+    statuss = xml.Utils.GetAttr(elt, 'PCT-Status', 'value')
     self.status = statuss[0] if statuss else None
-    errors = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Status-Message_message')
+    errors = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Status-Message_message')
     self.error = errors[0] if errors else None
-    reqids = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Waiting_reqid')
+    reqids = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Waiting_reqid')
     self.reqid = int(reqids[0]) if reqids else None
-    urls = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Download-URL_url')
+    urls = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Download-URL_url')
     self.url=urls[0] if urls else None
-    qkeys = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Entrez_query-key')
+    qkeys = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Entrez_query-key')
     self.qkey = qkeys[0] if qkeys else None
-    wenvs = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Entrez_webenv')
+    wenvs = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Entrez_webenv')
     self.wenv = wenvs[0] if wenvs else None
     #Standardize:
-    out_smis = xml_utils.DOM_GetLeafValsByTagName(elt, 'PCT-Structure_structure_string')
+    out_smis = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Structure_structure_string')
     self.out_smi = out_smis[0] if out_smis else None
 
 #############################################################################
@@ -156,7 +156,7 @@ def SubmitQuery_Structural(pugurl, smiles, searchtype, sim_cutoff, active=False,
   logging.debug("Requesting: pugurl: {}; searchtype: {}; smiles: {}".format(pugurl, searchtype, smiles))
   if searchtype.lower()=='similarity':
     logging.debug("Similarity cutoff: {}".format(sim_cutoff))
-  pugxml = rest_utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS[searchtype]})
+  pugxml = rest.Utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS[searchtype]})
   return PugSoapRequest(pugurl, pugxml)
 
 #############################################################################
@@ -187,7 +187,7 @@ def SubmitQuery_Standardize(pugurl, smiles):
 </PCT-Data>
 """.format(SMILES=smiles)
   logging.debug("Requesting: pugurl: {}; smiles: {}".format(pugurl, smiles))
-  pugxml = rest_utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS["standardize"]})
+  pugxml = rest.Utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS["standardize"]})
   return PugSoapRequest(pugurl, pugxml)
 
 #############################################################################
@@ -208,12 +208,12 @@ def MonitorQuery(pugurl, qkey, webenv, fmt='smiles', do_gz=False):
 </PCT-InputData></PCT-Data_input></PCT-Data>
 """.format(QKEY=qkey, WEBENV=webenv, FMT=fmt, COMPRES=('gzip' if do_gz else 'none'))
   logging.info('Requesting: pugurl: {}; qkey: {}'.format(pugurl, qkey))
-  pugxml = rest_utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
+  pugxml = rest.Utils.PostURL(pugurl, data=(XMLHEADER+qxml), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
   return PugSoapRequest(pugurl, pugxml)
 
 #############################################################################
 def DownloadResults(pugurl, fout, ntries=10):
-  pugout = rest_utils.GetURL(pugurl, nmax_retry=ntries, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
+  pugout = rest.Utils.GetURL(pugurl, nmax_retry=ntries, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
   if fout == sys.stdout:
     fout.write(pugout)
   elif type(pugout) is bytes:

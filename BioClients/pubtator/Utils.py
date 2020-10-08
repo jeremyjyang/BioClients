@@ -2,7 +2,7 @@
 ###
 import sys,os,time,json,argparse,re,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 #############################################################################
 def GetAnnotations(base_url, mode, pmids, fout):
@@ -10,7 +10,7 @@ def GetAnnotations(base_url, mode, pmids, fout):
   fout.write('sourcedb\tsourceid\tbegin\tend\tobj_type\tobj\n')
   for pmid in pmids:
     url = base_url+'/%s/%s/JSON'%(mode, pmid)
-    rval = rest_utils.GetURL(url, parse_json=True)
+    rval = rest.Utils.GetURL(url, parse_json=True)
     if not rval:
       logging.info('not found: %s'%(pmid))
       continue

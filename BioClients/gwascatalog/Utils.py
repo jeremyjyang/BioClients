@@ -2,7 +2,7 @@
 ###
 import sys,os,re,json,time,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def ListStudies(base_url, fout):
@@ -15,7 +15,7 @@ def ListStudies(base_url, fout):
       elif url_this == rval['_links']['last']['href']: break
       else: url_this = rval['_links']['next']['href']
     logging.debug(url_this)
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: break
     studies = rval['_embedded']['studies']
     if not studies: break
@@ -48,7 +48,7 @@ def SearchStudies(base_url, ids, searchtype, fout):
   tags=[]; n_study=0; rval=None;
   for id_this in ids:
     url_this=url+'%s'%id_this
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: continue
     studies = rval['_embedded']['studies']
     if not studies: continue
@@ -77,7 +77,7 @@ def GetStudyAssociations(base_url, ids, fout):
   for id_this in ids:
     n_id+=1
     url_this=url+'/%s/associations?projection=associationByStudy'%id_this
-    rval=rest_utils.GetURL(url_this, parse_json=True)
+    rval=rest.Utils.GetURL(url_this, parse_json=True)
     if not rval:
       continue
     if '_embedded' in rval and 'associations' in rval['_embedded']:
@@ -165,7 +165,7 @@ def GetSnps(base_url, ids, fout):
   for id_this in ids:
     n_snp+=1
     url_this=url+'/'+id_this
-    snp=rest_utils.GetURL(url_this, parse_json=True)
+    snp=rest.Utils.GetURL(url_this, parse_json=True)
     if not snp:
       continue
     if n_snp==1:

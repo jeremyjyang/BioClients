@@ -4,7 +4,7 @@
 ##############################################################################
 import sys,os,re,time,logging,urllib.parse,json
 #
-from ..util import rest_utils
+from ..util import rest
 #
 INT_TAGS=[
 	"interactionId",
@@ -68,7 +68,7 @@ def ListTargets(base_url, tgt_type, db, ids, fout):
   if db: url+=('&database=%s'%(db))
   for id_this in ids:
     url_this = url+('&accession=%s'%(urllib.parse.quote(id_this)))
-    rval=rest_utils.GetURL(url_this, parse_json=True)
+    rval=rest.Utils.GetURL(url_this, parse_json=True)
     tgts=rval
     for tgt in tgts:
       n_tgt+=1
@@ -91,7 +91,7 @@ def ListTargetFamilies(base_url,  tgt_type, fout):
   tags=None;
   url=base_url+'/targets/families'
   if tgt_type: url+=('?type=%s'%urllib.parse.quote(tgt_type))
-  rval=rest_utils.GetURL(url, parse_json=True)
+  rval=rest.Utils.GetURL(url, parse_json=True)
   fams=rval
   for fam in fams:
     n_fam+=1
@@ -115,7 +115,7 @@ def GetTarget(base_url, ids, fout):
   for tid in ids:
     n_qry+=1
     url=base_url+'/targets/%s'%tid
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     tgt=rval
     n_tgt+=1
     if n_tgt==1 or not tags:
@@ -138,7 +138,7 @@ def GetTargetSubstrates(base_url, ids, species, fout):
     n_qry+=1
     url=base_url+('/targets/%s/substrates'%id_query)
     if species: url+=('?species=%s'%urllib.parse.quote(species))
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     tsbs=rval
     for tsb in tsbs:
       n_tsb+=1
@@ -162,7 +162,7 @@ def GetTargetProducts(base_url, ids, species, fout):
     n_qry+=1
     url=base_url+('/targets/%s/products'%id_query)
     if species: url+=('?species=%s'%urllib.parse.quote(species))
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     prds=rval
     for prd in prds:
       n_prd+=1
@@ -186,7 +186,7 @@ def GetTargetFunction(base_url, ids, species, fout):
     n_qry+=1
     url=base_url+('/targets/%s/function'%id_query)
     if species: url+=('?species=%s'%urllib.parse.quote(species))
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     fncs=rval
     for fnc in fncs:
       n_fnc+=1
@@ -209,7 +209,7 @@ def GetTargetGeneProteinInfo(base_url, ids, fout):
   for tid in ids:
     n_qry+=1
     url=base_url+'/targets/%s/geneProteinInformation'%tid
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     gpis=rval
     for gpi in gpis:
       n_gpi+=1
@@ -234,7 +234,7 @@ def ListLigands(base_url, lig_type, db, ids, fout):
   if db: url+=('&database=%s'%(db))
   for id_this in ids:
     url_this = url+('&database=%s&accession=%s'%(db, urllib.parse.quote(id_this)))
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     ligs=rval
     for lig in ligs:
       n_lig+=1
@@ -257,7 +257,7 @@ def GetLigand(base_url, ids, fout):
   for lid in ids:
     n_qry+=1
     url=base_url+'/ligands/%s'%lid
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     lig=rval
     n_lig+=1
     if n_lig==1 or not tags:
@@ -280,7 +280,7 @@ def GetLigandStructure(base_url, ids, fout):
   for lid in ids:
     n_qry+=1
     url=base_url+'/ligands/%s/structure'%lid
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     lig=rval
     if not lig:
       logging.error('Not found: %s'%(url))
@@ -312,7 +312,7 @@ def GetInteractions(base_url, resource, ids, species, itr_type, aff_type, aff, f
     if itr_type: url+=('&type=%s'%urllib.parse.quote(itr_type))
     if aff_type: url+=('&affinityType=%s'%urllib.parse.quote(aff_type))
     if aff: url+=('&affinity=%.2f'%aff)
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     itrs=rval
     if not itrs or type(itrs) not in (list, tuple):
       logging.error('Not found: %s'%(url))
@@ -347,7 +347,7 @@ def SearchLigand(base_url, smi, search_type, fout):
   n_lig=0; n_out=0; n_err=0;
   tags=None;
   url=base_url+('/ligands/%s?smiles=%s'%(search_type, urllib.parse.quote(smi)))
-  rval=rest_utils.GetURL(url, parse_json=True)
+  rval=rest.Utils.GetURL(url, parse_json=True)
   ligs=rval
   for lig in ligs:
     n_lig+=1
@@ -371,7 +371,7 @@ def GetSynonyms(base_url, resource, ids, fout):
   for id_query in ids:
     n_qry+=1
     url=base_url+'/%s/%s/synonyms'%(resource, id_query)
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     syns=rval
     for syn in syns:
       n_syn+=1
@@ -396,7 +396,7 @@ def GetDblinks(base_url, resource, ids, species, db, fout):
     url=base_url+'/%s/%s/databaseLinks?'%(resource, id_query)
     if species: url+=('&species=%s'%urllib.parse.quote(species))
     if db: url+=('&database=%s'%urllib.parse.quote(db))
-    rval=rest_utils.GetURL(url, parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
     dbls=rval
     for dbl in dbls:
       n_dbl+=1

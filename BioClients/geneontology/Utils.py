@@ -5,7 +5,7 @@
 import os,sys,re,json,time,logging
 import urllib.parse
 
-from ..util import rest_utils
+from ..util import rest
 
 #
 ##############################################################################
@@ -13,7 +13,7 @@ def GetEntities(base_url, ids, fout):
   """For only one type of entity per call (gene, term)."""
   n_ent=0; tags=[];
   for id_this in ids:
-    ent = rest_utils.GetURL(base_url+'/bioentity/%s'%(urllib.parse.quote(id_this)), parse_json=True)
+    ent = rest.Utils.GetURL(base_url+'/bioentity/%s'%(urllib.parse.quote(id_this)), parse_json=True)
     logging.debug(json.dumps(ent, sort_keys=True, indent=2))
     n_ent+=1
     if not tags:
@@ -27,7 +27,7 @@ def GetEntities(base_url, ids, fout):
 def GetGeneTerms(base_url, ids, fout): 
   n_assn=0; tags=[];
   for id_this in ids:
-    rval = rest_utils.GetURL(base_url+'/bioentity/gene/%s/function'%(urllib.parse.quote(id_this)), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/bioentity/gene/%s/function'%(urllib.parse.quote(id_this)), parse_json=True)
     assns = rval['associations'] if 'associations' in rval else []
     for assn in assns:
       logging.debug(json.dumps(assn, sort_keys=True, indent=2))

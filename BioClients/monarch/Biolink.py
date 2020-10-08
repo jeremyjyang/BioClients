@@ -7,7 +7,7 @@ https://github.com/monarch-initiative/biolink-api/
 ###
 import sys,os,argparse,json,csv,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='api.monarchinitiative.org'
 API_BASE_PATH='/api'
@@ -29,7 +29,7 @@ def GetDisease(base_url, ids, args, fout):
     print('%s:'%entid, file=sys.stderr)
     url_this = (base_url+'/bioentity/disease/%s?%s'%(entid,url_params_str))
     try:
-      ent = rest_utils.GetURL(url_this, parse_json=True)
+      ent = rest.Utils.GetURL(url_this, parse_json=True)
     except Exception as e:
       if e.args:
         print(str(e.args), file=sys.stderr)

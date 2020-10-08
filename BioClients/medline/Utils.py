@@ -29,7 +29,7 @@
 import sys,os,re,time,logging
 import urllib.parse,json
 #
-from ..util import rest_utils
+from ..util import rest
 #
 CODESYSTEMS = {
 	'SNOWMEDCT'	: '2.16.840.1.113883.6.96',
@@ -47,7 +47,7 @@ def GetCode(base_url, codesys, codes, fout):
   url+=('&mainSearchCriteria.v.cs='+CODESYSTEMS[codesys])
   for code in codes:
     url_this =url+('&mainSearchCriteria.v.c='+code)
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
 
 ##############################################################################

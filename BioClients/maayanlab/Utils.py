@@ -9,14 +9,14 @@ https://amp.pharm.mssm.edu/Harmonizome/api/1.0/gene/NANOG?showAssociations=true
 """
 import sys,os,re,json,logging
 
-from ..util import rest_utils
+from ..util import rest
 #
 ##############################################################################
 def GetGene(base_url, ids, fout):
   """Gene symbols expected, e.g. NANOG."""
   n_out=0; tags=None;
   for id_this in ids:
-    gene = rest_utils.GetURL(base_url+'/gene/{0}'.format(id_this), parse_json=True)
+    gene = rest.Utils.GetURL(base_url+'/gene/{0}'.format(id_this), parse_json=True)
     logging.debug(json.dumps(gene, indent=2))
     if not tags:
       tags = list(gene.keys())
@@ -31,7 +31,7 @@ def GetGeneAssociations(base_url, ids, fout):
   """Gene symbols expected, e.g. NANOG."""
   n_out=0; gene_tags=[]; assn_tags=[];
   for id_this in ids:
-    gene = rest_utils.GetURL(base_url+'/gene/{0}?showAssociations=true'.format(id_this), parse_json=True)
+    gene = rest.Utils.GetURL(base_url+'/gene/{0}?showAssociations=true'.format(id_this), parse_json=True)
     assns = gene["associations"] if "associations" in gene else []
     if not assns: continue
     if not gene_tags:

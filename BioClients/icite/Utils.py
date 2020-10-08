@@ -2,7 +2,7 @@
 ###
 import sys,os,json,re,logging
 #
-from ..util import rest_utils
+from ..util import rest
 
 #############################################################################
 def GetStats(base_url, pmids, fout):
@@ -14,7 +14,7 @@ cited_by) reported as counts."""
     pmids_this = pmids[n_in:n_in+nchunk]
     n_in += (nchunk if n_in+nchunk < len(pmids) else len(pmids)-n_in)
     url_this = (base_url+'?pmids=%s'%(','.join(pmids_this)))
-    rval = rest_utils.GetURL(url_this, parse_json=True)
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, indent=2))
     url_self = rval['links']['self']
@@ -39,7 +39,7 @@ def GetStats_single(base_url, pmids, fout):
   n_out=0; tags=None;
   for pmid in pmids:
     url = base_url+'/%s'%pmid
-    pub = rest_utils.GetURL(url, parse_json=True)
+    pub = rest.Utils.GetURL(url, parse_json=True)
     if not pub:
       logging.info('not found: %s'%(pmid))
       continue

@@ -36,7 +36,7 @@ from xml.etree import ElementTree
 #
 import rdkit.Chem
 #
-from ..util import rest_utils
+from ..util import rest
 from ..util import xml_utils
 #
 #############################################################################
@@ -44,7 +44,7 @@ def GetProteinData(base_url, pid):
   url = (base_url+'/describePDB?structureId=%s'%pid)
   logging.debug(url)
   try:
-    etree = rest_utils.GetURL(url, parse_xml=True)
+    etree = rest.Utils.GetURL(url, parse_xml=True)
   except Exception as e:
     logging.error('%s'%(e))
     return []
@@ -73,7 +73,7 @@ def GetLigandData(base_url, pid):
   url = (base_url+'/ligandInfo?structureId=%s'%pid)
   logging.debug(url)
   try:
-    etree = rest_utils.GetURL(url, parse_xml=True)
+    etree = rest.Utils.GetURL(url, parse_xml=True)
     #ligands = etree.findall('/structureId/ligandInfo/ligand')
     ligands = etree.findall('./ligandInfo/ligand')
   except Exception as e:
@@ -117,7 +117,7 @@ def GetLigands_LID2SDF(base_url, lids, fout):
     url = ('https://www.rcsb.org/pdb/download/downloadLigandFiles.do?ligandIdList=%s'%lid)
     logging.debug(url)
     try:
-      rval = rest_utils.GetURL(url, parse_json=False)
+      rval = rest.Utils.GetURL(url, parse_json=False)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -165,7 +165,7 @@ def GetUniprotData(base_url, pid):
   '''API functionality maybe discontinued.'''
   url = base_url+'/das/pdb_uniprot_mapping/alignment?query=%s'%pid
   try:
-    etree = rest_utils.GetURL(url, parse_xml=True)
+    etree = rest.Utils.GetURL(url, parse_xml=True)
   except Exception as e:
     logging.debug('%s'%(e))
   if not etree:
@@ -204,7 +204,7 @@ def GetUniprots(base_url, pids, fout):
 #############################################################################
 #def AllPIDs(base_url):
 #  try:
-#    etree = rest_utils.GetURL(base_url+'/getCurrent', parse_xml=True)
+#    etree = rest.Utils.GetURL(base_url+'/getCurrent', parse_xml=True)
 #  except Exception as e:
 #    logging.error('%s'%(e))
 #    return []
@@ -216,7 +216,7 @@ def GetUniprots(base_url, pids, fout):
 #############################################################################
 def AllPIDs(base_url):
   try:
-    rval = rest_utils.GetURL(base_url+'/getCurrent', parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/getCurrent', parse_json=True)
   except Exception as e:
     logging.error('HTTP Error: %s'%(e))
     return []
@@ -251,7 +251,7 @@ def SearchByKeywords(base_url, kwds):
 </orgPdbQuery>
 '''%{'KWDS':(','.join(kwds))}
   try:
-    txt = rest_utils.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
+    txt = rest.Utils.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
   except Exception as e:
     logging.error('%s'%(e))
     return []
@@ -274,7 +274,7 @@ def SearchByUniprot(base_url, uniprots, fout):
 </orgPdbQuery>
 '''%{'UNIPROT':uniprot}
     try:
-      txt=rest_utils.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
+      txt=rest.Utils.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
     except Exception as e:
       logging.error('%s'%(e))
     pids=[]

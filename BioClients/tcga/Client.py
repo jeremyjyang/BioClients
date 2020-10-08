@@ -5,7 +5,6 @@ See: https://docs.gdc.cancer.gov/API/Users_Guide/
 ###
 import sys,os,re,argparse,time,json,logging
 #
-from ..util import rest_utils
 from .. import tcga
 #
 API_HOST='api.gdc.cancer.gov'

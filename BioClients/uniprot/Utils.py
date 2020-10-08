@@ -5,14 +5,14 @@
 ##############################################################################
 import sys,os,re,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 #############################################################################
 def GetData(base_uri, uids, ofmt, fout):
   """Need to handle xml, rdf better (merge)."""
   n_prot=0; n_err=0;
   for uid in uids:
-    rval=rest_utils.GetURL(base_uri+'/%s.%s'%(uid, ofmt))
+    rval=rest.Utils.GetURL(base_uri+'/%s.%s'%(uid, ofmt))
     if not rval:
       n_err+=1
       continue

@@ -4,7 +4,7 @@
 #############################################################################
 import sys,os,re,json,argparse,time,logging
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='www.disease-ontology.org'
 API_BASE_PATH='/api'
@@ -19,7 +19,7 @@ def GetMetadata(ids,base_url,fout):
   fout.write('doid,name,definition,child_count,parent_count,meshid\n')
   for doid in ids:
     try:
-      rval=rest_utils.GetURL(base_url+'/metadata/%s'%(doid),headers=HEADERS,parse_json=True)
+      rval=rest.Utils.GetURL(base_url+'/metadata/%s'%(doid),headers=HEADERS,parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -47,7 +47,7 @@ def GetMetadata(ids,base_url,fout):
 ##############################################################################
 def ListTopClasses(base_url,fout):
   n_out=0;
-  rval=rest_utils.GetURL(base_url+'/metadata/DOID:4',headers=HEADERS,parse_json=True)
+  rval=rest.Utils.GetURL(base_url+'/metadata/DOID:4',headers=HEADERS,parse_json=True)
   children = rval['children'] if rval.has_key('children') else []
   for c in children:
     desc,doid = c

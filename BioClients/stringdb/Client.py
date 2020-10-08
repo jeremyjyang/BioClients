@@ -17,7 +17,7 @@ stitch.embl.de
 import sys,os,re,json,argparse,time,logging
 import urllib,urllib.request,urllib.parse
 #
-from ..util import rest_utils
+from ..util import rest
 #
 API_HOST='string-db.org'
 API_BASE_PATH='/api'
@@ -32,7 +32,7 @@ def GetIds(base_url, pids, fout):
     url+=('?identifier=%s'%pids[0])
   else:
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; results: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -45,7 +45,7 @@ def GetInteractionPartners(base_url, pids, species, minscore, fout):
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; interaction partners: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -55,7 +55,7 @@ def GetEnrichment(base_url, pids, species, minscore, fout):
   url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('query genes: %d ; enrichment results: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -65,7 +65,7 @@ def GetPPIEnrichment(base_url, pids, species, minscore, fout):
   url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('query genes: %d ; enrichment results: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -76,7 +76,7 @@ def GetNetwork(base_url, pid, species, minscore, netflavor, fout):
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
   url+=('&network_flavor=%s'%netflavor)
-  rval=rest_utils.GetURL(url, parse_json=False, parse_xml=False)
+  rval=rest.Utils.GetURL(url, parse_json=False, parse_xml=False)
   fout.write(rval)
   logging.info('edges: %d'%(len(rval.splitlines())-1))
 
@@ -86,7 +86,7 @@ def GetNetworkImage(base_url, pid, species, minscore, netflavor, imgfmt, fout):
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
   url+=('&network_flavor=%s'%netflavor)
-  rval=rest_utils.GetURL(url, parse_json=False, parse_xml=False)
+  rval=rest.Utils.GetURL(url, parse_json=False, parse_xml=False)
   fout.write(rval)
 
 ##############################################################################
@@ -99,7 +99,7 @@ def GetInteractors(base_url, pids, species, minscore, fout):
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; interactors: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -113,7 +113,7 @@ def GetActions(base_url, pids, species, minscore, fout):
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; actions: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -126,7 +126,7 @@ def GetAbstracts(base_url, pids, species, fout):
   else:
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
-  rval=rest_utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; abstracts: %d'%(len(pids), len(rval.splitlines())-1))
 

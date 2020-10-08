@@ -5,7 +5,7 @@ See: http://www.genenames.org/
 ###
 import sys,os,re,argparse,time,json,logging
 #
-from ..util import rest_utils
+from ..util import rest
 from .. import hugo
 #
 API_HOST='rest.genenames.org'
@@ -74,7 +74,7 @@ if __name__=='__main__':
       parser.error("Invalid field type[s]: {0}".format(set(ftypes) - set(FTYPES)))
 
   if args.op == "show_info":
-    rval=rest_utils.GetURL(API_BASE_URL+'/info',headers={'Accept':hugo.Utils.OFMTS['JSON']},parse_json=True)
+    rval=rest.Utils.GetURL(API_BASE_URL+'/info',headers={'Accept':hugo.Utils.OFMTS['JSON']},parse_json=True)
     print(json.dumps(rval,sort_keys=True,indent=2))
 
   elif args.op == "list_searchable":

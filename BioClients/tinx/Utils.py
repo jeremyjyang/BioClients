@@ -9,7 +9,7 @@ https://api.newdrugtargets.org/targets/
 import sys,os,re,json,time,logging
 import urllib,urllib.parse
 #
-from ..util import rest_utils
+from ..util import rest
 #
 NCHUNK=100;
 #
@@ -18,7 +18,7 @@ def ListTargets(base_url, skip, nmax, fout):
   n_out=0; tags=None;
   url_next = (base_url+'/targets/?limit=%d&offset=%d'%(NCHUNK, skip))
   while True:
-    rval = rest_utils.GetURL(url_next, parse_json=True)
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     targets = rval["results"] if "results" in rval else []
     for target in targets:
@@ -43,7 +43,7 @@ def SearchTargets(base_url, terms, skip, nmax, fout):
   for term in terms:
     url_next = (base_url+'/targets/?search=%s'%(urllib.parse.quote(term)))
     while True:
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       targets = rval["results"] if "results" in rval else []
       for target in targets:
@@ -65,7 +65,7 @@ def ListDiseases(base_url, skip, nmax, fout):
   n_out=0; tags=None;
   url_next = (base_url+'/diseases/?limit=%d&offset=%d'%(NCHUNK, skip))
   while True:
-    rval = rest_utils.GetURL(url_next, parse_json=True)
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     diseases = rval["results"] if "results" in rval else []
     for disease in diseases:
@@ -89,7 +89,7 @@ def ListArticles(base_url, skip, nmax, fout):
   n_out=0; tags=None;
   url_next = (base_url+'/articles/?limit=%d&offset=%d'%(NCHUNK, skip))
   while True:
-    rval = rest_utils.GetURL(url_next, parse_json=True)
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     articles = rval["results"] if "results" in rval else []
     for article in articles:
@@ -113,7 +113,7 @@ def ListDTO(base_url, skip, nmax, fout):
   n_out=0; tags=None;
   url_next = (base_url+'/dto/?limit=%d&offset=%d'%(NCHUNK, skip))
   while True:
-    rval = rest_utils.GetURL(url_next, parse_json=True)
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     dtos = rval["results"] if "results" in rval else []
     for dto in dtos:
@@ -139,7 +139,7 @@ def GetDisease(base_url, ids, skip, nmax, fout):
   for id_this in ids:
     n_in+=1
     if skip and skip>n_in: continue
-    disease = rest_utils.GetURL((base_url+'/diseases/%s/'%id_this), parse_json=True)
+    disease = rest.Utils.GetURL((base_url+'/diseases/%s/'%id_this), parse_json=True)
     logging.debug(json.dumps(disease, sort_keys=True, indent=2))
     if not tags:
       tags = list(disease.keys())
@@ -157,7 +157,7 @@ def GetDiseaseByDOId(base_url, ids, skip, nmax, fout):
   for id_this in ids:
     n_in+=1
     if skip and skip>n_in: continue
-    rval = rest_utils.GetURL((base_url+'/diseases/?doid=%s'%id_this), parse_json=True)
+    rval = rest.Utils.GetURL((base_url+'/diseases/?doid=%s'%id_this), parse_json=True)
     diseases = rval["results"] if "results" in rval else []
     for disease in diseases:
       logging.debug(json.dumps(disease, sort_keys=True, indent=2))
@@ -177,7 +177,7 @@ def GetTarget(base_url, ids, skip, nmax, fout):
   for id_this in ids:
     n_in+=1
     if skip and skip>n_in: continue
-    target = rest_utils.GetURL((base_url+'/targets/%s/'), parse_json=True)
+    target = rest.Utils.GetURL((base_url+'/targets/%s/'), parse_json=True)
     logging.debug(json.dumps(target, sort_keys=True, indent=2))
     if not tags:
       tags = list(target.keys())
@@ -195,7 +195,7 @@ def GetTargetByUniprot(base_url, ids, skip, nmax, fout):
   for id_this in ids:
     n_in+=1
     if skip and skip>n_in: continue
-    rval = rest_utils.GetURL((base_url+'/targets/?uniprot=%s'), parse_json=True)
+    rval = rest.Utils.GetURL((base_url+'/targets/?uniprot=%s'), parse_json=True)
     targets = rval["results"] if "results" in rval else []
     for target in targets:
       logging.debug(json.dumps(target, sort_keys=True, indent=2))
@@ -217,7 +217,7 @@ def GetTargetDiseases(base_url, ids, skip, nmax, fout):
     if skip and skip>n_in: continue
     while True:
       url_next = (base_url+'/targets/%s/diseases'%id_this)
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       diseases = rval["results"] if "results" in rval else []
       for disease in diseases:
         logging.debug(json.dumps(disease, sort_keys=True, indent=2))
@@ -246,7 +246,7 @@ def GetDiseaseTargets(base_url, ids, skip, nmax, fout):
     if skip and skip>n_in: continue
     while True:
       url_next = (base_url+'/diseases/%s/targets'%id_this)
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       targets = rval["results"] if "results" in rval else []
       for target in targets:
         logging.debug(json.dumps(target, sort_keys=True, indent=2))
@@ -274,7 +274,7 @@ def GetDiseaseTargetArticles(base_url, disease_ids, ids, skip, nmax, fout):
     for tid in ids:
       url_next = (base_url+'/diseases/%s/targets/%s/articles'%(did, tid))
       while True:
-        rval = rest_utils.GetURL(url_next, parse_json=True)
+        rval = rest.Utils.GetURL(url_next, parse_json=True)
         articles = rval["results"] if "results" in rval else []
         for article in articles:
           logging.debug(json.dumps(article, sort_keys=True, indent=2))
@@ -295,7 +295,7 @@ def SearchDiseases(base_url, terms, skip, nmax, fout):
   for term in terms:
     url_next = (base_url+'/diseases/?search=%s'%(urllib.parse.quote(term)))
     while True:
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       diseases = rval["results"] if "results" in rval else []
       for disease in diseases:
@@ -319,7 +319,7 @@ def SearchTargets(base_url, terms, skip, nmax, fout):
   for term in terms:
     url_next = (base_url+'/targets/?search=%s'%(urllib.parse.quote(term)))
     while True:
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       targets = rval["results"] if "results" in rval else []
       for target in targets:
@@ -342,7 +342,7 @@ def SearchArticles(base_url, terms, skip, nmax, fout):
   for term in terms:
     url_next = (base_url+'/articles/?search=%s'%(urllib.parse.quote(term)))
     while True:
-      rval = rest_utils.GetURL(url_next, parse_json=True)
+      rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       articles = rval["results"] if "results" in rval else []
       for article in articles:

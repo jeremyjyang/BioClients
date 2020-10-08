@@ -19,7 +19,7 @@
 import sys,os,re,argparse,json,logging,yaml
 import urllib.parse
 
-from ..util import rest_utils
+from ..util import rest
 
 N_CHUNK=200
 
@@ -36,21 +36,21 @@ def ReadParamFile(fparam):
 def ListDatatypes(base_url, params):
   headers = {"Accept":"application/json", "user_key":params['user_key']}
   url = (base_url+'/dataTypes')
-  response = rest_utils.GetURL(url, headers=headers, parse_json=True)
+  response = rest.Utils.GetURL(url, headers=headers, parse_json=True)
   logging.debug(json.dumps(response, indent=2))
 
 #############################################################################
 def ListDatasets(base_url, params):
   headers = {"Accept":"application/json", "user_key":params['user_key']}
   url = (base_url+'/datasets')
-  response = rest_utils.GetURL(url, headers=headers, parse_json=True)
+  response = rest.Utils.GetURL(url, headers=headers, parse_json=True)
   logging.debug(json.dumps(response, indent=2))
 
 #############################################################################
 def ListPerturbagenClasses(base_url, params, fout):
   headers = {"user_key":params['user_key']}
   url = (base_url+'/pcls')
-  pcls = rest_utils.GetURL(url, headers=headers, parse_json=True)
+  pcls = rest.Utils.GetURL(url, headers=headers, parse_json=True)
   tags=None; n_pcl=0;
   for pcl in pcls:
     n_pcl+=1
@@ -80,7 +80,7 @@ def GetGenes(base_url, params, ids, id_type, fout):
 	id_type, urllib.parse.quote(id_this), i_chunk*N_CHUNK, N_CHUNK))
       url=url_base+('&filter=%s'%(qry))
       try:
-        genes = rest_utils.GetURL(url, parse_json=True)
+        genes = rest.Utils.GetURL(url, parse_json=True)
       except:
         break
       if not genes:
@@ -136,7 +136,7 @@ def GetPerturbagens(base_url, params, ids, id_type, fout):
 	i_chunk*N_CHUNK, N_CHUNK))
       url = url_base+('?filter=%s'%(qry))
       try:
-        perts = rest_utils.GetURL(url, headers=headers, parse_json=True)
+        perts = rest.Utils.GetURL(url, headers=headers, parse_json=True)
       except:
         continue
       if not perts:
@@ -176,7 +176,7 @@ def ListDrugs(base_url, params, fout):
     qry = ('{"skip":%d,"limit":%d}'%(i_chunk*N_CHUNK, N_CHUNK))
     url = url_base+('?filter=%s'%(qry))
     try:
-      drugs = rest_utils.GetURL(url, headers=headers, parse_json=True)
+      drugs = rest.Utils.GetURL(url, headers=headers, parse_json=True)
     except Exception as e:
       logging.error('Exception: %s'%e)
       continue
@@ -215,7 +215,7 @@ def GetCells(base_url, params, ids, id_type, fout):
 	i_chunk*N_CHUNK, N_CHUNK))
       url = url_base+('?filter=%s'%(qry))
       try:
-        cells = rest_utils.GetURL(url, headers=headers, parse_json=True)
+        cells = rest.Utils.GetURL(url, headers=headers, parse_json=True)
       except:
         break
       if not cells:
@@ -251,7 +251,7 @@ def ListCells(base_url, params, fout):
     qry = ('{"skip":%d,"limit":%d}'%(i_chunk*N_CHUNK, N_CHUNK))
     url = url_base+('?filter=%s'%(qry))
     try:
-      cells = rest_utils.GetURL(url, headers=headers, parse_json=True)
+      cells = rest.Utils.GetURL(url, headers=headers, parse_json=True)
     except Exception as e:
       logging.error('Exception: %s'%e)
       continue
@@ -280,7 +280,7 @@ def CountSignatures(base_url, params, args):
   url_base = (base_url+'/sigs/count')
   url = url_base+('?where=%s'%(args.clue_where))
   try:
-    sigs = rest_utils.GetURL(url, headers=headers, parse_json=True)
+    sigs = rest.Utils.GetURL(url, headers=headers, parse_json=True)
     logging.info('signatures: %d'%len(sigs))
   except Exception as e:
     logging.error('%s'%e)
@@ -297,7 +297,7 @@ def GetSignatures(base_url, params, args, fout):
 	args.skip+i_chunk*N_CHUNK, N_CHUNK))
     url = url_base+('?filter=%s'%(qry))
     try:
-      sigs = rest_utils.GetURL(url, headers=headers, parse_json=True)
+      sigs = rest.Utils.GetURL(url, headers=headers, parse_json=True)
     except:
       continue
     if not sigs:
