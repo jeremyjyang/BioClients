@@ -36,16 +36,20 @@ def ListTables(dbcon, fout=None):
 
 #############################################################################
 def DescribeTables(dbcon, fout=None):
-  n_table=0;
+  n_table=0; df=None;
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
     sql = ('DESCRIBE '+table)
-    df = read_sql_query(sql, dbcon)
-    cols = list(df.columns.values)
-    df['table'] = table
-    df = df[['table']+cols]
-    if fout:
-      df.to_csv(fout, "\t", index=False, header=bool(n_table==1))
+    df_this = read_sql_query(sql, dbcon)
+    cols = list(df_this.columns.values)
+    df_this['table'] = table
+    df_this = df_this[['table']+cols]
+    if n_table==1:
+      df = df_this
+    else:
+      df = pd.concat([df, df_this])
+  if fout:
+    df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
@@ -54,12 +58,16 @@ def TableRowCounts(dbcon, fout):
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
     sql = ('SELECT count(*) AS row_count FROM '+table)
-    df = read_sql_query(sql, dbcon)
-    cols = list(df.columns.values)
-    df['table'] = table
-    df = df[['table']+cols]
-    if fout:
-      df.to_csv(fout, "\t", index=False, header=bool(n_table==1))
+    df_this = read_sql_query(sql, dbcon)
+    cols = list(df_this.columns.values)
+    df_this['table'] = table
+    df_this = df_this[['table']+cols]
+    if n_table==1:
+      df = df_this
+    else:
+      df = pd.concat([df, df_this])
+  if fout:
+    df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
