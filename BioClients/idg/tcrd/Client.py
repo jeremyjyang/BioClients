@@ -6,21 +6,25 @@ import os,sys,argparse,re,time,json,logging
 import mysql.connector as mysql
 
 from ...idg import tcrd
+from ...util import yaml as util_yaml
 
 #############################################################################
 if __name__=='__main__':
-  qtypes=[ 'TID', 'GENEID', 'UNIPROT', 'GENESYMB', 'NCBI_GI', 'ENSP']
+  idtypes=['TID', 'GENEID', 'UNIPROT', 'GENESYMB', 'ENSP']
   parser = argparse.ArgumentParser(description='TCRD MySql client utility')
   ops = ['info', 'listTables', 'describeTables', 'tableRowCounts', 'tdlCounts', 
-	'listTargets', 'listXreftypes', 'listXrefs',
-	'getTargets', 'getTargetpathways']
+	'listTargets', 'listXrefTypes', 'listXrefs',
+	'listTargetFamilies',
+	'getTargets', 'getTargetsByXref',
+	'getTargetpathways']
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--i", dest="ifile", help="input ID or query file")
-  parser.add_argument("--ids", help="IDs or queries")
-  parser.add_argument("--qtype", choices=qtypes, default='TID', help='ID or query type')
-  parser.add_argument("--tdl", choices=tcrd.TDLS, help="Target Development Level (TDL) %s"%('|'.join(tcrd.TDLS)))
-  parser.add_argument("--fam", help="target family GPCR|Kinase|IC|NR|...|Unknown")
+  parser.add_argument("--i", dest="ifile", help="input target ID file")
+  parser.add_argument("--ids", help="input IDs")
+  parser.add_argument("--idtype", choices=idtypes, default='TID', help='target ID type')
+  parser.add_argument("--xreftypes", help='Xref types, comma-separated')
+  parser.add_argument("--tdls", help="TDLs, comma-separated ({})".format('|'.join(tcrd.TDLS)))
+  parser.add_argument("--tfams", help="target families, comma-separated")
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.tcrd.yaml")
   parser.add_argument("--dbhost")
   parser.add_argument("--dbport")
@@ -33,7 +37,7 @@ if __name__=='__main__':
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   if os.path.isfile(args.param_file):
-    params = tcrd.Utils.ReadParamFile(args.param_file)
+    params = util_yaml.ReadParamFile(args.param_file)
   if args.dbhost: params['DBHOST'] = args.dbhost 
   if args.dbport: params['DBPORT'] = args.dbport 
   if args.dbusr: params['DBUSR'] = args.dbusr 
@@ -72,24 +76,42 @@ if __name__=='__main__':
     tcrd.Utils.ListTables(dbcon, fout)
 
   elif args.op=='listTargets':
-    tcrd.Utils.ListTargets(dbcon, args.tdl, args.fam, fout)
+    tdls = re.split(r'\s*,\s*', args.tdls) if args.tdls else []
+    tfams = re.split(r'\s*,\s*', args.tfams) if args.tfams else []
+    tcrd.Utils.ListTargets(dbcon, tdls, tfams, fout)
 
   elif args.op=='getTargets':
-    tcrd.Utils.GetTargets(dbcon, ids, args.qtype, fout)
+    if not ids:
+      parser.error('IDs required for operation: {}'.format(arg.op))
+    tcrd.Utils.GetTargets(dbcon, ids, args.idtype, fout)
+
+  elif args.op=='getTargetsByXrefs':
+    if not ids:
+      parser.error('IDs required for operation: {}'.format(arg.op))
+    tcrd.Utils.GetTargetsByXrefs(dbcon, ids, args.xreftypes, fout)
 
   elif args.op=='getTargetpathways':
-    tids = tcrd.Utils.GetTargets(dbcon, ids, args.qtype, None)
+    if not ids:
+      parser.error('IDs required for operation: {}'.format(arg.op))
+    tids = tcrd.Utils.GetTargets(dbcon, ids, args.idtype, None)
     tcrd.Utils.GetPathways(dbcon, tids, fout)
 
-  elif args.op=='listXreftypes':
-    xreftypes = tcrd.Utils.ListXreftypes(dbcon)
-    print(str(xreftypes))
+  elif args.op=='listXrefTypes':
+    tcrd.Utils.ListXrefTypes(dbcon, fout)
 
   elif args.op=='listXrefs':
-    xreftypes = tcrd.Utils.ListXreftypes(dbcon)
-    if qtype not in xreftypes:
-      parser.error('qtype "%s" invalid.  Available xref types: %s'%(qtype, str(xreftypes)))
-    tcrd.Utils.ListXrefs(dbcon, args.qtype, fout)
+    if args.xreftypes:
+      xreftypes = re.split(r'\s*,\s*', args.xreftypes.strip())
+      xreftypes_all = tcrd.Utils.ListXrefTypes(dbcon).iloc[:,0]
+      for xreftype in xreftypes:
+        if xreftype not in list(xreftypes_all):
+          parser.error('xreftype "{}" invalid.  Available xreftypes: {}'.format(xreftype, str(list(xreftypes_all))))
+    else:
+      xreftypes = []
+    tcrd.Utils.ListXrefs(dbcon, xreftypes, fout)
+
+  elif args.op=='listTargetFamilies':
+    tcrd.Utils.ListTargetFamilies(dbcon, fout)
 
   else:
     parser.print_help()

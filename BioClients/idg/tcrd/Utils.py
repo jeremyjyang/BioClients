@@ -10,15 +10,6 @@ import mysql.connector as mysql
 TDLS = ['Tdark', 'Tbio', 'Tchem', 'Tclin']
 
 #############################################################################
-def ReadParamFile(fparam):
-  params={};
-  with open(fparam, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
-  return params
-
-#############################################################################
 def Info(dbcon, fout=None):
   sql = 'SELECT * FROM dbinfo'
   df = read_sql_query(sql, dbcon)
@@ -32,6 +23,7 @@ def ListTables(dbcon, fout=None):
   df = read_sql_query(sql, dbcon)
   if fout:
     df.to_csv(fout, "\t", index=False)
+  logging.info("n_table: {}".format(df.shape[0]))
   return df
 
 #############################################################################
@@ -50,6 +42,7 @@ def DescribeTables(dbcon, fout=None):
       df = pd.concat([df, df_this])
   if fout:
     df.to_csv(fout, "\t", index=False)
+  logging.info("n_tables: {}; n_columns: {}".format(df.table.nunique(), df.shape[0]))
   return df
 
 #############################################################################
@@ -68,6 +61,7 @@ def TableRowCounts(dbcon, fout):
       df = pd.concat([df, df_this])
   if fout:
     df.to_csv(fout, "\t", index=False)
+  logging.info("n_table: {}".format(df.shape[0]))
   return df
 
 #############################################################################
@@ -95,49 +89,61 @@ def XrefCounts(dbcon, fout=None):
   return df
 
 #############################################################################
-def ListXreftypes(dbcon, fout=None):
+def ListXrefTypes(dbcon, fout=None):
   sql='SELECT DISTINCT xtype FROM xref ORDER BY xtype'
   df = read_sql_query(sql, dbcon)
   if fout:
     df.to_csv(fout, "\t", index=False)
+  logging.info("n_xreftypes: {}".format(df.shape[0]))
   return df
 
 #############################################################################
-def ListXrefs(dbcon, qtype, fout):
-  cols=['value','target_id','protein_id']
-  sql='''\
-SELECT DISTINCT %(COLS)s
-FROM xref
-WHERE xtype = '%(QTYPE)s'
-'''%{	'COLS':(','.join(cols)),
-	'QTYPE':qtype }
+def ListXrefs(dbcon, xreftypes, fout):
+  cols=['target_id', 'protein_id', 'xtype', 'value'] 
+  sql = "SELECT DISTINCT {} FROM xref".format(", ".join(cols))
+  if xreftypes:
+    sql += " WHERE xtype IN ({})".format("'"+("','".join(xreftypes)+"'"))
+  logging.debug("SQL: \"{}\"".format(sql))
   df = read_sql_query(sql, dbcon)
   if fout:
     df.to_csv(fout, "\t", index=False)
+  logging.info('Target count: %d'%(df.target_id.nunique()))
+  logging.info('Protein count: %d'%(df.protein_id.nunique()))
+  logging.info('XrefType count: %d'%(df.xtype.nunique()))
+  logging.info('Xref count: %d'%(df.value.nunique()))
   return df
 
 #############################################################################
-def ListTargets(dbcon, tdl, pfam, fout):
+def ListTargetFamilies(dbcon, fout=None):
+  sql='SELECT DISTINCT fam TargetFamily FROM target ORDER BY fam'
+  df = read_sql_query(sql, dbcon)
+  if fout:
+    df.to_csv(fout, "\t", index=False)
+  logging.info("n_tfams: {}".format(df.shape[0]))
+  return df
+
+#############################################################################
+def ListTargets(dbcon, tdls, tfams, fout):
   sql='''
 SELECT
-	target.id AS "tcrdTargetId",
-	target.name AS "tcrdTargetName",
-	target.fam AS "tcrdTargetFamily",
-	target.tdl AS "TDL",
-	target.ttype AS "tcrdTargetType",
-	target.idg AS "idgList",
-	protein.id AS "tcrdProteinId",
-	protein.sym AS "tcrdGeneSymbol",
-	protein.family AS "tcrdProteinFamily",
-	protein.geneid AS "ncbiGeneId",
-	protein.uniprot AS "uniprotId",
-	protein.up_version AS "uniprotVersion",
+	target.id tcrdTargetId,
+	target.name tcrdTargetName,
+	target.fam tcrdTargetFamily,
+	target.tdl TDL,
+	target.ttype tcrdTargetType,
+	target.idg idgList,
+	protein.id tcrdProteinId,
+	protein.sym tcrdGeneSymbol,
+	protein.family tcrdProteinFamily,
+	protein.geneid ncbiGeneId,
+	protein.uniprot uniprotId,
+	protein.up_version uniprotVersion,
 	protein.chr,
-	protein.description AS "tcrdProteinDescription",
-	protein.dtoid AS "dtoId",
-	protein.dtoclass AS "dtoClass",
-	protein.stringid AS "ensemblProteinId",
-	xref.value AS "ensemblGeneId"
+	protein.description tcrdProteinDescription,
+	protein.dtoid dtoId,
+	protein.dtoclass dtoClass,
+	protein.stringid ensemblProteinId,
+	xref.value ensemblGeneId
 FROM
 	target
 JOIN
@@ -147,34 +153,30 @@ JOIN
 JOIN
 	xref ON xref.protein_id = protein.id
 '''
-  wheres=["xref.xtype = 'Ensembl'", "xref.value REGEXP '^ENSG'"]
-  if tdl:
-    wheres.append('target.tdl = \'%s\''%tdl)
-  if pfam:
-    wheres.append('target.fam = \'%s\''%pfam)
+  wheres = ["xref.xtype = 'Ensembl'", "xref.value REGEXP '^ENSG'"]
+  if tdls:
+    wheres.append("target.tdl IN ({})".format("'"+("','".join(tdls))+"'"))
+  if tfams:
+    wheres.append("target.fam IN ({})".format("'"+("','".join(tfams))+"'"))
   if wheres:
     sql+=(' WHERE '+(' AND '.join(wheres)))
   df = read_sql_query(sql, dbcon)
-  if tdl: logging.info('TDL: %s'%(tdl))
-  if pfam: logging.info('Pfam: %s'%(pfam))
-  logging.info('rows: %d'%(df.shape[0]))
-  logging.info('Target count: %d'%(df.tcrdTargetId.nunique()))
-  logging.info('Protein count: %d'%(df.tcrdProteinId.nunique()))
-  logging.info('Uniprot count: %d'%(df.uniprotId.nunique()))
-  logging.info('ENSP count: %d'%(df.ensemblProteinId.nunique()))
-  logging.info('ENSG count: %d'%(df.ensemblGeneId.nunique()))
-  logging.info('GeneSymbol count: %d'%(df.tcrdGeneSymbol.nunique()))
+  if tdls: logging.info('TDLs: {}'.format(",".join(tdls)))
+  if tfams: logging.info('TargetFamilies: {}'.format(",".join(tfams)))
+  logging.info('rows: {}'.format(df.shape[0]))
+  logging.info('Target count: {}'.format(df.tcrdTargetId.nunique()))
+  logging.info('Protein count: {}'.format(df.tcrdProteinId.nunique()))
+  logging.info('Uniprot count: {}'.format(df.uniprotId.nunique()))
+  logging.info('ENSP count: {}'.format(df.ensemblProteinId.nunique()))
+  logging.info('ENSG count: {}'.format(df.ensemblGeneId.nunique()))
+  logging.info('GeneSymbol count: {}'.format(df.tcrdGeneSymbol.nunique()))
   if fout:
     df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
-def GetTargets(dbcon, qs, qtype, fout):
-  if not qs:
-    logging.error('No query IDs.')
-    return
-  cols=[
-	'target.description',
+def GetTargets(dbcon, ids, idtype, fout):
+  cols=[ 'target.description',
 	'target.id',
 	'target.fam',
 	'target.name',
@@ -187,92 +189,127 @@ def GetTargets(dbcon, qs, qtype, fout):
 	'protein.id',
 	'protein.name',
 	'protein.sym',
-	'protein.uniprot'
-	]
-  #if fout: fout.write('query,qtype,'+('%s\n'%(','.join(cols))))
-
-  n_query=0; n_hit=0;
-  for qid in qs:
-    n_query+=1
-    sql='''\
+	'protein.uniprot' ]
+  sql='''\
 SELECT
-	%(COLS)s
+	{}
 FROM
 	target
 JOIN
 	t2tc ON target.id = t2tc.target_id
 JOIN
 	protein ON protein.id = t2tc.protein_id
-'''%{'COLS':(','.join(map(lambda s: '%s AS %s'%(s, s.replace('.', '_')), cols)))}
+'''.format(','.join(map(lambda s: '{} {}'.format(s, s.replace('.', '_')), cols)))
+
+  n_id=0; n_hit=0;
+  for id_this in ids:
+    n_id+=1
     wheres=[]
-    if qtype.lower()=='tid':
-      wheres.append('target.id = %d'%int(qid))
-    elif qtype.lower()=='uniprot':
-      wheres.append('protein.uniprot = \'%s\''%qid)
-    elif qtype.lower() in ('gid', 'geneid'):
-      wheres.append('protein.geneid = \'%s\''%qid)
-    elif qtype.lower() in ('genesymb', 'genesymbol'):
-      wheres.append('protein.sym = \'%s\''%qid)
-    elif qtype.lower() == 'ensp':
-      wheres.append('protein.stringid = \'%s\''%qid)
-    elif qtype.lower() == 'ncbi_gi':
-      sql+=('\nJOIN\n\txref ON xref.protein_id = protein.id')
-      wheres.append('xref.xtype = \'NCBI GI\'')
-      wheres.append('xref.value = \'%s\''%qid)
-      wheres.append('xref.protein_id = protein.id')
+    if idtype.lower()=='tid':
+      wheres.append('target.id = {}'.format(int(id_this)))
+    elif idtype.lower()=='uniprot':
+      wheres.append("protein.uniprot = '{}'".format(id_this))
+    elif idtype.lower() in ('gid', 'geneid'):
+      wheres.append("protein.geneid = '{}'".format(id_this))
+    elif idtype.lower() in ('genesymb', 'genesymbol'):
+      wheres.append("protein.sym = '{}'".format(id_this))
+    elif idtype.lower() == 'ensp':
+      wheres.append("protein.stringid = '{}'".format(id_this))
     else:
-      logging.info('ERROR: unknown query type: %s'%qtype)
+      logging.error('Unknown ID type: {}'.format(idtype))
       return
-    sql+=(' WHERE '+(' AND '.join(wheres)))
-    logging.debug('"%s"'%sql)
-    logging.debug('query: %s = "%s" ...'%(qtype, qid))
-    df = read_sql_query(sql, dbcon)
-    if fout:
-      df.to_csv(fout, "\t", index=False, header=bool(n_query=1))
+    sql_this = sql+(' WHERE '+(' AND '.join(wheres)))
+    logging.debug('SQL: "{}"'.format(sql_this))
+    logging.debug('ID: {} = "{}" ...'.format(idtype, id_this))
+    df = read_sql_query(sql_this, dbcon)
     if df.shape[0]>0:
       n_hit+=1
-  logging.info("n_query: {}; n_hit: {}".format(n_query, n_hit))
+    if n_id==1:
+      df = df_this
+    else:
+      df = pd.concat([df, df_this])
+  if fout:
+    df.to_csv(fout, "\t", index=False)
+  logging.info("n_id: {}; n_hit: {}".format(n_id, n_hit))
   return df
 
 #############################################################################
-def GetPathways(dbcon, tids, fout):
-  n_query=0;
-  cols=[
-	't2p.target_id',
+def GetTargetsByXref(dbcon, xrefs, xreftypes, fout):
+  cols=[ 'target.description',
+	'target.id',
+	'target.fam',
+	'target.name',
+	'target.tdl',
+	'target.ttype',
+	'protein.chr',
+	'protein.description',
+	'protein.family',
+	'protein.geneid',
+	'protein.id',
+	'protein.name',
+	'protein.sym',
+	'protein.uniprot',
+	'xref.xtype',
+	'xref.value']
+  sql='''\
+SELECT
+	{}
+FROM
+	target
+JOIN
+	t2tc ON target.id = t2tc.target_id
+JOIN
+	protein ON protein.id = t2tc.protein_id
+JOIN
+	xref ON xref.protein_id = protein.id
+'''.format(','.join(map(lambda s: '{} {}'.format(s, s.replace('.', '_')), cols)))
+
+  n_id=0; n_hit=0;
+  for id_this in ids:
+    n_id+=1
+    wheres=[]
+    wheres.append("xref.xtype IN ({})".format("'"+("','".join(xreftypes))+"'"))
+    wheres.append("xref.value = '{}'".format(id_this))
+    sql_this = sql+('WHERE '+(' AND '.join(wheres)))
+    logging.debug('SQL: "{}"'%sql_this)
+    logging.debug('ID: {} = "{}" ...'.format(idtype, id_this))
+    df_this = read_sql_query(sql_this, dbcon)
+    if df_this.shape[0]>0:
+      n_hit+=1
+    if n_id==1:
+      df = df_this
+    else:
+      df = pd.concat([df, df_this])
+  if fout:
+    df.to_csv(fout, "\t", index=False)
+  logging.info("n_id: {}; n_hit: {}".format(n_id, n_hit))
+  return df
+
+#############################################################################
+def GetPathways(dbcon, ids, fout):
+  n_id=0; n_hit=0;
+  cols=[ 't2p.target_id',
 	't2p.id',
 	't2p.source',
 	't2p.id_in_source',
 	't2p.name',
 	't2p.description',
-	't2p.url'
-	]
-  n_hit=0;
+	't2p.url' ]
+  sql = "SELECT {} FROM target2pathway t2p JOIN target t ON t.id = t2p.target_id".format(','.join(map(lambda s: '{} {}'.format(s, s.replace('.', '_')), cols)))
   pids_all=set();
-  for tid in tids:
-    n_query+=1
-    sql='''\
-SELECT
-	%(COLS)s
-FROM
-	target2pathway t2p
-JOIN
-	target t ON t.id = t2p.target_id
-WHERE
-	t.id = %(TID)s
-ORDER BY
-	t2p.target_id,
-	t2p.id
-'''%{	'COLS':(','.join(map(lambda s: '%s AS %s'%(s,s.replace('.','_')),cols))),
-	'TID':str(tid)
-	}
-    logging.debug('"%s"'%sql)
-    logging.debug('query: %s ...'%(tid))
-    df = read_sql_query(sql, dbcon)
-    if fout:
-      df.to_csv(fout, "\t", index=False, header=bool(n_query=1))
-    if df.shape[0]>0:
+  for id_this in ids:
+    n_id+=1
+    sql_this = sql+("WHERE t.id = {}".format(id_this))
+    logging.debug('SQL: "{}"'.format(sql_this))
+    df_this = read_sql_query(sql_this, dbcon)
+    if df_this.shape[0]>0:
       n_hit+=1
-
+    if n_id==1:
+      df = df_this
+    else:
+      df = pd.concat([df, df_this])
+  if fout:
+    df.to_csv(fout, "\t", index=False)
   logging.info("n_query: {}; n_hit: {}".format(n_query, n_hit))
   return df
 
