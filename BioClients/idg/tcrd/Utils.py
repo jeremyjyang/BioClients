@@ -99,6 +99,8 @@ def ListXrefTypes(dbcon, fout=None):
 
 #############################################################################
 def ListXrefs(dbcon, xreftypes, fout):
+  if xreftypes and type(xreftypes) not in (list, tuple):
+    xreftypes = [xreftypes]
   cols=['target_id', 'protein_id', 'xtype', 'value'] 
   sql = "SELECT DISTINCT {} FROM xref".format(", ".join(cols))
   if xreftypes:
@@ -220,9 +222,9 @@ JOIN
       return
     sql_this = sql+(' WHERE '+(' AND '.join(wheres)))
     logging.debug('SQL: "{}"'.format(sql_this))
-    logging.debug('ID: {} = "{}" ...'.format(idtype, id_this))
-    df = read_sql_query(sql_this, dbcon)
-    if df.shape[0]>0:
+    logging.debug('ID: {} = "{}"'.format(idtype, id_this))
+    df_this = read_sql_query(sql_this, dbcon)
+    if df_this.shape[0]>0:
       n_hit+=1
     if n_id==1:
       df = df_this
@@ -234,7 +236,9 @@ JOIN
   return df
 
 #############################################################################
-def GetTargetsByXref(dbcon, xrefs, xreftypes, fout):
+def GetTargetsByXref(dbcon, ids, xreftypes, fout):
+  if xreftypes and type(xreftypes) not in (list, tuple):
+    xreftypes = [xreftypes]
   cols=[ 'target.description',
 	'target.id',
 	'target.fam',
@@ -271,8 +275,7 @@ JOIN
     wheres.append("xref.xtype IN ({})".format("'"+("','".join(xreftypes))+"'"))
     wheres.append("xref.value = '{}'".format(id_this))
     sql_this = sql+('WHERE '+(' AND '.join(wheres)))
-    logging.debug('SQL: "{}"'%sql_this)
-    logging.debug('ID: {} = "{}" ...'.format(idtype, id_this))
+    logging.debug('SQL: "{}"'.format(sql_this))
     df_this = read_sql_query(sql_this, dbcon)
     if df_this.shape[0]>0:
       n_hit+=1
