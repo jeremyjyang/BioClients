@@ -3,7 +3,6 @@
 TCRD db client utility (see also Pharos GraphQL API)
 """
 import os,sys,argparse,re,time,json,logging
-import mysql.connector as mysql
 
 from ...idg import tcrd
 from ...util import yaml as util_yaml
@@ -58,7 +57,16 @@ if __name__=='__main__':
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
-  dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+  try:
+    import mysql.connector as mysql
+    dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+  except Exception as e:
+    try:
+      import MySQLdb as mysql
+      dbcon = mysql.connect(host=params['DBHOST'], port=int(params['DBPORT']), user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+    except Exception as e2:
+      logging.error('{}\n{}'.format(e, e2))
+      sys.exit(1)
 
   if args.op=='describeTables':
     tcrd.Utils.DescribeTables(dbcon, fout)

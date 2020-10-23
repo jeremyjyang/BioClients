@@ -5,7 +5,6 @@ TCRD MySql db client utilities.
 import os,sys,re,time,json,logging,yaml
 import pandas as pd
 from pandas.io.sql import read_sql_query
-import mysql.connector as mysql
 
 TDLS = ['Tdark', 'Tbio', 'Tchem', 'Tclin']
 
