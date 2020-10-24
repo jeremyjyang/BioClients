@@ -9,8 +9,10 @@ from ...util import yaml as util_yaml
 
 #############################################################################
 if __name__=='__main__':
+  PARAM_FILE = os.environ['HOME']+"/.tcrd.yaml"
   idtypes=['TID', 'GENEID', 'UNIPROT', 'GENESYMB', 'ENSP']
-  parser = argparse.ArgumentParser(description='TCRD MySql client utility')
+  epilog = "default param_file: {}".format(PARAM_FILE)
+  parser = argparse.ArgumentParser(description='TCRD MySql client utility', epilog=epilog)
   ops = ['info', 'listTables', 'describeTables', 'tableRowCounts', 'tdlCounts', 
 	'listTargets', 'listXrefTypes', 'listXrefs',
 	'listTargetFamilies',
@@ -24,7 +26,7 @@ if __name__=='__main__':
   parser.add_argument("--xreftypes", help='Xref types, comma-separated')
   parser.add_argument("--tdls", help="TDLs, comma-separated ({})".format('|'.join(tcrd.TDLS)))
   parser.add_argument("--tfams", help="target families, comma-separated")
-  parser.add_argument("--param_file", default=os.environ['HOME']+"/.tcrd.yaml")
+  parser.add_argument("--param_file", default=PARAM_FILE)
   parser.add_argument("--dbhost")
   parser.add_argument("--dbport")
   parser.add_argument("--dbusr")
@@ -35,8 +37,7 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if os.path.isfile(args.param_file):
-    params = util_yaml.ReadParamFile(args.param_file)
+  params = util_yaml.ReadParamFile(args.param_file) if os.path.isfile(args.param_file) else {}
   if args.dbhost: params['DBHOST'] = args.dbhost 
   if args.dbport: params['DBPORT'] = args.dbport 
   if args.dbusr: params['DBUSR'] = args.dbusr 
@@ -122,4 +123,5 @@ if __name__=='__main__':
     tcrd.Utils.ListTargetFamilies(dbcon, fout)
 
   else:
+    parser.error("Invalid operation: {}".format(args.op))
     parser.print_help()
