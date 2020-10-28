@@ -10,9 +10,6 @@ import sys,os,re,argparse,time,logging
 #
 from ...idg import tinx
 #
-API_HOST="api.newdrugtargets.org"
-API_BASE_PATH=""
-#
 ##############################################################################
 if __name__=='__main__':
   epilog="""\
@@ -36,8 +33,8 @@ as for get_disease_target_articles.
   parser.add_argument("--query", help="search query")
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=None)
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=tinx.Utils.API_HOST)
+  parser.add_argument("--api_base_path", default=tinx.Utils.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -63,50 +60,52 @@ as for get_disease_target_articles.
   base_url = 'https://'+args.api_host+args.api_base_path
 
   if args.op=='list_targets':
-    tinx.Utils.ListTargets(base_url, args.skip, args.nmax, fout)
+    tinx.Utils.ListTargets(args.skip, args.nmax, base_url, fout)
 
   elif args.op=='list_diseases':
-    tinx.Utils.ListDiseases(base_url, args.skip, args.nmax, fout)
+    tinx.Utils.ListDiseases(args.skip, args.nmax, base_url, fout)
 
   elif args.op=='list_articles':
-    tinx.Utils.ListArticles(base_url, args.skip, args.nmax, fout)
+    tinx.Utils.ListArticles(args.skip, args.nmax, base_url, fout)
 
   elif args.op=='list_dto':
-    tinx.Utils.ListDTO(base_url, args.skip, args.nmax, fout)
+    tinx.Utils.ListDTO(args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease':
-    tinx.Utils.GetDisease(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetDisease(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease_by_doid':
-    tinx.Utils.GetDiseaseByDOId(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetDiseaseByDOId(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease_targets':
-    tinx.Utils.GetDiseaseTargets(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetDiseaseTargets(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease_target_articles':
     if not disease_ids: parser.error("--disease_ids required for {}".format(args.op))
-    tinx.Utils.GetDiseaseTargetArticles(base_url, disease_ids, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetDiseaseTargetArticles(disease_ids, ids, args.skip,
+args.nmax, base_url, fout)
 
   elif args.op=='get_target':
-    tinx.Utils.GetTarget(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetTarget(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_target_by_uniprot':
-    tinx.Utils.GetTargetByUniprot(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetTargetByUniprot(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_target_diseases':
-    tinx.Utils.GetTargetDiseases(base_url, ids, args.skip, args.nmax, fout)
+    tinx.Utils.GetTargetDiseases(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='search_diseases':
     if not args.query: parser.error("--query required for {}".format(args.op))
-    tinx.Utils.SearchDiseases(base_url, args.query, args.skip, args.nmax, fout)
+    tinx.Utils.SearchDiseases(args.query, args.skip, args.nmax,
+base_url, fout)
 
   elif args.op=='search_targets':
     if not args.query: parser.error("--query required for {}".format(args.op))
-    tinx.Utils.SearchTargets(base_url, args.query, args.skip, args.nmax, fout)
+    tinx.Utils.SearchTargets(args.query, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='search_articles':
     if not args.query: parser.error("--query required for {}".format(args.op))
-    tinx.Utils.SearchArticles(base_url, args.query, args.skip, args.nmax, fout)
+    tinx.Utils.SearchArticles(args.query, args.skip, args.nmax, base_url, fout)
 
   else:
     parser.error('Unknown operation: %s'%args.op)

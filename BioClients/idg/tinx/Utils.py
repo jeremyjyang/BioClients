@@ -12,10 +12,14 @@ import urllib,urllib.parse
 #
 from ...util import rest
 #
+API_HOST="api.newdrugtargets.org"
+API_BASE_PATH=""
+BASE_URL = 'https://'+API_HOST+API_BASE_PATH
+#
 NCHUNK=100;
 #
 ##############################################################################
-def ListTargets(base_url, skip, nmax, fout):
+def ListTargets(skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; tq=None; df=None;
   url_next = (base_url+'/targets/?limit={}&offset={}'.format(NCHUNK, skip))
   while True:
@@ -37,7 +41,7 @@ def ListTargets(base_url, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def SearchTargets(base_url, query_term, skip, nmax, fout):
+def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None;
   url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
   while True:
@@ -58,7 +62,7 @@ def SearchTargets(base_url, query_term, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def ListDiseases(base_url, skip, nmax, fout):
+def ListDiseases(skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; tq=None; df=None;
   url_next = (base_url+'/diseases/?limit={}&offset={}'.format(NCHUNK, skip))
   while True:
@@ -81,7 +85,7 @@ def ListDiseases(base_url, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def ListArticles(base_url, skip, nmax, fout):
+def ListArticles(skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; tq=None; df=None;
   url_next = (base_url+'/articles/?limit={}&offset={}'.format(NCHUNK, skip))
   while True:
@@ -103,7 +107,7 @@ def ListArticles(base_url, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def ListDTO(base_url, skip, nmax, fout):
+def ListDTO(skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; tq=None; df=None;
   url_next = (base_url+'/dto/?limit={}&offset={}'.format(NCHUNK, skip))
   while True:
@@ -125,7 +129,7 @@ def ListDTO(base_url, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetDisease(base_url, ids, skip, nmax, fout):
+def GetDisease(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease IDs, e.g. 5391."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
@@ -142,7 +146,7 @@ def GetDisease(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetDiseaseByDOId(base_url, ids, skip, nmax, fout):
+def GetDiseaseByDOId(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be Disease Ontology IDs, e.g. DOID:9297."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
@@ -161,7 +165,7 @@ def GetDiseaseByDOId(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetTarget(base_url, ids, skip, nmax, fout):
+def GetTarget(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X target IDs, e.g. 10027."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
@@ -178,7 +182,7 @@ def GetTarget(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetTargetByUniprot(base_url, ids, skip, nmax, fout):
+def GetTargetByUniprot(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be UniProt IDs, e.g. Q9H4B4."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
@@ -197,7 +201,7 @@ def GetTargetByUniprot(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetTargetDiseases(base_url, ids, skip, nmax, fout):
+def GetTargetDiseases(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X target IDs, e.g. 10027."""
   n_in=0; n_out=0; tags=None; tq=None; df=None;
   for id_this in ids:
@@ -232,7 +236,7 @@ def GetTargetDiseases(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetDiseaseTargets(base_url, ids, skip, nmax, fout):
+def GetDiseaseTargets(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease IDs, e.g. 5391."""
   n_in=0; n_out=0; tags=None; tq=None; df=None;
   for id_this in ids:
@@ -267,7 +271,7 @@ def GetDiseaseTargets(base_url, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def GetDiseaseTargetArticles(base_url, disease_ids, ids, skip, nmax, fout):
+def GetDiseaseTargetArticles(disease_ids, ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease and target IDs and, e.g. 5391, 12203."""
   n_out=0; tags=None; df=None;
   for did in disease_ids:
@@ -289,7 +293,7 @@ def GetDiseaseTargetArticles(base_url, disease_ids, ids, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def SearchDiseases(base_url, query_term, skip, nmax, fout):
+def SearchDiseases(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """Search names; begins-with search logic."""
   n_out=0; tags=None; df=None;
   url_next = (base_url+'/diseases/?search='+urllib.parse.quote(query_term))
@@ -310,7 +314,7 @@ def SearchDiseases(base_url, query_term, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def SearchTargets(base_url, query_term, skip, nmax, fout):
+def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """Search names."""
   n_out=0; tags=None; df=None;
   url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
@@ -331,7 +335,7 @@ def SearchTargets(base_url, query_term, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def SearchArticles(base_url, terms, skip, nmax, fout):
+def SearchArticles(terms, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None;
   for term in terms:
     url_next = (base_url+'/articles/?search='+urllib.parse.quote(term))
