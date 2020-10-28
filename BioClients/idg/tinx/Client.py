@@ -8,7 +8,7 @@ https://api.newdrugtargets.org/targets/
 ###
 import sys,os,re,argparse,time,logging
 #
-from .. import tinx
+from ...idg import tinx
 #
 API_HOST="api.newdrugtargets.org"
 API_BASE_PATH=""

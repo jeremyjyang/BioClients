@@ -2,4 +2,4 @@
 
 from .Utils import *
 
-__all__ = [ "tcrd" ]
+__all__ = [ "tcrd", "tinx" ]
