@@ -37,23 +37,22 @@ def ListTargets(base_url, skip, nmax, fout):
   return(df)
 
 ##############################################################################
-def SearchTargets(base_url, terms, skip, nmax, fout):
+def SearchTargets(base_url, query_term, skip, nmax, fout):
   n_out=0; tags=None; df=None;
-  for term in terms:
-    url_next = (base_url+'/targets/?search=%s'%(urllib.parse.quote(term)))
-    while True:
-      rval = rest.Utils.GetURL(url_next, parse_json=True)
-      logging.debug(json.dumps(rval, sort_keys=True, indent=2))
-      targets = rval["results"] if "results" in rval else []
-      for target in targets:
-        logging.debug(json.dumps(target, sort_keys=True, indent=2))
-        if not tags: tags = list(target.keys())
-        df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
-        n_out+=1
-        if nmax and n_out>=nmax: break
+  url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
+  while True:
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+    targets = rval["results"] if "results" in rval else []
+    for target in targets:
+      logging.debug(json.dumps(target, sort_keys=True, indent=2))
+      if not tags: tags = list(target.keys())
+      df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
+      n_out+=1
       if nmax and n_out>=nmax: break
-      url_next = rval["next"] if "next" in rval else None
-      if not url_next: break
+    if nmax and n_out>=nmax: break
+    url_next = rval["next"] if "next" in rval else None
+    if not url_next: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
@@ -222,9 +221,12 @@ def GetTargetDiseases(base_url, ids, skip, nmax, fout):
         data_this.update({phenotype_tags[j]:[phenotype[phenotype_tags[j]]] for j in range(len(phenotype_tags))})
         df = pd.concat([df, pd.DataFrame(data_this)])
         n_out+=1
+        if nmax and n_out>=nmax: break
+      if nmax and n_out>=nmax: break
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
-    if nmax and n_in>=nmax: break
+      if n_out>=rval["count"]: break #url_next may be wrong.
+    if nmax and n_out>=nmax: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
@@ -239,6 +241,7 @@ def GetDiseaseTargets(base_url, ids, skip, nmax, fout):
     while True:
       url_next = (base_url+'/diseases/{}/targets'.format(id_this))
       rval = rest.Utils.GetURL(url_next, parse_json=True)
+      logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       targets = rval["results"] if "results" in rval else []
       if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="targets")
       for target in targets:
@@ -250,13 +253,15 @@ def GetDiseaseTargets(base_url, ids, skip, nmax, fout):
           tags.remove("target")
           protein_tags = list(protein.keys())
         data_this = {"tinx_disease_id":id_this}
-        data_this = data_this.update({tags[j]:[disease[tags[j]]] for j in range(len(tags))})
-        data_this = data_this.update({protein_tags[j]:[protein[protein_tags[j]]] for j in range(len(protein_tags))})
+        data_this.update({tags[j]:[target[tags[j]]] for j in range(len(tags))})
+        data_this.update({protein_tags[j]:[protein[protein_tags[j]]] for j in range(len(protein_tags))})
         df = pd.concat([df, pd.DataFrame(data_this)])
         n_out+=1
+        if nmax and n_out>=nmax: break
+      if nmax and n_out>=nmax: break
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
-    if nmax and n_in>=nmax: break
+      if n_out>=rval["count"]: break #url_next may be wrong.
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
@@ -276,52 +281,51 @@ def GetDiseaseTargetArticles(base_url, disease_ids, ids, skip, nmax, fout):
           if not tags: tags = list(article.keys())
           df = pd.concat([df, pd.DataFrame({tags[j]:[article[tags[j]]] for j in range(len(tags))})])
           n_out+=1
-          url_next = rval["next"] if "next" in rval else None
-          if not url_next: break
+        url_next = rval["next"] if "next" in rval else None
+        if not url_next: break
+        if n_out>=rval["count"]: break #url_next may be wrong.
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchDiseases(base_url, terms, skip, nmax, fout):
+def SearchDiseases(base_url, query_term, skip, nmax, fout):
   """Search names; begins-with search logic."""
   n_out=0; tags=None; df=None;
-  for term in terms:
-    url_next = (base_url+'/diseases/?search='+urllib.parse.quote(term))
-    while True:
-      rval = rest.Utils.GetURL(url_next, parse_json=True)
-      diseases = rval["results"] if "results" in rval else []
-      for disease in diseases:
-        logging.debug(json.dumps(disease, sort_keys=True, indent=2))
-        if not tags: tags = list(disease.keys())
-        df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
-        n_out+=1
-        if nmax and n_out>=nmax: break
+  url_next = (base_url+'/diseases/?search='+urllib.parse.quote(query_term))
+  while True:
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    diseases = rval["results"] if "results" in rval else []
+    for disease in diseases:
+      logging.debug(json.dumps(disease, sort_keys=True, indent=2))
+      if not tags: tags = list(disease.keys())
+      df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
+      n_out+=1
       if nmax and n_out>=nmax: break
-      url_next = rval["next"] if "next" in rval else None
-      if not url_next: break
+    if nmax and n_out>=nmax: break
+    url_next = rval["next"] if "next" in rval else None
+    if not url_next: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchTargets(base_url, terms, skip, nmax, fout):
+def SearchTargets(base_url, query_term, skip, nmax, fout):
   """Search names."""
   n_out=0; tags=None; df=None;
-  for term in terms:
-    url_next = (base_url+'/targets/?search='+urllib.parse.quote(term))
-    while True:
-      rval = rest.Utils.GetURL(url_next, parse_json=True)
-      targets = rval["results"] if "results" in rval else []
-      for target in targets:
-        logging.debug(json.dumps(target, sort_keys=True, indent=2))
-        if not tags: tags = list(target.keys())
-        df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
-        n_out+=1
-        if nmax and n_out>=nmax: break
+  url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
+  while True:
+    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    targets = rval["results"] if "results" in rval else []
+    for target in targets:
+      logging.debug(json.dumps(target, sort_keys=True, indent=2))
+      if not tags: tags = list(target.keys())
+      df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
+      n_out+=1
       if nmax and n_out>=nmax: break
-      url_next = rval["next"] if "next" in rval else None
-      if not url_next: break
+    if nmax and n_out>=nmax: break
+    url_next = rval["next"] if "next" in rval else None
+    if not url_next: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)

@@ -24,26 +24,13 @@ as for get_disease_target_articles.
 """
   parser = argparse.ArgumentParser(description="TIN-X (Target Importance and Novelty Explorer) REST API client)", epilog=epilog)
   ops = [
-	"list_diseases",
-	"list_targets",
-	"list_articles",
-	"list_dto",
-	"get_disease",
-	"get_disease_by_doid",
-	"get_disease_targets",
-	"get_disease_target_articles",
-	"get_target",
-	"get_target_by_uniprot",
-	"get_target_diseases",
-	"get_dto",
-	"search_diseases",
-	"search_targets",
-	"search_articles",
-	"search_dtos"
+	"list_diseases", "list_targets", "list_articles", "list_dto",
+	"get_disease", "get_disease_by_doid", "get_disease_targets", "get_disease_target_articles", "get_target", "get_target_by_uniprot", "get_target_diseases", "get_dto",
+	"search_diseases", "search_targets", "search_articles", "search_dtos"
 	]
   parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input IDs or search terms")
-  parser.add_argument("--ids", help="IDs or search terms (comma-separated)")
+  parser.add_argument("--ids", help="IDs (comma-separated)")
   parser.add_argument("--disease_ids", help="disease IDs (comma-separated), needed ONLY if BOTH target and disease IDs specified")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--query", help="search query")
@@ -67,10 +54,9 @@ as for get_disease_target_articles.
       ids.append(line.rstrip())
     fin.close()
   elif args.ids:
-    ids = re.split('[, ]+', args.ids.strip())
+    ids = re.split('[,\s]+', args.ids.strip())
   if ids: logging.info('Input IDs: %d'%(len(ids)))
-  if args.disease_ids:
-    disease_ids = re.split('[, ]+', args.disease_ids.strip())
+  disease_ids = re.split('[,\s]+', args.disease_ids.strip()) if args.disease_ids else None
 
   t0=time.time()
 
@@ -98,6 +84,7 @@ as for get_disease_target_articles.
     tinx.Utils.GetDiseaseTargets(base_url, ids, args.skip, args.nmax, fout)
 
   elif args.op=='get_disease_target_articles':
+    if not disease_ids: parser.error("--disease_ids required for {}".format(args.op))
     tinx.Utils.GetDiseaseTargetArticles(base_url, disease_ids, ids, args.skip, args.nmax, fout)
 
   elif args.op=='get_target':
@@ -110,13 +97,16 @@ as for get_disease_target_articles.
     tinx.Utils.GetTargetDiseases(base_url, ids, args.skip, args.nmax, fout)
 
   elif args.op=='search_diseases':
-    tinx.Utils.SearchDiseases(base_url, ids, args.skip, args.nmax, fout)
+    if not args.query: parser.error("--query required for {}".format(args.op))
+    tinx.Utils.SearchDiseases(base_url, args.query, args.skip, args.nmax, fout)
 
   elif args.op=='search_targets':
-    tinx.Utils.SearchTargets(base_url, ids, args.skip, args.nmax, fout)
+    if not args.query: parser.error("--query required for {}".format(args.op))
+    tinx.Utils.SearchTargets(base_url, args.query, args.skip, args.nmax, fout)
 
   elif args.op=='search_articles':
-    tinx.Utils.SearchArticles(base_url, ids, args.skip, args.nmax, fout)
+    if not args.query: parser.error("--query required for {}".format(args.op))
+    tinx.Utils.SearchArticles(base_url, args.query, args.skip, args.nmax, fout)
 
   else:
     parser.error('Unknown operation: %s'%args.op)
