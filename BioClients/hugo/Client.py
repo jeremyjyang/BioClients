@@ -4,13 +4,14 @@ See: http://www.genenames.org/
 """
 ###
 import sys,os,re,argparse,time,json,logging
+import pandas as pd
 #
 from ..util import rest
 from .. import hugo
 #
 ##############################################################################
 if __name__=='__main__':
-  FTYPES=['SYMBOL','ALIAS_SYMBOL', 'HGNC_ID', 'UNIPROT', 'ENTREZ_ID', 'ENSEMBL_GENE_ID', 'VEGA_ID'];
+  FTYPES=['SYMBOL', 'ALIAS_SYMBOL', 'HGNC_ID', 'UNIPROT', 'ENTREZ_ID', 'ENSEMBL_GENE_ID', 'VEGA_ID'];
   epilog='''\
            SYMBOL: HGNC gene symbol (e.g. ZNF3),
      ALIAS_SYMBOL: synonym gene symbol (e.g. AAA1),
@@ -18,18 +19,16 @@ if __name__=='__main__':
           UNIPROT: UniProt ID,
         ENTREZ_ID: NCBI Gene ID,
   ENSEMBL_GENE_ID: Ensembl Gene ID (e.g. ENSG00000003056),
-          VEGA_ID:
 '''
   parser = argparse.ArgumentParser(description='HUGO HGNC REST API client', epilog=epilog)
-  ops = ['search', 'get', 'show_info', 'list_searchable']
-  parser.add_argument("op", choices=ops, help='operation')
+  ops = ['search', 'get', 'info', 'list_searchable']
+  parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
+  parser.add_argument("--i", dest="ifile", help="query file")
   parser.add_argument("--query", help="gene query")
-  parser.add_argument("--qfile", help="query file")
   parser.add_argument("--ftypes", default="SYMBOL,ALIAS_SYMBOL", help="comma-separated list")
-  parser.add_argument("--ftypes_all", type=bool, help="(could be slow)")
-  parser.add_argument("--found_only", type=bool, help="no output for not-found")
-  parser.add_argument("--rawquery")
+  parser.add_argument("--ftypes_all", action="store_true", help="(could be slow)")
+  parser.add_argument("--rawquery", action="store_true")
   parser.add_argument("--nmax", type=int, default=None, help="max records")
   parser.add_argument("--skip", type=int, default=0, help="skip 1st SKIP queries")
   parser.add_argument("--api_host", default=hugo.Utils.API_HOST)
@@ -45,46 +44,37 @@ if __name__=='__main__':
 
   t0=time.time()
 
-  qrys=[];
-  if args.qfile:
-    fin=open(args.qfile)
-    if not fin: parser.error('ERROR: cannot open qfile: %s'%args.qfile)
-    while True:
-      line=fin.readline()
-      if not line: break
-      if line.rstrip(): qrys.append(line.rstrip())
-    logging.info('input queries: %d'%(len(qrys)))
-    fin.close()
+  if args.ifile:
+    qrys=[];
+    with open(args.ifile) as fin:
+      while True:
+        line=fin.readline()
+        if not line: break
+        if line.rstrip(): qrys.append(line.rstrip())
   elif args.query:
-    qrys.append(args.query)
+    qrys = [args.query]
 
   if args.ftypes_all:
-    ftypes = hugo.Utils.ListSearchableFields(BASE_URL)
+    ftypes = list(hugo.Utils.ListSearchableFields(BASE_URL).iloc[:,0])
   else:
     ftypes = re.split('[, ]+', args.ftypes.strip())
     ftypes = [s.upper() for s in ftypes]
     if len(set(ftypes) - set(FTYPES))>0:
       parser.error("Invalid field type[s]: {0}".format(set(ftypes) - set(FTYPES)))
 
-  if args.op == "show_info":
-    rval = rest.Utils.GetURL(BASE_URL+'/info',headers={'Accept':hugo.Utils.OFMTS['JSON']},parse_json=True)
-    print(json.dumps(rval,sort_keys=True,indent=2))
+  if args.op == "info":
+    hugo.Utils.Info(BASE_URL, fout)
 
   elif args.op == "list_searchable":
     hugo.Utils.ListSearchableFields(BASE_URL, fout)
 
   elif args.op == "get":
-    fields = hugo.Utils.ListSearchableFields(BASE_URL)
-    for ftype in ftypes:
-      if ftype.lower() not in fields:
-        parser.error("ftype \"%s\" not searchable field."%ftype)
-    n_in,n_hit = hugo.Utils.GetGenes(qrys, ftypes, args.found_only, args.skip, BASE_URL, fout)
-    logging.info('queries: %d, found: %d, not found: %d'%(n_in, n_hit, n_in-n_hit))
+    hugo.Utils.GetGenes(qrys, ftypes, args.skip, BASE_URL, fout)
 
   elif args.op == "search":
     hugo.Utils.SearchGenes(qrys, ftypes, BASE_URL, fout)
 
   else:
-    parser.error("Invalid operation: %s"%args.op)
+    parser.error("Invalid operation: {}".format(args.op))
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
