@@ -4,8 +4,13 @@
 ### See: http://www.genenames.org/help/rest-web-service-help
 ##############################################################################
 import sys,os,re,json,time,logging
+import pandas as pd
 
 from ..util import rest
+#
+API_HOST='rest.genenames.org'
+API_BASE_PATH=''
+BASE_URL='http://'+API_HOST+API_BASE_PATH
 #
 OFMTS={'XML':'application/xml','JSON':'application/json'}
 #
@@ -34,17 +39,13 @@ GENE_TAGS=[
 	]
 #
 ##############################################################################
-def GetGene(qry, ftype, base_url):
-  rval=None
-  try:
-    rval=rest.Utils.GetURL(base_url+'/fetch/%s/%s'%(ftype.lower(), qry), headers=HEADERS, parse_json=True)
-  except Exception as e:
-    logging.error('%s'%(e))
+def GetGene(qry, ftype, base_url=BASE_URL):
+  rval = rest.Utils.GetURL(base_url+'/fetch/{}/{}'.format(ftype.lower(), qry), headers=HEADERS, parse_json=True)
   if type(rval) is not dict: return None
   return rval
 
 ##############################################################################
-def GetGenes(qrys, ftypes, base_url, fout, found_only, skip):
+def GetGenes(qrys, ftypes, found_only, skip, base_url=BASE_URL, fout=None):
   '''The API can return multiple hits for each query, though should not 
 for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
   n_in=0;	#queries
@@ -63,18 +64,12 @@ for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
     for ftype in ftypes:
       rval = GetGene(qry, ftype, base_url)
       ftype_hit=ftype
-
-      try:
-        responseHeader = rval['responseHeader']
-        logging.debug('response status = %d'%(responseHeader['status']))
-        response = rval['response'] 
-        numFound = response['numFound'] if 'numFound' in response else 0
-        genes = response['docs']
-      except Exception as e:
-        logging.error('%s'%(e))
-
-      if numFound>0:
-        break
+      responseHeader = rval['responseHeader']
+      logging.debug('response status = %d'%(responseHeader['status']))
+      response = rval['response'] 
+      numFound = response['numFound'] if 'numFound' in response else 0
+      genes = response['docs']
+      if numFound>0: break
 
     if numFound==0:
       n_notfound+=1
@@ -102,34 +97,36 @@ for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
   return n_in-skip, n_found
 
 ##############################################################################
-def SearchGenes(qrys, ftype, base_url, fout):
-  n_in=0; n_found=0;
+def SearchGenes(qrys, ftypes, base_url=BASE_URL, fout=None):
+  n_in=0; n_found=0; tags=[]; df=None;
   for qry in qrys:
     n_in+=1
-    logging.debug('%d. query: %s'%(n_in, qry))
-    url = (base_url+'/search%s/*%s*'%((('/'+ftype.lower()) if ftype else ''), qry))
-    try:
-      rval=rest.Utils.GetURL(url, headers=HEADERS, parse_json=True)
-    except Exception as e:
-      logging.error('%s'%(e))
-
-    responseHeader = rval['responseHeader']
-    logging.debug('response status = %d'%(responseHeader['status']))
-    response = rval['response'] 
-    numFound = response['numFound'] if 'numFound' in response else 0
-    if numFound>0:
-      n_found+=1
-    fout.write(json.dumps(response, sort_keys=True, indent=2)+'\n')
-
-  return n_in,n_found
+    logging.debug('{}. query: {}'.format(n_in, qry))
+    found_this=False
+    for ftype in ftypes:
+      url = (base_url+'/search{}/*{}*'.format((('/'+ftype.lower()) if ftype else ''), qry))
+      rval = rest.Utils.GetURL(url, headers=HEADERS, parse_json=True)
+      responseHeader = rval['responseHeader']
+      logging.debug('response status = {}'.format(responseHeader['status']))
+      response = rval['response'] 
+      numFound = response['numFound'] if 'numFound' in response else 0
+      if numFound==0: continue
+      found_this=True
+      logging.debug(json.dumps(response, sort_keys=True, indent=2)+'\n')
+      if not tags: tags = list(response.keys())
+      df_this = pd.DataFrame({tags[j]:[response[tags[j]]] for j in range(len(tags))})
+      df = pd.concat([df, df_this])
+    if found_this: n_found+=1
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info('queries: {}; found: {}'.format(n_in, n_found))
+  return df
 
 ##############################################################################
-def SearchableFieldsList(base_url):
-  try:
-    rval=rest.Utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
-  except Exception as e:
-    logging.error('%s'%(e))
+def ListSearchableFields(base_url=BASE_URL, fout=None):
+  rval = rest.Utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
   fields = rval['searchableFields'] if 'searchableFields' in rval else None
   fields.sort()
-  return fields
+  df = pd.DataFrame({'fields':fields})
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
