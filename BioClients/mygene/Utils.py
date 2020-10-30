@@ -1,21 +1,40 @@
 #!/usr/bin/env python3
+"""
+https://mygene.info/
+https://mygene.info/v3/api
+https://pypi.org/project/mygene/
+"""
 ###
-# https://mygene.info/
 #
 import sys,os
+import pandas as pd
 import mygene as mg
 #
+FIELDS = 'HGNC,symbol,name,taxid,entrezgene,ensemblgene'
+NCHUNK=100;
+#
 #############################################################################
-def Mygene2TSV(mgi, genes, fields, fout):
-  fout.write('\t'.join(['id']+fields)+'\n')
-  for geneid in genes.ID:
-    g = mgi.getgene(geneid, fields)
-    vals=[geneid]
-    if g:
-      for key in fields:
-        vals.append(str(g[key]) if key in g else '')
-    else:
-      vals.extend(['' for key in fields])
-    fout.write('\t'.join(vals)+'\n')
+def GetGenes(ids, fields=FIELDS, fout=None):
+  """Get genes by Entrez or Ensembl gene ID."""
+  n_out=0; df=None;
+  mgi = mg.MyGeneInfo()
+  ichunk=0;
+  while ichunk*NCHUNK<len(ids):
+    df_this = mgi.getgenes(ids[ichunk*NCHUNK:((ichunk+1)*NCHUNK)], fields, as_dataframe=True)
+    df = pd.concat([df, df_this])
+    ichunk+=1
+  if fout and df is not None: df.to_csv(fout, "\t", index=False)
+  return df
+
+#############################################################################
+def SearchGenes(queries, species, fout=None):
+  """Search genes by symbol, etc. using MyGene syntax."""
+  n_out=0; df=None;
+  mgi = mg.MyGeneInfo()
+  for qry in queries:
+    df_this = mgi.query(qry, species=species, as_dataframe=True)
+    df = pd.concat([df, df_this])
+  if fout and df is not None: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
