@@ -13,7 +13,7 @@ if __name__=='__main__':
   idtypes=['TID', 'GENEID', 'UNIPROT', 'GENESYMB', 'ENSP']
   epilog = "default param_file: {}".format(PARAM_FILE)
   parser = argparse.ArgumentParser(description='TCRD MySql client utility', epilog=epilog)
-  ops = ['info', 'listTables', 'describeTables', 'tableRowCounts', 'tdlCounts', 
+  ops = ['info', 'listTables', 'listColumns', 'tableRowCounts', 'tdlCounts', 
 	'listTargets', 'listXrefTypes', 'listXrefs',
 	'listTargetFamilies',
 	'getTargets', 'getTargetsByXref',
@@ -62,15 +62,16 @@ if __name__=='__main__':
     import mysql.connector as mysql
     dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
   except Exception as e:
+    logging.error(f'{e}')
     try:
       import MySQLdb as mysql
       dbcon = mysql.connect(host=params['DBHOST'], port=int(params['DBPORT']), user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
     except Exception as e2:
-      logging.error('{}\n{}'.format(e, e2))
+      logging.error(f'{e2}')
       sys.exit(1)
 
-  if args.op=='describeTables':
-    tcrd.Utils.DescribeTables(dbcon, fout)
+  if args.op=='listColumns':
+    tcrd.Utils.ListColumns(dbcon, fout)
 
   elif args.op=='info':
     tcrd.Utils.Info(dbcon, fout)
@@ -91,17 +92,17 @@ if __name__=='__main__':
 
   elif args.op=='getTargets':
     if not ids:
-      parser.error('IDs required for operation: {}'.format(arg.op))
+      parser.error(f'IDs required for operation: {args.op}')
     tcrd.Utils.GetTargets(dbcon, ids, args.idtype, fout)
 
   elif args.op=='getTargetsByXrefs':
     if not ids:
-      parser.error('IDs required for operation: {}'.format(arg.op))
+      parser.error(f'IDs required for operation: {args.op}')
     tcrd.Utils.GetTargetsByXrefs(dbcon, ids, args.xreftypes, fout)
 
   elif args.op=='getTargetpathways':
     if not ids:
-      parser.error('IDs required for operation: {}'.format(arg.op))
+      parser.error(f'IDs required for operation: {args.op}')
     tids = tcrd.Utils.GetTargets(dbcon, ids, args.idtype, None)
     tcrd.Utils.GetPathways(dbcon, tids, fout)
 
@@ -123,5 +124,5 @@ if __name__=='__main__':
     tcrd.Utils.ListTargetFamilies(dbcon, fout)
 
   else:
-    parser.error("Invalid operation: {}".format(args.op))
+    parser.error(f"Invalid operation: {args.op}")
     parser.print_help()

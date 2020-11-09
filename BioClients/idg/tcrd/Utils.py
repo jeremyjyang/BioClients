@@ -27,6 +27,10 @@ def ListTables(dbcon, fout=None):
 
 #############################################################################
 def DescribeTables(dbcon, fout=None):
+  return ListColumns(dbcon, fout)
+
+#############################################################################
+def ListColumns(dbcon, fout=None):
   n_table=0; df=None;
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
@@ -41,7 +45,7 @@ def DescribeTables(dbcon, fout=None):
       df = pd.concat([df, df_this])
   if fout:
     df.to_csv(fout, "\t", index=False)
-  logging.info("n_tables: {}; n_columns: {}".format(df.table.nunique(), df.shape[0]))
+  logging.info("n_columns: {}; n_tables: {}".format(df.shape[0], df.table.nunique()))
   return df
 
 #############################################################################
