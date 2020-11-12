@@ -243,7 +243,7 @@ def GetDiseaseTargets(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     n_in+=1
     if skip and skip>n_in: continue
     while True:
-      url_next = (base_url+'/diseases/{}/targets'.format(id_this))
+      url_next = (base_url+f'/diseases/{id_this}/targets')
       rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       targets = rval["results"] if "results" in rval else []

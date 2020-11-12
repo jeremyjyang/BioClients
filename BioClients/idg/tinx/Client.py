@@ -78,12 +78,12 @@ as for get_disease_target_articles.
     tinx.Utils.GetDiseaseByDOId(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease_targets':
+    if not ids: parser.error(f"--i or --ids required for {args.op}")
     tinx.Utils.GetDiseaseTargets(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_disease_target_articles':
-    if not disease_ids: parser.error("--disease_ids required for {}".format(args.op))
-    tinx.Utils.GetDiseaseTargetArticles(disease_ids, ids, args.skip,
-args.nmax, base_url, fout)
+    if not disease_ids: parser.error(f"--disease_ids required for {args.op}")
+    tinx.Utils.GetDiseaseTargetArticles(disease_ids, ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_target':
     tinx.Utils.GetTarget(ids, args.skip, args.nmax, base_url, fout)
@@ -95,19 +95,19 @@ args.nmax, base_url, fout)
     tinx.Utils.GetTargetDiseases(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='search_diseases':
-    if not args.query: parser.error("--query required for {}".format(args.op))
+    if not args.query: parser.error(f"--query required for {args.op}")
     tinx.Utils.SearchDiseases(args.query, args.skip, args.nmax,
 base_url, fout)
 
   elif args.op=='search_targets':
-    if not args.query: parser.error("--query required for {}".format(args.op))
+    if not args.query: parser.error(f"--query required for {args.op}")
     tinx.Utils.SearchTargets(args.query, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='search_articles':
-    if not args.query: parser.error("--query required for {}".format(args.op))
+    if not args.query: parser.error(f"--query required for {args.op}")
     tinx.Utils.SearchArticles(args.query, args.skip, args.nmax, base_url, fout)
 
   else:
-    parser.error('Unknown operation: %s'%args.op)
+    parser.error(f'Unknown operation: {args.op}')
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
