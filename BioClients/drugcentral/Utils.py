@@ -3,7 +3,8 @@
 DrugCentral db utility functions.
 """
 import os,sys,re,logging,yaml
-import pandas,pandas.io.sql
+import pandas
+from pandas.io.sql import read_sql_query
 import psycopg2,psycopg2.extras
 
 #############################################################################
@@ -25,122 +26,74 @@ def Connect(dbhost, dbport, dbname, dbusr, dbpw):
 
 #############################################################################
 def Version(dbcon, dbschema="public", fout=None):
-  sql = ("SELECT * FROM {0}.dbversion".format(dbschema))
+  sql = (f"SELECT * FROM {dbschema}.dbversion")
   logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  row = cur.fetchone()
-  tags = list(row.keys())
-  fout.write("\t".join(tags)+"\n")
-  fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def MetaListdbs(dbcon, fout=None):
   """Pg meta-command: list dbs from pg_database."""
   sql = ("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    fout.write("\t".join([str(row[tag]) for tag in tags])+"\n")
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def Describe(dbcon, dbschema="public", fout=None):
   '''Describing the schema.'''
-  if fout:
-    cur = dbcon.cursor()
-    cur.execute(("SELECT table_name FROM information_schema.tables WHERE table_schema = %s"), (dbschema,))
-    fout.write("schema\ttable\tcolumn\tdatatype\n")
-    for row in cur:
-      cur2 = dbcon.cursor()
-      cur2.execute(("SELECT column_name,data_type FROM information_schema.columns WHERE table_schema = %s AND table_name = %s"), (dbschema, row[0]))
-      for row2 in cur2:
-        fout.write("\t".join([dbschema, row[0], row2[0], row2[1]])+"\n")
-      cur2.close()
-    cur.close()
-  else:
-    df_out=None;
-    sql1 = ("SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(dbschema))
-    df1 = pandas.io.sql.read_sql_query(sql1, dbcon)
-    for tname in df1.table_name:
-      sql2 = ("SELECT column_name,data_type FROM information_schema.columns WHERE table_schema = '{}' AND table_name = '{}'".format(dbschema, tname))
-      df_this = pandas.io.sql.read_sql_query(sql2, dbcon)
-      df_this["schema"] = dbschema
-      df_this["table"] = tname
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-    df_out = df_out[["schema", "table", "column_name", "data_type"]]
-    return df_out
+  df=None;
+  sql1 = (f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{dbschema}'")
+  df1 = read_sql_query(sql1, dbcon)
+  for tname in df1.table_name:
+    sql2 = (f"SELECT column_name,data_type FROM information_schema.columns WHERE table_schema = '{dbschema}' AND table_name = '{tname}'")
+    df_this = read_sql_query(sql2, dbcon)
+    df_this["schema"] = dbschema
+    df_this["table"] = tname
+    df = df_this if df is None else pandas.concat([df, df_this])
+  df = df[["schema", "table", "column_name", "data_type"]]
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def Counts(dbcon, dbschema="public", fout=None):
   '''Listing the table rowcounts.'''
-  if fout:
-    n_table=0; n_row=0;
-    cur = dbcon.cursor()
-    cur.execute(("SELECT table_name FROM information_schema.tables WHERE table_schema = %s ORDER BY table_name"), (dbschema,))
-    fout.write("schema\ttable\trowcount\n")
-    cur2 = dbcon.cursor()
-    for row in cur:
-      n_table+=1
-      cur2.execute("SELECT COUNT(*) FROM {}.{}".format(dbschema, row[0]))
-      row2 = cur2.fetchone()
-      n_row+=row2[0]
-      fout.write("\t".join([dbschema, row[0], str(row2[0])])+"\n")
-    cur2.close()
-    cur.close()
-    logging.info("Totals: tables: {}; rows: {}".format(n_table, n_row))
-  else:
-    df_out=None;
-    sql1 = ("SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(dbschema))
-    df1 = pandas.io.sql.read_sql_query(sql1, dbcon)
-    for tname in df1.table_name:
-      sql2 = ("SELECT COUNT(*) AS rowcount FROM {}.{}".format(dbschema, tname))
-      df_this = pandas.io.sql.read_sql_query(sql2, dbcon)
-      df_this["schema"] = dbschema
-      df_this["table"] = tname
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-    df_out = df_out[["schema", "table", "rowcount"]]
-    return df_out
+  df=None;
+  sql1 = (f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{dbschema}'")
+  df1 = read_sql_query(sql1, dbcon)
+  for tname in df1.table_name:
+    sql2 = (f"SELECT COUNT(*) AS rowcount FROM {dbschema}.{tname}")
+    df_this = read_sql_query(sql2, dbcon)
+    df_this["schema"] = dbschema
+    df_this["table"] = tname
+    df = df_this if df is None else pandas.concat([df, df_this])
+  df = df[["schema", "table", "rowcount"]]
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListStructures(dbcon, dbschema="public", fout=None):
-  sql = ("SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM {}.structures".format(dbschema))
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {}".format(n_out))
+  sql = (f"SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM {dbschema}.structures")
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
-  sql = ("SELECT smiles, id, name FROM {0}.structures WHERE smiles IS NOT NULL".format(dbschema))
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; 
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    vals = [row["smiles"], str(row["id"]), row["name"]]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {0}".format(n_out))
+  sql = (f"SELECT smiles, id, name FROM {dbschema}.structures WHERE smiles IS NOT NULL")
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListStructures2Molfile(dbcon, dbschema="public", fout=None):
+  """fout is required arg."""
   n_out=0;
   cur = dbcon.cursor()
   cur.execute("SELECT molfile, id, name FROM {0}.structures WHERE molfile IS NOT NULL".format(dbschema))
@@ -155,37 +108,21 @@ def ListStructures2Molfile(dbcon, dbschema="public", fout=None):
 
 #############################################################################
 def ListProducts(dbcon, dbschema="public", fout=None):
-  sql = ("SELECT * FROM {0}.product".format(dbschema))
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {0}".format(n_out))
+  sql = (f"SELECT * FROM {dbschema}.product")
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListActiveIngredients(dbcon, dbschema="public", fout=None):
-  sql = ("SELECT * FROM {0}.active_ingredient".format(dbschema))
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {0}".format(n_out))
+  sql = (f"SELECT * FROM {dbschema}.active_ingredient")
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListXrefTypes(dbcon, fout=None):
@@ -199,19 +136,11 @@ FROM
 ORDER BY
 	xref_type
 """
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {}".format(n_out))
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListIndications(dbcon, fout=None):
@@ -230,19 +159,11 @@ JOIN
 WHERE
 	omop.relationship_name = 'indication'
 """
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {}".format(n_out))
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListIndicationTargets(dbcon, fout=None):
@@ -275,19 +196,11 @@ FROM
 WHERE
 	omop.relationship_name = 'indication'
 """
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {}".format(n_out))
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def ListDrugdruginteractions(dbcon, fout=None):
@@ -308,25 +221,16 @@ FROM
 JOIN drug_class drug_class1 ON drug_class1.name = ddi.drug_class1
 JOIN drug_class drug_class2 ON drug_class2.name = ddi.drug_class2
 """
-  logging.debug("SQL: {}".format(sql))
-  if not fout: return pandas.io.sql.read_sql_query(sql, dbcon)
-  n_out=0; tags=None;
-  cur = dbcon.cursor()
-  cur.execute(sql)
-  for row in cur:
-    if not tags:
-      tags = list(row.keys())
-      fout.write("\t".join(tags)+"\n")
-    vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-    fout.write("\t".join(vals)+"\n")
-    n_out+=1
-  logging.info("n_out: {}".format(n_out))
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def SearchIndications(dbcon, terms, fout=None):
   """Search names via Pg regular expression (SIMILAR TO)."""
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   for term in terms:
     sql="""\
 SELECT DISTINCT
@@ -345,27 +249,16 @@ WHERE
 	AND (omop.concept_name ~* '{0}' OR omop.snomed_full_name ~* '{0}')
 """.format(term)
     logging.debug("SQL: {}".format(sql))
-    if fout:
-      cur.execute(sql)
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql, dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    df_this = read_sql_query(sql, dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetIndicationStructures(dbcon, ids, fout=None):
   """Input OMOP conceptIds."""
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql="""\
 SELECT DISTINCT
 	omop.concept_id omop_concept_id,
@@ -385,118 +278,68 @@ WHERE
 	omop.relationship_name = 'indication'
 	AND omop.concept_id = '{}'
 """
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructure(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql = ("""SELECT id,name,cas_reg_no,smiles,inchikey,inchi,cd_formula AS formula,cd_molweight AS molweight FROM structures WHERE id = '{}'""")
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureByXref(dbcon, xref_type, ids, fout=None):
   if not xref_type:
     logging.error("xref_type required.")
     return None
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql = ("""SELECT idn.identifier xref, idn.id_type xref_type, s.id dc_struct_id, s.name dc_struct_name FROM structures AS s JOIN identifier AS idn ON idn.struct_id=s.id WHERE idn.id_type = '"""+xref_type+"""' AND idn.identifier = '{}'""")
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureBySynonym(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql = ("""SELECT str.id, str.name structure_name, syn.name synonym FROM structures AS str JOIN synonyms AS syn ON syn.id=str.id WHERE syn.name = '{}'""")
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureXrefs(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql = ("""SELECT struct_id, id_type AS xref_type, identifier AS xref FROM identifier WHERE struct_id = '{}'""")
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureProducts(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql="""\
 SELECT DISTINCT
 	s.id struct_id,
@@ -520,27 +363,17 @@ JOIN
 WHERE 
 	s.id = '{}'
 """
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureOBProducts(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql="""\
 SELECT DISTINCT
 	s.id struct_id,
@@ -562,27 +395,17 @@ FROM
 WHERE 
 	s.id = '{}'
 """
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetStructureAtcs(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql="""\
 SELECT DISTINCT
 	s.id struct_id,
@@ -608,27 +431,17 @@ JOIN
 WHERE 
 	s.id = '{}'
 """
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
 def GetProductStructures(dbcon, ids, fout=None):
-  n_out=0; tags=None; df_out=None;
-  cur = dbcon.cursor()
+  df=None;
   sql="""\
 SELECT DISTINCT
 	p.id product_id,
@@ -649,21 +462,12 @@ JOIN
 WHERE 
 	p.id = '{}'
 """
-  logging.debug("SQL: {}".format(sql))
   for id_this in ids:
-    if fout:
-      cur.execute(sql.format(id_this))
-      for row in cur:
-        if not tags:
-          tags = list(row.keys())
-          fout.write("\t".join(tags)+"\n")
-        vals = [("{:.3f}".format(row[tag]) if type(row[tag]) is float else '' if row[tag] is None else str(row[tag])) for tag in tags]
-        fout.write("\t".join(vals)+"\n")
-        n_out+=1
-    else:
-      df_this = pandas.io.sql.read_sql_query(sql.format(id_this), dbcon)
-      df_out = df_this if df_out is None else pandas.concat([df_out, df_this])
-  if fout: logging.info("n_out: {}".format(n_out))
-  else: return df_out
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pandas.concat([df, df_this])
+  logging.info("n_out: {}".format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 #############################################################################
