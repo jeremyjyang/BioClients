@@ -19,29 +19,28 @@ BASE_URL = 'https://'+API_HOST+API_BASE_PATH
 NCHUNK=100;
 #
 ##############################################################################
-def ListTargets(skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; tq=None; df=None;
-  url_next = (base_url+'/targets/?limit={}&offset={}'.format(NCHUNK, skip))
+def ListTargets(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; tq=None; df=None; offset=0;
   while True:
+    url_next = (base_url+f'/targets/?limit={NCHUNK}&offset={offset}')
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     targets = rval["results"] if "results" in rval else []
-    if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="targets")
+    if not tq: tq = tqdm.tqdm(total=rval["count"], unit="targets")
     for target in targets:
       tq.update()
       logging.debug(json.dumps(target, sort_keys=True, indent=2))
       if not tags: tags = list(target.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
-    url_next = rval["next"] if "next" in rval else None
+    url_next = rval["next"] if "next" in rval else None #Full URL suboptimal.
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def SearchTargets(query_term, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None;
   url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
   while True:
@@ -53,8 +52,6 @@ def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
       if not tags: tags = list(target.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
   if fout: df.to_csv(fout, "\t", index=False)
@@ -62,156 +59,145 @@ def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   return(df)
 
 ##############################################################################
-def ListDiseases(skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; tq=None; df=None;
-  url_next = (base_url+'/diseases/?limit={}&offset={}'.format(NCHUNK, skip))
+def ListDiseases(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; tq=None; df=None; offset=0;
   while True:
+    url_next = (base_url+f'/diseases/?limit={NCHUNK}&offset={offset}')
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     diseases = rval["results"] if "results" in rval else []
-    if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="dtos")
+    if not tq: tq = tqdm.tqdm(total=rval["count"], unit="dtos")
     for disease in diseases:
       tq.update()
       logging.debug(json.dumps(disease, sort_keys=True, indent=2))
       if not tags: tags = list(disease.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def ListArticles(skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; tq=None; df=None;
-  url_next = (base_url+'/articles/?limit={}&offset={}'.format(NCHUNK, skip))
+def ListArticles(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; tq=None; df=None; offset=0;
   while True:
+    url_next = (base_url+f'/articles/?limit={NCHUNK}&offset={offset}')
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     articles = rval["results"] if "results" in rval else []
-    if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="articles")
+    if not tq: tq = tqdm.tqdm(total=rval["count"], unit="articles")
     for article in articles:
       tq.update()
       logging.debug(json.dumps(article, sort_keys=True, indent=2))
       if not tags: tags = list(article.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[article[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def ListDTO(skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; tq=None; df=None;
-  url_next = (base_url+'/dto/?limit={}&offset={}'.format(NCHUNK, skip))
+def ListDTO(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; tq=None; df=None; offset=0;
   while True:
+    url_next = (base_url+f'/dto/?limit={NCHUNK}&offset={offset}')
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     dtos = rval["results"] if "results" in rval else []
-    if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="dtos")
+    if not tq: tq = tqdm.tqdm(total=rval["count"], unit="dtos")
     for dto in dtos:
       tq.update()
       logging.debug(json.dumps(dto, sort_keys=True, indent=2))
       if not tags: tags = list(dto.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[dto[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def GetDisease(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetDisease(ids, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease IDs, e.g. 5391."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
-    disease = rest.Utils.GetURL((base_url+'/diseases/{}/'.format(id_this)), parse_json=True)
+    disease = rest.Utils.GetURL(base_url+f'/diseases/{id_this}/', parse_json=True)
     logging.debug(json.dumps(disease, sort_keys=True, indent=2))
     if not tags: tags = list(disease.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
     n_out+=1
-    if nmax and n_in>=nmax: break
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
+  logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
 ##############################################################################
-def GetDiseaseByDOId(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetDiseaseByDOId(ids, base_url=BASE_URL, fout=None):
   """IDs should be Disease Ontology IDs, e.g. DOID:9297."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
-    rval = rest.Utils.GetURL((base_url+'/diseases/?doid='+id_this), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+f'/diseases/?doid={id_this}', parse_json=True)
     diseases = rval["results"] if "results" in rval else []
     for disease in diseases:
       logging.debug(json.dumps(disease, sort_keys=True, indent=2))
       if not tags: tags = list(disease.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-    if nmax and n_in>=nmax: break
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
+  logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
 ##############################################################################
-def GetTarget(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetTarget(ids, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X target IDs, e.g. 10027."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
-    target = rest.Utils.GetURL((base_url+'/targets/{}/'.format(id_this)), parse_json=True)
+    target = rest.Utils.GetURL(base_url+f'/targets/{id_this}/', parse_json=True)
     logging.debug(json.dumps(target, sort_keys=True, indent=2))
     if not tags: tags = list(target.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
     n_out+=1
-    if nmax and n_in>=nmax: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
 
 ##############################################################################
-def GetTargetByUniprot(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetTargetByUniprot(ids, base_url=BASE_URL, fout=None):
   """IDs should be UniProt IDs, e.g. Q9H4B4."""
   n_in=0; n_out=0; tags=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
-    rval = rest.Utils.GetURL((base_url+'/targets/?uniprot='+id_this), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+f'/targets/?uniprot={id_this}', parse_json=True)
     targets = rval["results"] if "results" in rval else []
     for target in targets:
       logging.debug(json.dumps(target, sort_keys=True, indent=2))
       if not tags: tags = list(target.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-    if nmax and n_in>=nmax: break
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
 
 ##############################################################################
-def GetTargetDiseases(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetTargetDiseases(ids, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X target IDs, e.g. 10027."""
   n_in=0; n_out=0; tags=None; tq=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
+    offset=0;
     while True:
-      url_next = (base_url+'/targets/{}/diseases'.format(id_this))
+      url_next = (base_url+f'/targets/{id_this}/diseases?limit={NCHUNK}&offset={offset}')
       rval = rest.Utils.GetURL(url_next, parse_json=True)
       diseases = rval["results"] if "results" in rval else []
-      if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="diseases")
+      if not tq: tq = tqdm.tqdm(total=rval["count"], unit="diseases")
       for disease in diseases:
         tq.update()
         logging.debug(json.dumps(disease, sort_keys=True, indent=2))
@@ -225,29 +211,27 @@ def GetTargetDiseases(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         data_this.update({phenotype_tags[j]:[phenotype[phenotype_tags[j]]] for j in range(len(phenotype_tags))})
         df = pd.concat([df, pd.DataFrame(data_this)])
         n_out+=1
-        if nmax and n_out>=nmax: break
-      if nmax and n_out>=nmax: break
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
       if n_out>=rval["count"]: break #url_next may be wrong.
-    if nmax and n_out>=nmax: break
+      offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
+  logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
 ##############################################################################
-def GetDiseaseTargets(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetDiseaseTargets(ids, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease IDs, e.g. 5391."""
   n_in=0; n_out=0; tags=None; tq=None; df=None;
   for id_this in ids:
     n_in+=1
-    if skip and skip>n_in: continue
+    offset=0;
     while True:
-      url_next = (base_url+f'/diseases/{id_this}/targets')
+      url_next = (base_url+f'/diseases/{id_this}/targets?limit={NCHUNK}&offset={offset}')
       rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       targets = rval["results"] if "results" in rval else []
-      if not tq: tq = tqdm.tqdm(total=(nmax if nmax else rval["count"]), unit="targets")
+      if not tq: tq = tqdm.tqdm(total=rval["count"], unit="targets")
       for target in targets:
         tq.update()
         logging.debug(json.dumps(target, sort_keys=True, indent=2))
@@ -261,23 +245,23 @@ def GetDiseaseTargets(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         data_this.update({protein_tags[j]:[protein[protein_tags[j]]] for j in range(len(protein_tags))})
         df = pd.concat([df, pd.DataFrame(data_this)])
         n_out+=1
-        if nmax and n_out>=nmax: break
-      if nmax and n_out>=nmax: break
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
       if n_out>=rval["count"]: break #url_next may be wrong.
+      offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
+  logging.info("n_in: {n_in}; n_out: {n_out}")
   return(df)
 
 ##############################################################################
-def GetDiseaseTargetArticles(disease_ids, ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def GetDiseaseTargetArticles(disease_ids, ids, base_url=BASE_URL, fout=None):
   """IDs should be TIN-X disease and target IDs and, e.g. 5391, 12203."""
   n_out=0; tags=None; df=None;
   for did in disease_ids:
     for tid in ids:
-      url_next = (base_url+'/diseases/{}/targets/{}/articles'.format(did, tid))
+      offset=0;
       while True:
+        url_next = (base_url+'/diseases/{did}/targets/{tid}/articles?limit={NCHUNK}&offset={offset}')
         rval = rest.Utils.GetURL(url_next, parse_json=True)
         articles = rval["results"] if "results" in rval else []
         for article in articles:
@@ -288,16 +272,17 @@ def GetDiseaseTargetArticles(disease_ids, ids, skip=0, nmax=None, base_url=BASE_
         url_next = rval["next"] if "next" in rval else None
         if not url_next: break
         if n_out>=rval["count"]: break #url_next may be wrong.
+        offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchDiseases(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def SearchDiseases(query_term, base_url=BASE_URL, fout=None):
   """Search names; begins-with search logic."""
-  n_out=0; tags=None; df=None;
-  url_next = (base_url+'/diseases/?search='+urllib.parse.quote(query_term))
+  n_out=0; tags=None; df=None; offset=0;
   while True:
+    url_next = (base_url+'/diseases/?search={}&limit={}&offset={}'.format(urllib.parse.quote(query_term), NCHUNK, offset))
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     diseases = rval["results"] if "results" in rval else []
     for disease in diseases:
@@ -305,20 +290,19 @@ def SearchDiseases(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
       if not tags: tags = list(disease.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+def SearchTargets(query_term, base_url=BASE_URL, fout=None):
   """Search names."""
-  n_out=0; tags=None; df=None;
-  url_next = (base_url+'/targets/?search='+urllib.parse.quote(query_term))
+  n_out=0; tags=None; df=None; offset=0;
   while True:
+    url_next = (base_url+'/targets/?search={}&limit={}&offset={}'.format(urllib.parse.quote(query_term), NCHUNK, offset))
     rval = rest.Utils.GetURL(url_next, parse_json=True)
     targets = rval["results"] if "results" in rval else []
     for target in targets:
@@ -326,20 +310,19 @@ def SearchTargets(query_term, skip=0, nmax=None, base_url=BASE_URL, fout=None):
       if not tags: tags = list(target.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-      if nmax and n_out>=nmax: break
-    if nmax and n_out>=nmax: break
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
+    offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
 ##############################################################################
-def SearchArticles(terms, skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; df=None;
+def SearchArticles(terms, base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=None; offset=0;
   for term in terms:
-    url_next = (base_url+'/articles/?search='+urllib.parse.quote(term))
     while True:
+      url_next = (base_url+'/articles/?search={}&limit={}&offset={}'.format(urllib.parse.quote(query_term), NCHUNK, offset))
       rval = rest.Utils.GetURL(url_next, parse_json=True)
       logging.debug(json.dumps(rval, sort_keys=True, indent=2))
       articles = rval["results"] if "results" in rval else []
@@ -348,10 +331,9 @@ def SearchArticles(terms, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         if not tags: tags = list(article.keys())
         df = pd.concat([df, pd.DataFrame({tags[j]:[article[tags[j]]] for j in range(len(tags))})])
         n_out+=1
-        if nmax and n_out>=nmax: break
-      if nmax and n_out>=nmax: break
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
+      offset += NCHUNK
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
