@@ -27,9 +27,9 @@ if __name__=="__main__":
   parser = argparse.ArgumentParser(description='Wikidata utilities with biomedical focus', epilog=verstr)
   ops = ['list_drugTargetPairs', 'list_geneDiseasePairs', 'test']
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
+  parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--rqfile", help="input Sparql file")
   parser.add_argument("--rq", help="input Sparql string")
-  parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -49,4 +49,4 @@ if __name__=="__main__":
     wikidata.Utils.ListGeneDiseasePairs(fout)
 
   else:
-    parser.error('Unknown operation: {}'.format(args.op))
+    parser.error(f'Unknown operation: {args.op}')

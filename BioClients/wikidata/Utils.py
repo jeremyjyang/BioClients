@@ -21,32 +21,35 @@ def Rq2Df(rq):
   return(df)
 
 #############################################################################
-def ListDrugTargetPairs(fout):
+def ListDrugTargetPairs(fout=None):
   "List drugs with known targets."
   rq="""SELECT DISTINCT ?drug ?drugLabel ?gene_product ?gene_productLabel WHERE {
   ?drug wdt:P129 ?gene_product . 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  df.to_csv(fout, '\t', index=False)
+  if fout: df.to_csv(fout, '\t', index=False)
+  return df
 
 #############################################################################
-def ListGeneDiseasePairs(fout):
+def ListGeneDiseasePairs(fout=None):
   "List genes with associated diseases."
   rq="""SELECT DISTINCT ?gene ?geneLabel ?disease ?diseaseLabel WHERE {
   ?gene wdt:P2293 ?disease . 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  df.to_csv(fout, '\t', index=False)
+  if fout: df.to_csv(fout, '\t', index=False)
+  return df
 
 #############################################################################
-def Test(fout):
+def Test(fout=None):
   rq="""SELECT ?item ?itemLabel WHERE {
   ?item wdt:P279 wd:Q1049021 .
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  df.to_csv(fout, '\t', index=False)
+  if fout: df.to_csv(fout, '\t', index=False)
+  return df
 
 #############################################################################

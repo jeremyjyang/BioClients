@@ -1,42 +1,42 @@
 #!/usr/bin/env python3
-'''
-	GeneOntology client.
-'''
+"""
+GeneOntology client.
+"""
 import os,sys,re,json,time,logging
 import urllib.parse
+import pandas as pd
 
 from ..util import rest
 
+API_HOST='api.geneontology.org'
+API_BASE_PATH='/api'
+BASE_URL = 'https://'+API_HOST+API_BASE_PATH
 #
 ##############################################################################
-def GetEntities(base_url, ids, fout): 
+def GetEntities(ids, base_url=BASE_URL, fout=None): 
   """For only one type of entity per call (gene, term)."""
-  n_ent=0; tags=[];
+  tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    ent = rest.Utils.GetURL(base_url+'/bioentity/%s'%(urllib.parse.quote(id_this)), parse_json=True)
+    ent = rest.Utils.GetURL(base_url+'/bioentity/'+urllib.parse.quote(id_this), parse_json=True)
     logging.debug(json.dumps(ent, sort_keys=True, indent=2))
-    n_ent+=1
-    if not tags:
-      tags = ent.keys()
-      fout.write('%s\n'%('\t'.join(tags)))
-    vals = [str(ent[tag]) if tag in ent else '' for tag in tags]
-    fout.write('%s\n'%('\t'.join(vals)))
-  logging.info('n_ent: %d'%(n_ent))
+    if not tags: tags = ent.keys()
+    df = pd.concat([df, pd.DataFrame({tags[j]:[ent[tags[j]]] for j in range(len(tags))})])
+  logging.info('n_ent: {}'.format(df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 ##############################################################################
-def GetGeneTerms(base_url, ids, fout): 
-  n_assn=0; tags=[];
+def GetGeneTerms(ids, base_url=BASE_URL, fout=None): 
+  tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+'/bioentity/gene/%s/function'%(urllib.parse.quote(id_this)), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+'/bioentity/gene/{}/function'.format(urllib.parse.quote(id_this)), parse_json=True)
     assns = rval['associations'] if 'associations' in rval else []
     for assn in assns:
       logging.debug(json.dumps(assn, sort_keys=True, indent=2))
-      n_assn+=1
-      if not tags:
-        tags = assn.keys()
-        fout.write('%s\n'%('\t'.join(tags)))
-      vals = [str(assn[tag]) if tag in assn else '' for tag in tags]
-      fout.write('%s\n'%('\t'.join(vals)))
-  logging.info('n_gene: %d; n_assn: %d'%(len(ids), n_assn))
+      if not tags: tags = assn.keys()
+      df = pd.concat([df, pd.DataFrame({tags[j]:[assn[tags[j]]] for j in range(len(tags))})])
+  logging.info('n_gene: {}; n_assn: {}'.format(len(ids), df.shape[0]))
+  if fout: df.to_csv(fout, "\t", index=False)
+  return df
 
 ##############################################################################

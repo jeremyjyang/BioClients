@@ -47,7 +47,7 @@ if __name__=='__main__':
     bc_mygene.Utils.SearchGenes(ids, args.species, fout)
 
   else:
-    parser.error("Invalid operation: {}".format(args.op))
+    parser.error(f"Invalid operation: {args.op}")
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
 
