@@ -11,9 +11,6 @@ import sys,os,re,argparse,json,time,logging
 #
 from .. import gwascatalog
 #
-API_HOST='www.ebi.ac.uk'
-API_BASE_PATH='/gwas/rest/api'
-#
 ##############################################################################
 if __name__=='__main__':
   epilog = "Examples: PubmedId=28530673; gcst=GCST004364,GCST000227; EfoUri=EFO_0004232; snpId=rs6085920"
@@ -25,8 +22,8 @@ if __name__=='__main__':
   parser.add_argument("--searchtype", choices=searchtypes, help="ID type")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=gwascatalog.API_HOST)
+  parser.add_argument("--api_base_path", default=gwascatalog.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -49,19 +46,19 @@ if __name__=='__main__':
     ids = re.split(r'\s*,\s*', args.ids.strip())
 
   if args.op == 'search_studies':
-    gwascatalog.Utils.SearchStudies(base_url, ids, args.searchtype, fout)
+    gwascatalog.Utils.SearchStudies(ids, args.searchtype, base_url, fout)
 
   elif args.op == 'list_studies':
     gwascatalog.Utils.ListStudies(base_url, fout)
 
   elif args.op == 'get_studyAssociations':
-    gwascatalog.Utils.GetStudyAssociations(base_url, ids, fout)
+    gwascatalog.Utils.GetStudyAssociations(ids, base_url, fout)
 
   elif args.op == 'get_snps':
-    gwascatalog.Utils.GetSnps(base_url, ids, fout)
+    gwascatalog.Utils.GetSnps(ids, base_url, fout)
 
   else:
-    parser.error("Unknown operation: {0}".format(args.op))
+    parser.error(f"Unknown operation: {args.op}")
 
   logging.info('{0}: elapsed time: {1}'.format(os.path.basename(sys.argv[0]), time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
 
