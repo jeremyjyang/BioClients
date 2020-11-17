@@ -7,9 +7,6 @@ import sys,os,re,argparse,time,json,logging
 
 from .. import ensembl
 #
-API_HOST='rest.ensembl.org'
-API_BASE_PATH=''
-#
 ##############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl REST API client", epilog="Example ID: ENSG00000157764")
@@ -17,15 +14,15 @@ if __name__=='__main__':
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003)")
   parser.add_argument("--i", dest="ifile", help="input file, Ensembl_IDs")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=ensembl.API_HOST)
+  parser.add_argument("--api_base_path", default=ensembl.API_BASE_PATH)
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  BASE_URL='http://'+args.api_host+args.api_base_path
+  base_url='http://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
@@ -45,18 +42,18 @@ if __name__=='__main__':
     parser.error('--i or --ids required.')
 
   if args.op=='list_species':
-    ensembl.Utils.ListSpecies(BASE_URL, fout)
+    ensembl.Utils.ListSpecies(base_url, fout)
 
   elif args.op=='get_info':
-    ensembl.Utils.GetInfo(BASE_URL, ids, fout)
+    ensembl.Utils.GetInfo(ids, base_url, fout)
 
   elif args.op=='get_xrefs':
-    ensembl.Utils.GetXrefs(BASE_URL, ids, fout)
+    ensembl.Utils.GetXrefs(ids, base_url, fout)
 
   elif args.op=='show_version':
-    ensembl.Utils.ShowVersion(BASE_URL, fout)
+    ensembl.Utils.ShowVersion(base_url, fout)
 
   else:
-    parser.error('Invalid operation: {0}'.format(args.op))
+    parser.error(f'Invalid operation: {args.op}')
 
   logging.info(('%s: elapsed time: %s'%(os.path.basename(sys.argv[0]), time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
