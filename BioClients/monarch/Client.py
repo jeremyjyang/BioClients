@@ -48,9 +48,6 @@ import sys,os,re,json,argparse,time,logging
 #
 from .. import monarch
 #
-API_HOST='monarchinitiative.org'
-API_BASE_PATH=''
-#
 ##############################################################################
 if __name__=='__main__':
   epilog='''\
@@ -71,21 +68,21 @@ NCBIGene:26564 (mouse gene)
         "get_disease_relationships",
         "get_phenotype",
         "get_gene",
-        "compare"
+        "compare_phenotypes"
 	]
   parser.add_argument("op", choices=ops, help="operation")
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--idAs", help="input IDs (comma-separated)")
   parser.add_argument("--idBs", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=monarch.Utils.API_HOST)
+  parser.add_argument("--api_base_path", default=monarch.Utils.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  BASE_URL = 'http://'+args.api_host+args.api_base_path
+  base_url = 'http://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile,"w") if args.ofile else sys.stdout
 
@@ -107,22 +104,22 @@ NCBIGene:26564 (mouse gene)
   logging.info('Input idBs: %d'%(len(idBs)))
 
   if args.op=="get_disease":
-    monarch.Utils.GetDisease(BASE_URL, idAs, fout)
+    monarch.Utils.GetDisease(idAs, base_url, fout)
 
   elif args.op=="get_disease_relationships":
-    monarch.Utils.GetDiseaseRelationships(BASE_URL, idAs, fout)
+    monarch.Utils.GetDiseaseRelationships(idAs, base_url, fout)
 
   elif args.op=="get_phenotype":
     parser.error("Unimplemented operation: {0}".format(args.op))
-    #monarch.Utils.GetPhenotype(BASE_URL, idAs, fout)
+    #monarch.Utils.GetPhenotype(idAs, base_url, fout)
 
   elif args.op=="get_gene":
-    monarch.Utils.GetGene(BASE_URL, idAs, fout)
+    monarch.Utils.GetGene(idAs, base_url, fout)
 
-  elif args.op=="compare":
-    monarch.Utils.Compare(BASE_URL, idAs, idBs, fout)
+  elif args.op=="compare_phenotypes":
+    monarch.Utils.ComparePhenotypes(idAs, idBs, base_url, fout)
 
   else:
-    parser.error("Invalid operation: {0}".format(args.op))
+    parser.error(f"Invalid operation: {args.op}")
 
   logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))))
