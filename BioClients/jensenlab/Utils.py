@@ -7,45 +7,47 @@ https://api.jensenlab.org/Knowledge?type1=-26&id1=DOID:10652&type2=9606&limit=10
 https://api.jensenlab.org/Experiments?type1=-26&id1=DOID:10652&type2=9606&limit=10&format=json
 """
 import sys,os,re,json,time,logging
+import pandas as pd
 
 from ..util import rest
 #
+API_HOST='api.jensenlab.org'
+API_BASE_PATH=''
+BASE_URL='https://'+API_HOST+API_BASE_PATH
+#
 ##############################################################################
-def GetDiseaseGenes(base_url, channel, ids, nmax, fout):
-  n_out=0; tags=None;
+def GetDiseaseGenes(channel, ids, nmax, base_url=BASE_URL, fout=None):
+  tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+'/{CHANNEL}?type1=-26&id1={DOID}&type2=9606&limit={NMAX}&format=json'.format(CHANNEL=channel, DOID=id_this, NMAX=nmax), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+f'/{channel}?type1=-26&id1={id_this}&type2=9606&limit={nmax}&format=json', parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?
     for ensg in ensgs:
       gene = genes[ensg]
       logging.debug(json.dumps(gene, indent=2))
-      if not tags:
-        tags = list(gene.keys())
-        fout.write("queryId\t"+("\t".join(tags))+"\n")
-      vals = [(str(gene[tag]) if tag in gene else "") for tag in tags]
-      fout.write(str(id_this)+"\t"+("\t".join(vals))+"\n")
-      n_out+=1
-  logging.info("n_out: %d"%(n_out))
+      if not tags: tags = list(gene.keys())
+      df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info("n_out: {}".format(df.shape[0]))
+  return df
 
 ##############################################################################
-def GetPubmedComentionGenes(base_url, ids, fout):
+def GetPubmedComentionGenes(ids, base_url=BASE_URL, fout=None):
   """Search by co-mentioned terms."""
-  n_out=0; tags=None;
+  tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+'/Textmining?query={0}[tiab]&type2=9606&limit=10&format=json'.format(id_this), parse_json=True)
+    rval = rest.Utils.GetURL(base_url+f'/Textmining?query={id_this}[tiab]&type2=9606&limit=10&format=json', parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?
     for ensg in ensgs:
       gene = genes[ensg]
       logging.debug(json.dumps(gene, indent=2))
-      if not tags:
-        tags = list(gene.keys())
-        fout.write("\t".join(tags)+"\n")
-      vals = [(str(gene[tag]) if tag in gene else "") for tag in tags]
-      fout.write("\t".join(vals)+"\n")
-  logging.info("n_out: %d"%(n_out))
+      if not tags: tags = list(gene.keys())
+      df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info("n_out: {}".format(df.shape[0]))
+  return df
 
 ##############################################################################

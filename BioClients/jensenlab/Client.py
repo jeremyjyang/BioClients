@@ -7,22 +7,19 @@ import sys,os,re,argparse,time,json,logging
 #
 from .. import jensenlab
 #
-API_HOST='api.jensenlab.org'
-API_BASE_PATH=''
-#
 ##############################################################################
 if __name__=='__main__':
   CHANNELS= ['Knowledge', 'Experiments', 'Textmining', 'All']
   parser = argparse.ArgumentParser(description='JensenLab REST API client')
   ops = ['get_disease_genes', 'get_comention_genes' ]
-  parser.add_argument("op", choices=ops, help='operation')
+  parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", help="input IDs (for diseases should be DOIDs, e.g. \"DOID:10652\"")
   parser.add_argument("--channel", choices=CHANNELS, default="Textmining", help="source channel")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--nmax", type=int, default=100, help="max hits")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=jensenlab.Utils.API_HOST)
+  parser.add_argument("--api_base_path", default=jensenlab.Utils.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -46,12 +43,12 @@ if __name__=='__main__':
   logging.info('Input queries: %d'%(len(ids)))
 
   if args.op == "get_disease_genes":
-    jensenlab.Utils.GetDiseaseGenes(base_url, args.channel, ids, args.nmax, fout)
+    jensenlab.Utils.GetDiseaseGenes(args.channel, ids, args.nmax, base_url, fout)
 
   elif args.op == "get_comention_genes":
-    jensenlab.Utils.GetPubmedComentionGenes(base_url, ids, fout)
+    jensenlab.Utils.GetPubmedComentionGenes(ids, base_url, fout)
 
   else:
-    parser.error("Invalid operation: %s"%args.op)
+    parser.error(f"Invalid operation: {args.op}")
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
