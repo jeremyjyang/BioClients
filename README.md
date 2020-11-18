@@ -6,7 +6,7 @@ usually via REST APIs. Modules generally include
 integration into other code. With the advent of HTTP web services,
 first SOAP/XML and then mostly REST/JSON, many online APIs
 require very similar methods for data search, requests
-and transforms into usable formats, often CSV/TSV.
+and transforms into usable formats, often TSV.
 
 ## Availability and installation
 
@@ -40,14 +40,21 @@ Miscellaneous utilities: [__UTIL__](doc/util.md)
 $ python3 -m BioClients.pubchem.Client -h
 ```
 
-## Data structures and formats, XML, JSON, and CSV/TSV
+## Design pattern
+
+Generally each module includes command-line app `Client.py` which calls 
+functions in a corresponding `Utils.py`, providing all capabilities
+by import of the module.  Functions can write to an output file
+or return a Pandas dataframe.
+
+## Data structures and formats, XML, JSON, and TSV
 
 BioClients is designed to be simple and practical, and XML, JSON
-and CSV/TSV are likewise simple in many respects, yet a great deal
+and TSV are likewise simple in many respects, yet a great deal
 of conceptual and technological progress is reflected. XML and JSON
 can represent arbitrarily complex data objects, comprised of nested lists,
-dictionaries, and trees of primary types. CSV/TSV represents tables of
+dictionaries, and trees of primary types. TSV represents tables of
 rows and columns, related by common keys, reflecting the development
-of SQL and relational databases. Transforming JSON to CSV/TSV, as these
+of SQL and relational databases. Transforming JSON to TSV, as these
 clients generally do, projects data objects to tables useful for many
 applications (e.g. machine learning).
