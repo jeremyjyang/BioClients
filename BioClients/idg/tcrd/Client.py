@@ -14,7 +14,7 @@ if __name__=='__main__':
   epilog = "default param_file: {}".format(PARAM_FILE)
   parser = argparse.ArgumentParser(description='TCRD MySql client utility', epilog=epilog)
   ops = ['info', 'listTables', 'listColumns', 'tableRowCounts', 'tdlCounts', 
-	'listTargets', 'listXrefTypes', 'listXrefs',
+	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
 	'listTargetFamilies',
 	'getTargets', 'getTargetsByXref',
 	'getTargetpathways']
@@ -122,6 +122,9 @@ if __name__=='__main__':
 
   elif args.op=='listTargetFamilies':
     tcrd.Utils.ListTargetFamilies(dbcon, fout)
+
+  elif args.op=='listDatasets':
+    tcrd.Utils.ListDatasets(dbcon, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

@@ -12,16 +12,22 @@ TDLS = ['Tdark', 'Tbio', 'Tchem', 'Tclin']
 def Info(dbcon, fout=None):
   sql = 'SELECT * FROM dbinfo'
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
 def ListTables(dbcon, fout=None):
   sql = 'SHOW TABLES'
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info("n_table: {}".format(df.shape[0]))
+  return df
+
+#############################################################################
+def ListDatasets(dbcon, fout=None):
+  sql = 'SELECT * FROM dataset'
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_table: {}".format(df.shape[0]))
   return df
 
@@ -31,7 +37,7 @@ def DescribeTables(dbcon, fout=None):
 
 #############################################################################
 def ListColumns(dbcon, fout=None):
-  n_table=0; df=None;
+  n_table=0; df=pd.DataFrame();
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
     sql = ('DESCRIBE '+table)
@@ -39,18 +45,14 @@ def ListColumns(dbcon, fout=None):
     cols = list(df_this.columns.values)
     df_this['table'] = table
     df_this = df_this[['table']+cols]
-    if n_table==1:
-      df = df_this
-    else:
-      df = pd.concat([df, df_this])
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+    df = pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_columns: {}; n_tables: {}".format(df.shape[0], df.table.nunique()))
   return df
 
 #############################################################################
 def TableRowCounts(dbcon, fout):
-  n_table=0;
+  n_table=0; df=pd.DataFrame();
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
     sql = ('SELECT count(*) AS row_count FROM '+table)
@@ -58,12 +60,8 @@ def TableRowCounts(dbcon, fout):
     cols = list(df_this.columns.values)
     df_this['table'] = table
     df_this = df_this[['table']+cols]
-    if n_table==1:
-      df = df_this
-    else:
-      df = pd.concat([df, df_this])
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+    df = pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_table: {}".format(df.shape[0]))
   return df
 
@@ -71,32 +69,28 @@ def TableRowCounts(dbcon, fout):
 def TDLCounts(dbcon, fout=None):
   sql="SELECT tdl, COUNT(id) AS target_count FROM target GROUP BY tdl"
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
 def AttributeCounts(dbcon, fout=None):
   sql='SELECT ga.type, COUNT(ga.id) FROM gene_attribute ga GROUP BY ga.type'
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
 def XrefCounts(dbcon, fout=None):
   sql = ('SELECT xtype, COUNT(DISTINCT value) FROM xref GROUP BY xtype ORDER BY xtype')
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
 def ListXrefTypes(dbcon, fout=None):
   sql='SELECT DISTINCT xtype FROM xref ORDER BY xtype'
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_xreftypes: {}".format(df.shape[0]))
   return df
 
@@ -110,8 +104,7 @@ def ListXrefs(dbcon, xreftypes, fout):
     sql += " WHERE xtype IN ({})".format("'"+("','".join(xreftypes)+"'"))
   logging.debug("SQL: \"{}\"".format(sql))
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info('Target count: %d'%(df.target_id.nunique()))
   logging.info('Protein count: %d'%(df.protein_id.nunique()))
   logging.info('XrefType count: %d'%(df.xtype.nunique()))
@@ -122,8 +115,7 @@ def ListXrefs(dbcon, xreftypes, fout):
 def ListTargetFamilies(dbcon, fout=None):
   sql='SELECT DISTINCT fam TargetFamily FROM target ORDER BY fam'
   df = read_sql_query(sql, dbcon)
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_tfams: {}".format(df.shape[0]))
   return df
 
@@ -168,6 +160,7 @@ JOIN
   df = read_sql_query(sql, dbcon)
   if tdls: logging.info('TDLs: {}'.format(",".join(tdls)))
   if tfams: logging.info('TargetFamilies: {}'.format(",".join(tfams)))
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info('rows: {}'.format(df.shape[0]))
   logging.info('Target count: {}'.format(df.tcrdTargetId.nunique()))
   logging.info('Protein count: {}'.format(df.tcrdProteinId.nunique()))
@@ -175,8 +168,6 @@ JOIN
   logging.info('ENSP count: {}'.format(df.ensemblProteinId.nunique()))
   logging.info('ENSG count: {}'.format(df.ensemblGeneId.nunique()))
   logging.info('GeneSymbol count: {}'.format(df.tcrdGeneSymbol.nunique()))
-  if fout:
-    df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
@@ -206,7 +197,7 @@ JOIN
 	protein ON protein.id = t2tc.protein_id
 '''.format(','.join(map(lambda s: '{} {}'.format(s, s.replace('.', '_')), cols)))
 
-  n_id=0; n_hit=0;
+  n_id=0; n_hit=0; df=pd.DataFrame();
   for id_this in ids:
     n_id+=1
     wheres=[]
@@ -227,14 +218,9 @@ JOIN
     logging.debug('SQL: "{}"'.format(sql_this))
     logging.debug('ID: {} = "{}"'.format(idtype, id_this))
     df_this = read_sql_query(sql_this, dbcon)
-    if df_this.shape[0]>0:
-      n_hit+=1
-    if n_id==1:
-      df = df_this
-    else:
-      df = pd.concat([df, df_this])
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+    if df_this.shape[0]>0: n_hit+=1
+    df = pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_id: {}; n_hit: {}".format(n_id, n_hit))
   return df
 
@@ -271,7 +257,7 @@ JOIN
 	xref ON xref.protein_id = protein.id
 '''.format(','.join(map(lambda s: '{} {}'.format(s, s.replace('.', '_')), cols)))
 
-  n_id=0; n_hit=0;
+  n_id=0; n_hit=0; df=pd.DataFrame();
   for id_this in ids:
     n_id+=1
     wheres=[]
@@ -282,18 +268,14 @@ JOIN
     df_this = read_sql_query(sql_this, dbcon)
     if df_this.shape[0]>0:
       n_hit+=1
-    if n_id==1:
-      df = df_this
-    else:
-      df = pd.concat([df, df_this])
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+    df = pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_id: {}; n_hit: {}".format(n_id, n_hit))
   return df
 
 #############################################################################
 def GetPathways(dbcon, ids, fout):
-  n_id=0; n_hit=0;
+  n_id=0; n_hit=0; df=pd.DataFrame();
   cols=[ 't2p.target_id',
 	't2p.id',
 	't2p.source',
@@ -308,14 +290,9 @@ def GetPathways(dbcon, ids, fout):
     sql_this = sql+("WHERE t.id = {}".format(id_this))
     logging.debug('SQL: "{}"'.format(sql_this))
     df_this = read_sql_query(sql_this, dbcon)
-    if df_this.shape[0]>0:
-      n_hit+=1
-    if n_id==1:
-      df = df_this
-    else:
-      df = pd.concat([df, df_this])
-  if fout:
-    df.to_csv(fout, "\t", index=False)
+    if df_this.shape[0]>0: n_hit+=1
+    df = pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
   logging.info("n_query: {}; n_hit: {}".format(n_query, n_hit))
   return df
 
