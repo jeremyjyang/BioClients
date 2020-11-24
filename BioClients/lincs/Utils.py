@@ -8,55 +8,62 @@ http://www.ilincs.org/ilincs/APIdocumentation
 """
 ###
 import sys,os,re,json,logging
+import pandas as pd
 #
 from ..util import rest
 #
+API_HOST="www.ilincs.org"
+API_BASE_PATH="/api"
+BASE_URL='https://'+API_HOST+API_BASE_PATH
+#
 #############################################################################
-def GetGene(base_url, ids, fout):
-  tags=None;
+def GetGene(ids, base_url=BASE_URL, fout=None):
+  tags=None; df=pd.DataFrame();
   for id_this in ids:
-    url = base_url+'/GeneInfos/%s'%id_this
+    url = base_url+'/GeneInfos/'+id_this
     rval = rest.Utils.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     if not tags:
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
-      fout.write('\t'.join(tags)+'\n')
-    vals = [str(rval[tag]) if tag in rval else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-  logging.info("IDs: {0}".format(len(ids)))
+    gene = rval
+    df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"IDs: {len(ids)}")
+  return df
 
 #############################################################################
-def GetDataset(base_url, ids, fout):
-  tags=None;
+def GetDataset(ids, base_url=BASE_URL, fout=None):
+  tags=None; df=pd.DataFrame();
   for id_this in ids:
-    url = base_url+'/PublicDatasets/%s'%id_this
+    url = base_url+'/PublicDatasets/'+id_this
     rval = rest.Utils.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     if not tags:
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
-      fout.write('\t'.join(tags)+'\n')
-    vals = [str(rval[tag]) if tag in rval else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-  logging.info("IDs: {0}".format(len(ids)))
+    dset = rval
+    df = pd.concat([df, pd.DataFrame({tags[j]:[dset[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"IDs: {len(ids)}")
+  return df
 
 #############################################################################
-def GetCompound(base_url, ids, fout):
-  tags=None; n_cpd=0;
+def GetCompound(ids, base_url=BASE_URL, fout=None):
+  tags=None; df=pd.DataFrame();
   for id_this in ids:
     url = base_url+'/Compounds/%s'%id_this
-    cpd = rest.Utils.GetURL(url, parse_json=True)
-    logging.debug(json.dumps(cpd, indent=2))
+    rval = rest.Utils.GetURL(url, parse_json=True)
+    logging.debug(json.dumps(rval, indent=2))
     if not tags:
-      tags = [tag for tag in cpd.keys() if type(cpd[tag]) not in (list, dict)]
-      fout.write('\t'.join(tags)+'\n')
-    vals = [str(cpd[tag]) if tag in cpd else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-    n_cpd+=1
-  logging.info("IDs: {0}; n_cpd: {1}".format(len(ids), n_cpd))
+      tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
+    cpd = rval
+    df = pd.concat([df, pd.DataFrame({tags[j]:[cpd[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"IDs: {len(ids)}; n_cpd: {df.shape[0]}")
+  return df
 
 #############################################################################
-def SearchDataset(base_url, searchTerm, lincs, fout):
-  tags=None;
+def SearchDataset(searchTerm, lincs, base_url=BASE_URL, fout=None):
+  tags=None; df=pd.DataFrame();
   url = base_url+'/PublicDatasets/findTermMeta'
   d = {'term':searchTerm}
   if lincs: d['lincs'] = True
@@ -67,32 +74,32 @@ def SearchDataset(base_url, searchTerm, lincs, fout):
     logging.debug(json.dumps(dset, indent=2))
     if not tags:
       tags = [tag for tag in dset.keys() if type(dset[tag]) not in (list, dict)]
-      fout.write('\t'.join(tags)+'\n')
-    vals = [str(dset[tag]) if tag in dset else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-  logging.info("Datasets: {0}".format(len(dsets)))
+    df = pd.concat([df, pd.DataFrame({tags[j]:[dset[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"Datasets: {df.shape[0]}")
+  return df
 
 #############################################################################
-def SearchSignature(base_url, ids, lincs, fout):
+def SearchSignature(ids, lincs, base_url=BASE_URL, fout=None):
   #SignatureMeta?filter={"where":{"lincspertid":"LSM-2121"},"limit":10}
-  tags=None; n_sig=0;
+  tags=None; df=pd.DataFrame();
   for id_this in ids:
-    url = base_url+'/SignatureMeta?filter={"where":{"lincspertid":"%s"}}'%id_this
-    sigs = rest.Utils.GetURL(url, parse_json=True)
-    logging.debug(json.dumps(sigs, indent=2))
+    url = base_url+'/SignatureMeta?filter={"where":{"lincspertid":"'+id_this+'"}}'
+    rval = rest.Utils.GetURL(url, parse_json=True)
+    logging.debug(json.dumps(rval, indent=2))
+    sigs = rval
     for sig in sigs:
       logging.debug(json.dumps(sig, indent=2))
       if not tags:
         tags = [tag for tag in sig.keys() if type(sig[tag]) not in (list, dict)]
-        fout.write('\t'.join(tags)+'\n')
-      vals = [str(sig[tag]) if tag in sig else '' for tag in tags]
-      fout.write('\t'.join(vals)+'\n')
-      n_sig+=1
-  logging.info("IDs: {0}; n_sig: {1}".format(len(ids), n_sig))
+      df = pd.concat([df, pd.DataFrame({tags[j]:[sig[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"IDs: {len(ids)}; n_sig: {df.shape[0]}")
+  return df
 
 #############################################################################
-def GetSignature(base_url, ids, ngene, fout):
-  tags=None; n_gene=0;
+def GetSignature(ids, ngene, base_url=BASE_URL, fout=None):
+  tags=None; df=pd.DataFrame();
   url = base_url+'/ilincsR/downloadSignature'
   d = {'sigID':(','.join(ids)), 'display':True, 'noOfTopGenes':ngene}
   rval = rest.Utils.PostURL(url, data=d, parse_json=True)
@@ -102,10 +109,9 @@ def GetSignature(base_url, ids, ngene, fout):
     logging.debug(json.dumps(gene, indent=2))
     if not tags:
       tags = [tag for tag in gene.keys() if type(gene[tag]) not in (list, dict)]
-      fout.write('\t'.join(tags)+'\n')
-    vals = [str(gene[tag]) if tag in gene else '' for tag in tags]
-    fout.write('\t'.join(vals)+'\n')
-    n_gene+=1
-  logging.info("IDs: {0}; n_gene: {1}".format(len(ids), n_gene))
+    df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"IDs: {len(ids)}; n_gene: {df.shape[0]}")
+  return df
 
 #############################################################################
