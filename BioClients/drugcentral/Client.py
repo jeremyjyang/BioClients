@@ -5,13 +5,15 @@ DrugCentral PostgreSql db client.
 import os,sys,argparse,re,time,logging
 
 from .. import drugcentral
+from ..util import yaml as util_yaml
 
 #############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility", epilog="Search via --ids as regular expressions, e.g.  \"^Alzheimer\"")
   ops = [
-	"describe",
-	"counts",
+	"list_tables",
+	"list_columns",
+	"list_tables_rowCounts",
 	"version",
 	"get_structure",
 	"get_structure_by_synonym",
@@ -54,7 +56,7 @@ if __name__=='__main__':
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
   if os.path.isfile(args.param_file):
-    params = drugcentral.ReadParamFile(args.param_file)
+    params = util_yaml.ReadParamFile(args.param_file)
   if args.dbhost: params['DBHOST'] = args.dbhost 
   if args.dbport: params['DBPORT'] = args.dbport 
   if args.dbname: params['DBNAME'] = args.dbname 
@@ -83,11 +85,14 @@ if __name__=='__main__':
     logging.error("Connect failed.")
     parser.error("{0}".format(str(e)))
 
-  if args.op=='describe':
-    drugcentral.Utils.Describe(dbcon, args.dbschema, fout)
+  if args.op=='list_tables':
+    drugcentral.Utils.ListTables(dbcon, args.dbschema, fout)
 
-  elif args.op=='counts':
-    drugcentral.Utils.Counts(dbcon, args.dbschema, fout)
+  elif args.op=='list_tables_rowCounts':
+    drugcentral.Utils.ListTablesRowCounts(dbcon, args.dbschema, fout)
+
+  elif args.op=='list_columns':
+    drugcentral.Utils.ListColumns(dbcon, args.dbschema, fout)
 
   elif args.op=='version':
     drugcentral.Utils.Version(dbcon, args.dbschema, fout)
