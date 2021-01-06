@@ -41,7 +41,7 @@ def ListStudies(base_url=BASE_URL, fout=None):
       df = pd.concat([df, pd.DataFrame({tags[j]:[study[tags[j]]] for j in range(len(tags))})])
       n_study+=1
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f'n_study: {n_study}')
+  logging.info(f"n_study: {n_study}")
   return(df)
 
 ##############################################################################
@@ -77,7 +77,7 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
       df = pd.concat([df, pd.DataFrame({tags[j]:[study[tags[j]]] for j in range(len(tags))})])
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f'n_study: {n_study}')
+  logging.info(f"n_study: {n_study}")
   return(df)
 
 ##############################################################################
@@ -93,6 +93,8 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
   df=pd.DataFrame(); tq=None;
   url = base_url+'/studies'
   for id_this in ids:
+    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="studies")
+    tq.update()
     n_id+=1
     url_this = url+f'/{id_this}/associations?projection=associationByStudy'
     rval = rest.Utils.GetURL(url_this, parse_json=True)
@@ -133,7 +135,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
           snp_href = sra['_links']['snp']['href'] if '_links' in sra and 'snp' in sra['_links'] and 'href' in sra['_links']['snp'] else ''
           if snp_href: n_snp+=1
   n_gcst = len(gcsts)
-  logging.info(f'INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}')
+  logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}")
   if fout: df.to_csv(fout, "\t", index=False)
   return(df)
 
@@ -149,6 +151,8 @@ gc = genomicContext
   df=pd.DataFrame(); tq=None;
   url = base_url+'/singleNucleotidePolymorphisms'
   for id_this in ids:
+    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="snps")
+    tq.update()
     n_snp+=1
     url_this = url+'/'+id_this
     snp = rest.Utils.GetURL(url_this, parse_json=True)
@@ -178,7 +182,7 @@ gc = genomicContext
       n_gcloc+=1
       gene = gc['gene']
       n_gene+=1
-  logging.info(f'SNPs: {n_snp}; genomicContexts: {n_gc}; genes: {n_gene}; locations: {n_gcloc}')
+  logging.info(f"SNPs: {n_snp}; genomicContexts: {n_gc}; genes: {n_gene}; locations: {n_gcloc}")
   if fout: df.to_csv(fout, "\t", index=False)
   return(df)
 
