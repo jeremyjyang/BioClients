@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ###
-import sys,os,json,re,logging
+import sys,os,json,re,logging,tqdm
 import pandas as pd
 #
 from ..util import rest
@@ -15,8 +15,9 @@ NCHUNK=100;
 def GetStats(pmids, base_url=BASE_URL, fout=None):
   """Request multiply by chunk. Lists of PMIDs (e.g. references,
 cited_by) reported as counts."""
-  n_in=0; n_out=0; tags=None; df=pd.DataFrame();
+  n_in=0; n_out=0; tags=None; df=pd.DataFrame(); tq=None;
   while True:
+    if tq is None: tq = tqdm.tqdm(total=len(pmids), unit="pmids")
     if n_in>=len(pmids): break
     pmids_this = pmids[n_in:n_in+NCHUNK]
     n_in += (NCHUNK if n_in+NCHUNK < len(pmids) else len(pmids)-n_in)
@@ -29,24 +30,27 @@ cited_by) reported as counts."""
     for pub in pubs:
       if not tags: tags = list(pub.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[pub[tags[j]]] for j in range(len(tags))})])
+    for j in range(len(pmids_this)): tq.update()
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('n_in: {}; n_out: {}'.format(len(pmids), df.shape[0]))
+  logging.info(f"n_in: {len(pmids)}; n_out: {df.shape[0]}")
   return df
 
 #############################################################################
 def GetStats_single(pmids, base_url=BASE_URL, fout=None):
   """Request singly."""
-  tags=None; df=pd.DataFrame();
+  tags=None; df=pd.DataFrame(); tq=None;
   for pmid in pmids:
+    if tq is None: tq = tqdm.tqdm(total=len(pmids), unit="pmids")
+    tq.update()
     url = base_url+'/'+pmid
     pub = rest.Utils.GetURL(url, parse_json=True)
     if not pub:
-      logging.info('not found: %s'%(pmid))
+      logging.info(f"Not found: {pmid}")
       continue
     if not tags: tags = list(pub.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[pub[tags[j]]] for j in range(len(tags))})])
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('n_in: {}; n_out: {}'.format(len(pmids), df.shape[0]))
+  logging.info(f"n_in: {len(pmids)}; n_out: {df.shape[0]}")
   return df
 
 #############################################################################
