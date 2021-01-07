@@ -53,7 +53,7 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
     if not tags:
       for tag in gene.keys():
         if type(gene[tag]) not in (list, dict): tags.append(tag) #Only simple metadata.
-    df = pd.concat([df, pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else []) for j in range(len(tags))})])
+    df = pd.concat([df, pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else ['']) for j in range(len(tags))})])
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="genes")
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_ids: {len(ids)}; n_out: {df.shape[0]}; n_err: {n_err}")
@@ -77,7 +77,7 @@ def GetXrefs(ids, base_url=BASE_URL, fout=None):
       if dbname not in dbcounts: dbcounts[dbname]=0
       dbcounts[dbname]+=1
       if not tags: tags = list(xref.keys())
-      df = pd.concat([df, pd.DataFrame({tags[j]:([str(xref[tags[j]])] if tags[j] in xref else []) for j in range(len(tags))})])
+      df = pd.concat([df, pd.DataFrame({tags[j]:([str(xref[tags[j]])] if tags[j] in xref else ['']) for j in range(len(tags))})])
       n_out+=1
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="genes")
   for key in sorted(dbcounts.keys()):
