@@ -147,7 +147,7 @@ Input: rs_id, e.g. rs7329174
 loc = location
 gc = genomicContext
   """
-  n_snp=0; n_gc=0; n_gene=0; n_gcloc=0; n_loc=0; df=None; tq=None;
+  n_snp=0; n_gene=0; n_loc=0; df=None; tq=None;
   tags_snp=[]; tags_loc=[]; tags_gc=[]; tags_gcloc=[];  tags_gene=[]; 
   url = base_url+'/singleNucleotidePolymorphisms'
   for id_this in ids:
@@ -156,30 +156,32 @@ gc = genomicContext
     url_this = url+'/'+id_this
     snp = rest.Utils.GetURL(url_this, parse_json=True)
     if not snp: continue
+    if 'genomicContexts' not in snp: continue
+    if len(snp['genomicContexts'])==0: continue
+    df_this=None;
     for gc in snp['genomicContexts']:
-      n_gc+=1
+      if not tags_snp:
+        for key,val in snp.items():
+          if type(val) not in (list, dict): tags_snp.append(key)
+        for key in gc.keys():
+          if key not in ('gene', 'location', '_links'): tags_gc.append(key)
+        for key in gc['location'].keys():
+          if key != '_links': tags_gcloc.append(key)
+        for key in gc['gene'].keys():
+          if key != '_links': tags_gene.append(key)
+      df_snp = pd.DataFrame({tags_snp[j]:[snp[tags_snp[j]]] for j in range(len(tags_snp))})
+      df_gc = pd.DataFrame({tags_gc[j]:[gc[tags_gc[j]]] for j in range(len(tags_gc))})
       gcloc = gc['location']
-      n_gcloc+=1
+      df_gcloc = pd.DataFrame({tags_gcloc[j]:[gcloc[tags_gcloc[j]]] for j in range(len(tags_gcloc))})
       gene = gc['gene']
+      df_gene = pd.DataFrame({tags_gene[j]:[gene[tags_gene[j]]] for j in range(len(tags_gene))})
+      df_snp = pd.concat([df_snp, df_gc, df_gcloc, df_gene], axis=1)
+      df_this = pd.concat([df_this, df_snp], axis=0)
       n_gene+=1
-    if n_snp==0:
-      for key,val in snp.items():
-        if type(val) not in (list, dict): tags_snp.append(key)
-      for key in snp['genomicContexts'][0].keys():
-        if key not in ('gene', 'location', '_links'): tags_gc.append(key)
-      for key in snp['genomicContexts'][0]['location'].keys():
-        if key != '_links': tags_gcloc.append(key)
-      for key in snp['genomicContexts'][0]['gene'].keys():
-        if key != '_links': tags_gene.append(key)
-    df_snp = pd.DataFrame({tags_snp[j]:[snp[tags_snp[j]]] for j in range(len(tags_snp))})
-    df_gc = pd.DataFrame({tags_gc[j]:[snp['genomicContexts'][0][tags_gc[j]]] for j in range(len(tags_gc))})
-    df_gcloc = pd.DataFrame({tags_gcloc[j]:[snp['genomicContexts'][0]['location'][tags_gcloc[j]]] for j in range(len(tags_gcloc))})
-    df_gene = pd.DataFrame({tags_gene[j]:[snp['genomicContexts'][0]['gene'][tags_gene[j]]] for j in range(len(tags_gene))})
-    df_this = pd.concat([df_snp, df_gc, df_gcloc, df_gene], axis=1)
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
     df = pd.concat([df, df_this], axis=0)
     n_snp+=1
-  logging.info(f"SNPs: {n_snp}; genomicContexts: {n_gc}; genes: {n_gene}; locations: {n_gcloc}")
+  logging.info(f"SNPs: {n_snp}; genes: {n_gene}")
   if fout: df.to_csv(fout, "\t", index=False)
   return(df)
 
