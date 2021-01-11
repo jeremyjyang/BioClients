@@ -22,6 +22,8 @@ if __name__=='__main__':
   parser.add_argument("--searchtype", choices=searchtypes, help="ID type")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
+  parser.add_argument("--skip", type=int, default=0)
+  parser.add_argument("--nmax", type=int, default=None)
   parser.add_argument("--api_host", default=gwascatalog.API_HOST)
   parser.add_argument("--api_base_path", default=gwascatalog.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -52,10 +54,10 @@ if __name__=='__main__':
     gwascatalog.Utils.ListStudies(base_url, fout)
 
   elif args.op == 'get_studyAssociations':
-    gwascatalog.Utils.GetStudyAssociations(ids, base_url, fout)
+    gwascatalog.Utils.GetStudyAssociations(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_snps':
-    gwascatalog.Utils.GetSnps(ids, base_url, fout)
+    gwascatalog.Utils.GetSnps(ids, args.skip, args.nmax, base_url, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")

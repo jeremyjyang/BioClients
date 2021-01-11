@@ -45,42 +45,7 @@ def ListStudies(base_url=BASE_URL, fout=None):
   return(df)
 
 ##############################################################################
-def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
-  tags=[]; n_study=0; rval=None; df=None; tq=None;
-  url = base_url+'/studies/search'
-  if searchtype=='gcst':
-    url+='/'
-  elif searchtype.lower()=='pubmedid':
-    url+='/findByPublicationIdPubmedId?pubmedId={}'
-  elif searchtype.lower()=='efotrait':
-    url+='/findByEfoTrait?efoTrait={}'
-  elif searchtype.lower()=='efouri':
-    url+='/findByEfoUri?efoUri={}'
-  elif searchtype.lower()=='accessionid':
-    url+='/findByAccessionId?accessionId={}'
-  else:
-    logging.error(f'Searchtype not supported: {searchtype}')
-    return
-  for id_this in ids:
-    url_this = url.format(urllib.parse.quote(id_this))
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
-    if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: continue
-    studies = rval['_embedded']['studies']
-    if not studies: continue
-    for study in studies:
-      if not tags:
-        for tag in study.keys():
-          if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
-            tags.append(tag) #Only simple metadata.
-      n_study+=1
-      df = pd.concat([df, pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})])
-    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f"n_study: {n_study}")
-  return(df)
-
-##############################################################################
-def GetStudyAssociations(ids, base_url=BASE_URL, fout=None):
+def GetStudyAssociations(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """
 Mapped genes via SNP links.
 arg = authorReportedGene
@@ -88,11 +53,11 @@ sra = strongestRiskAllele
 https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=associationByStudy
   """
   n_id=0; n_assn=0; n_loci=0; n_arg=0; n_sra=0; n_snp=0; df=None; tq=None;
-  gcsts=set([]);
-  tags_assn=[]; tags_study=[]; tags_locus=[]; tags_sra=[]; tags_arg=[];
+  gcsts=set([]); tags_assn=[]; tags_study=[]; tags_locus=[]; tags_sra=[]; tags_arg=[];
   url = base_url+'/studies'
-  for id_this in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="studies")
+  if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
+  for id_this in ids[skip:]:
+    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="studies")
     tq.update()
     url_this = url+f'/{id_this}/associations?projection=associationByStudy'
     rval = rest.Utils.GetURL(url_this, parse_json=True)
@@ -136,12 +101,15 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_id==0), mode=('w' if n_id==0 else 'a'))
     df = pd.concat([df, df_this], axis=0)
     n_id+=1
+    if n_id==nmax:
+      logging.info(f"NMAX IDs reached: {nmax}")
+      break
   n_gcst = len(gcsts)
   logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}")
   return(df)
 
 ##############################################################################
-def GetSnps(ids, base_url=BASE_URL, fout=None):
+def GetSnps(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   """
 Input: rs_id, e.g. rs7329174
 loc = location
@@ -150,8 +118,9 @@ gc = genomicContext
   n_snp=0; n_gene=0; n_loc=0; df=None; tq=None;
   tags_snp=[]; tags_loc=[]; tags_gc=[]; tags_gcloc=[];  tags_gene=[]; 
   url = base_url+'/singleNucleotidePolymorphisms'
-  for id_this in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="snps")
+  if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
+  for id_this in ids[skip:]:
+    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="snps")
     tq.update()
     url_this = url+'/'+id_this
     snp = rest.Utils.GetURL(url_this, parse_json=True)
@@ -181,8 +150,45 @@ gc = genomicContext
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
     df = pd.concat([df, df_this], axis=0)
     n_snp+=1
+    if n_snp==nmax:
+      logging.info(f"NMAX IDs reached: {nmax}")
+      break
   logging.info(f"SNPs: {n_snp}; genes: {n_gene}")
+  return(df)
+
+##############################################################################
+def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
+  tags=[]; n_study=0; rval=None; df=None; tq=None;
+  url = base_url+'/studies/search'
+  if searchtype=='gcst':
+    url+='/'
+  elif searchtype.lower()=='pubmedid':
+    url+='/findByPublicationIdPubmedId?pubmedId={}'
+  elif searchtype.lower()=='efotrait':
+    url+='/findByEfoTrait?efoTrait={}'
+  elif searchtype.lower()=='efouri':
+    url+='/findByEfoUri?efoUri={}'
+  elif searchtype.lower()=='accessionid':
+    url+='/findByAccessionId?accessionId={}'
+  else:
+    logging.error(f'Searchtype not supported: {searchtype}')
+    return
+  for id_this in ids:
+    url_this = url.format(urllib.parse.quote(id_this))
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: continue
+    studies = rval['_embedded']['studies']
+    if not studies: continue
+    for study in studies:
+      if not tags:
+        for tag in study.keys():
+          if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
+            tags.append(tag) #Only simple metadata.
+      n_study+=1
+      df = pd.concat([df, pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})])
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_study: {n_study}")
   return(df)
 
 ##############################################################################
