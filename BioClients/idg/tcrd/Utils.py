@@ -171,21 +171,28 @@ JOIN
   return df
 
 #############################################################################
+def GetTargetPage(dbcon, tid, fout):
+  df = GetTargets(dbcon, [tid], "TID", None)
+  target = df.to_dict(orient='records')
+  fout.write(json.dumps(target, indent=2))
+
+#############################################################################
 def GetTargets(dbcon, ids, idtype, fout):
-  cols=[ 'target.description',
+  cols=[
 	'target.id',
-	'target.fam',
 	'target.name',
+	'target.description',
+	'target.fam',
 	'target.tdl',
 	'target.ttype',
-	'protein.chr',
+	'protein.id',
+	'protein.sym',
+	'protein.uniprot',
+	'protein.geneid',
+	'protein.name',
 	'protein.description',
 	'protein.family',
-	'protein.geneid',
-	'protein.id',
-	'protein.name',
-	'protein.sym',
-	'protein.uniprot' ]
+	'protein.chr']
   sql='''\
 SELECT
 	{}

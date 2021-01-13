@@ -17,6 +17,7 @@ if __name__=='__main__':
 	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
 	'listTargetFamilies',
 	'getTargets', 'getTargetsByXref',
+	'getTargetPage',
 	'getTargetpathways']
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
@@ -94,6 +95,11 @@ if __name__=='__main__':
     if not ids:
       parser.error(f'IDs required for operation: {args.op}')
     tcrd.Utils.GetTargets(dbcon, ids, args.idtype, fout)
+
+  elif args.op=='getTargetPage':
+    if not ids:
+      parser.error(f'Target ID required for operation: {args.op}')
+    tcrd.Utils.GetTargetPage(dbcon, ids[0], fout)
 
   elif args.op=='getTargetsByXrefs':
     if not ids:
