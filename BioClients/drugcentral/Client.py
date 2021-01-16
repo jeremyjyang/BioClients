@@ -33,6 +33,7 @@ if __name__=='__main__':
 	"list_indications",
 	"list_indication_targets",
 	"list_ddis",
+	"list_atcs",
 	"list_xref_types",
 	"search_indications",
 	"search_products",
@@ -120,6 +121,9 @@ if __name__=='__main__':
 
   elif args.op=='list_ddis':
     drugcentral.Utils.ListDrugdruginteractions(dbcon, fout)
+
+  elif args.op=='list_atcs':
+    drugcentral.Utils.ListAtcs(dbcon, fout)
 
   elif args.op=='list_xref_types':
     drugcentral.Utils.ListXrefTypes(dbcon, fout)

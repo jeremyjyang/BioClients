@@ -405,6 +405,36 @@ WHERE
   return df
 
 #############################################################################
+def ListAtcs(dbcon, fout=None):
+  """List ATC codes and drug count for which drugs exist."""
+  sql="""\
+SELECT DISTINCT
+	atc.l1_code atc_l1_code, atc.l1_name atc_l1_name,
+	atc.l2_code atc_l2_code, atc.l2_name atc_l2_name,
+	atc.l3_code atc_l3_code, atc.l3_name atc_l3_name,
+	atc.l4_code atc_l4_code, atc.l4_name atc_l4_name,
+	COUNT(DISTINCT s.id) drug_count
+FROM
+	atc
+JOIN 
+	struct2atc ON struct2atc.id = atc.id
+JOIN 
+	structures s ON s.id = struct2atc.struct_id
+GROUP BY
+	atc.l1_code, atc.l1_name,
+	atc.l2_code, atc.l2_name,
+	atc.l3_code, atc.l3_name,
+	atc.l4_code, atc.l4_name
+ORDER BY
+	atc.l1_name, atc.l2_name, atc.l3_name, atc.l4_name
+"""
+  logging.debug(sql)
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
+
+#############################################################################
 def GetStructureAtcs(dbcon, ids, fout=None):
   df=None;
   sql="""\
