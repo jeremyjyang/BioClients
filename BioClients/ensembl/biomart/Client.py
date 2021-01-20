@@ -28,7 +28,7 @@ def DemoXMLQuery(base_url, fout):
 ##############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl BIOMART REST API client", epilog="For XML query file format, see https://m.ensembl.org/info/data/biomart/biomart_restful.html#biomartxml")
-  ops = ["xmlQuery", "demo", "show_version"]
+  ops = ["xmlQuery", "ensg2ncbi", "ensg2hgnc", "demo", "show_version"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ixml", dest="ixmlfile", help="input file, XML query")
   parser.add_argument("--api_host", default=ensembl.biomart.API_HOST)
@@ -39,7 +39,7 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  base_url='https://'+args.api_host+args.api_base_path
+  base_url='http://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
@@ -51,6 +51,12 @@ if __name__=='__main__':
       sys.exit(1)
     xmltext = open(args.ixmlfile).read()
     ensembl.biomart.Utils.XMLQuery(xmltext, base_url, fout)
+
+  elif args.op=='ensg2ncbi':
+    ensembl.biomart.Utils.ENSG2NCBI(base_url, fout)
+
+  elif args.op=='ensg2hgnc':
+    ensembl.biomart.Utils.ENSG2HGNC(base_url, fout)
 
   elif args.op=='demo':
     DemoXMLQuery(base_url, fout)
