@@ -39,6 +39,21 @@ ENSG2HGNC_xml="""\
 </Query>
 """
 #
+ENSG2NCBIHGNC_xml="""\
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Query>
+<Query  virtualSchemaName = "default" formatter = "TSV" header = "1" uniqueRows = "0" count = "" datasetConfigVersion = "0.6" >
+
+	<Dataset name = "hsapiens_gene_ensembl" interface = "default" >
+		<Attribute name = "ensembl_gene_id" />
+		<Attribute name = "ensembl_gene_id_version" />
+		<Attribute name = "entrezgene_id" />
+		<Attribute name = "hgnc_id" />
+		<Attribute name = "hgnc_symbol" />
+	</Dataset>
+</Query>
+"""
+#
 ##############################################################################
 def XMLQuery(xmltxt, base_url=BASE_URL, fout=None):
   url_this = base_url+f"?query={urllib.parse.quote(xmltxt)}"
@@ -60,5 +75,9 @@ def ENSG2NCBI(base_url=BASE_URL, fout=None):
 ##############################################################################
 def ENSG2HGNC(base_url=BASE_URL, fout=None):
   return XMLQuery(ENSG2HGNC_xml, base_url, fout)
+
+##############################################################################
+def ENSG2NCBIHGNC(base_url=BASE_URL, fout=None):
+  return XMLQuery(ENSG2NCBIHGNC_xml, base_url, fout)
 
 ##############################################################################
