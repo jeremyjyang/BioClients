@@ -54,7 +54,8 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
       for tag in gene.keys():
         if type(gene[tag]) not in (list, dict): tags.append(tag) #Only simple metadata.
     df = pd.concat([df, pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else ['']) for j in range(len(tags))})])
-    if not tq: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if tq is not None: tq = tqdm.tqdm(total=len(ids), unit="genes")
+  if tq is not None: tq.close()
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_ids: {len(ids)}; n_out: {df.shape[0]}; n_err: {n_err}")
   return df
@@ -79,7 +80,8 @@ def GetXrefs(ids, base_url=BASE_URL, fout=None):
       if not tags: tags = list(xref.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:([str(xref[tags[j]])] if tags[j] in xref else ['']) for j in range(len(tags))})])
       n_out+=1
-    if not tq: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if tq is not None: tq = tqdm.tqdm(total=len(ids), unit="genes")
+  if tq is not None: tq.close()
   for key in sorted(dbcounts.keys()):
     logging.info(f"Xref counts, db = {key:12s}: {dbcounts[key]:5d}")
   if fout: df.to_csv(fout, "\t", index=False)
