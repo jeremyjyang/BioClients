@@ -19,32 +19,31 @@ API_HOST="data.bioontology.org"
 API_BASE_PATH=""
 #
 #############################################################################
-def RecommendOntologies(base_url, api_key, terms, fout):
+def RecommendOntologies(base_url, api_key, texts, fout):
+  """This API call designed for text, not necessarily single terms."""
+  #input_type={1|2} // default = 1. 1 means that the input type is text. 2 means that the input type is a list of comma separated keywords.
   tags=[]; df=pd.DataFrame(); n_err=0;
+  resultTags=["coverageResult", "specializationResult", "acceptanceResult", "detailResult"];
   headers = {"Authorization":f"apikey token={api_key}"}
-  for term in terms:
-    url_this = base_url+f"/recommender?input={urllib.parse.quote(term)}"
+  for text in texts:
+    url_this = base_url+f"/recommender?input={urllib.parse.quote(text)}"
+    url_this += "&input_type=2"
+    url_this += "&display_context=false&display_links=false"
     logging.debug(url_this)
     rval = requests.get(url_this, headers=headers)
     if not rval.ok:
-      logging.error(f'{rval.status_code} : "{term}"')
+      logging.error(f'{rval.status_code} : "{text}"')
       n_err+=1
       continue
-    recos = rval.json()
-    for reco in recos:
-      logging.debug(json.dumps(reco, indent=2))
-      evaluationScore = reco["evaluationScore"] if "evaluationScore" in reco else []
-      ontos = reco["ontologies"] if "ontologies" in reco else []
-      for onto in ontos:
-        if not tags:
-          for tag in onto.keys():
-            if type(onto[tag]) not in (list, dict): tags.append(tag) #Only simple metadata.
-        df_this = pd.DataFrame({tags[j]:([str(onto[tags[j]])] if tags[j] in onto else ['']) for j in range(len(tags))})
-        df_this["evaluationScore"] = [evaluationScore]
+    results = rval.json()
+    for result in results:
+      logging.debug(json.dumps(result, indent=2))
+      if not tags:
+        tags = list(result.keys())
+        df_this = pd.DataFrame({tags[j]:([str(result[tags[j]])] if tags[j] in result else ['']) for j in range(len(tags))})
         df = pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f"n_terms: {len(terms)}; n_out: {df.shape[0]}; n_err: {n_err}")
+  logging.info(f"n_texts: {len(texts)}; n_out: {df.shape[0]}; n_err: {n_err}")
   return df
-
 
 #############################################################################
