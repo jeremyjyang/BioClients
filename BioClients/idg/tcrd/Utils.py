@@ -304,3 +304,41 @@ def GetPathways(dbcon, ids, fout):
   return df
 
 #############################################################################
+def ListDiseases(dbcon, fout):
+  sql='''
+SELECT
+	d.dtype,
+	dt.description dtype_description,
+	d.name diseaseName,
+	d.ncats_name ncatsDiseaseName,
+	d.did diseaseId,
+	d.description diseaseDescription,
+	d.reference,
+	d.drug_name,
+	d.source,
+	COUNT(d.protein_id) n_target_associations
+FROM
+	disease d
+	JOIN disease_type dt ON dt.name = d.dtype
+GROUP BY
+	d.dtype,
+	dt.description,
+	d.name,
+	d.ncats_name,
+	d.did,
+	d.description,
+	d.reference,
+	d.drug_name,
+	d.source
+'''
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"rows: {df.shape[0]}")
+  logging.info(f"diseaseIDs: {df.diseaseId.nunique()}")
+  logging.info(f"diseaseNames: {df.diseaseName.nunique()}")
+  logging.info(f"ncatsDiseaseNames: {df.ncatsDiseaseName.nunique()}")
+  for dtype in df.dtype.unique().tolist():
+    logging.info(f"[{dtype}] diseaseIDs: {df[df.dtype==dtype].diseaseId.nunique()}")
+  return df
+
+#############################################################################
