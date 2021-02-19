@@ -342,3 +342,13 @@ GROUP BY
   return df
 
 #############################################################################
+def ListDiseaseTypes(dbcon, fout):
+  df = ListDiseases(dbcon, None)
+  df = df[["dtype", "dtype_description", "n_target_associations"]]
+  df = df.groupby(["dtype", "dtype_description"]).sum()
+  df.reset_index(drop=False, inplace=True)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"rows: {df.shape[0]}")
+  return df
+
+#############################################################################

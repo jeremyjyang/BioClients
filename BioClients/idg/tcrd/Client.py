@@ -16,7 +16,7 @@ if __name__=='__main__':
   ops = ['info', 'listTables', 'listColumns', 'tableRowCounts', 'tdlCounts', 
 	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
 	'listTargetFamilies',
-	'listDiseases',
+	'listDiseases', 'listDiseaseTypes',
 	'getTargets', 'getTargetsByXref',
 	'getTargetPage',
 	'getTargetpathways']
@@ -132,6 +132,9 @@ if __name__=='__main__':
 
   elif args.op=='listDiseases':
     tcrd.Utils.ListDiseases(dbcon, fout)
+
+  elif args.op=='listDiseaseTypes':
+    tcrd.Utils.ListDiseaseTypes(dbcon, fout)
 
   elif args.op=='listDatasets':
     tcrd.Utils.ListDatasets(dbcon, fout)
