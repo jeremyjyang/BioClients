@@ -352,3 +352,43 @@ def ListDiseaseTypes(dbcon, fout):
   return df
 
 #############################################################################
+def ListPhenotypes(dbcon, fout):
+  sql='''
+SELECT
+	p.ptype,
+        CONCAT(IF(INSTR(IFNULL(p.trait, ""), ';')>0, SUBSTR(IFNULL(p.trait, ""), 1, INSTR(IFNULL(p.trait, ""), ';')-1), IFNULL(p.trait, "")),IFNULL(p.term_id, "")) p_identifier,
+        p.term_name,
+        p.term_description,
+	pt.ontology ptype_ontology,
+	pt.description ptype_description,
+	COUNT(p.protein_id) n_target_associations
+FROM
+	phenotype p
+	JOIN phenotype_type pt ON pt.name = p.ptype
+GROUP BY
+	p.ptype,
+        p_identifier,
+        p.term_name,
+        p.term_description,
+	pt.ontology,
+	pt.description
+'''
+  df = read_sql_query(sql, dbcon)
+  df.loc[((df['ptype']=='OMIM') & ((df['ptype_ontology']=='')|(df['ptype_ontology'].isna()))),'ptype_ontology'] = 'OMIM' # Kludge
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"rows: {df.shape[0]}")
+  for ptype in df.ptype.unique().tolist():
+    logging.info(f"[{ptype}] phenotype_IDs: {df[df.ptype==ptype].p_identifier.nunique()}")
+  return df
+
+#############################################################################
+def ListPhenotypeTypes(dbcon, fout):
+  df = ListPhenotypes(dbcon, None)
+  df = df[["ptype", "ptype_ontology", "n_target_associations"]]
+  df = df.groupby(["ptype", "ptype_ontology"]).sum()
+  df.reset_index(drop=False, inplace=True)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"rows: {df.shape[0]}")
+  return df
+
+#############################################################################

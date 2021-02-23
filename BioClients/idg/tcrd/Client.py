@@ -17,6 +17,7 @@ if __name__=='__main__':
 	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
 	'listTargetFamilies',
 	'listDiseases', 'listDiseaseTypes',
+	'listPhenotypes', 'listPhenotypeTypes',
 	'getTargets', 'getTargetsByXref',
 	'getTargetPage',
 	'getTargetpathways']
@@ -135,6 +136,12 @@ if __name__=='__main__':
 
   elif args.op=='listDiseaseTypes':
     tcrd.Utils.ListDiseaseTypes(dbcon, fout)
+
+  elif args.op=='listPhenotypes':
+    tcrd.Utils.ListPhenotypes(dbcon, fout)
+
+  elif args.op=='listPhenotypeTypes':
+    tcrd.Utils.ListPhenotypeTypes(dbcon, fout)
 
   elif args.op=='listDatasets':
     tcrd.Utils.ListDatasets(dbcon, fout)
