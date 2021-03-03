@@ -140,34 +140,33 @@ SELECT
 	protein.dtoid dtoId,
 	protein.dtoclass dtoClass,
 	protein.stringid ensemblProteinId,
-	xref.value ensemblGeneId
+	x.value ensemblGeneId
 FROM
 	target
-JOIN
+LEFT OUTER JOIN
 	t2tc ON t2tc.target_id = target.id
-JOIN
+LEFT OUTER JOIN
 	protein ON protein.id = t2tc.protein_id
-JOIN
-	xref ON xref.protein_id = protein.id
+LEFT OUTER JOIN
+	(SELECT * FROM xref WHERE xref.xtype = 'Ensembl' AND xref.value REGEXP '^ENSG'
+	) x ON x.protein_id = protein.id
 '''
-  wheres = ["xref.xtype = 'Ensembl'", "xref.value REGEXP '^ENSG'"]
-  if tdls:
-    wheres.append("target.tdl IN ({})".format("'"+("','".join(tdls))+"'"))
-  if tfams:
-    wheres.append("target.fam IN ({})".format("'"+("','".join(tfams))+"'"))
-  if wheres:
-    sql+=(' WHERE '+(' AND '.join(wheres)))
+  wheres=[]
+  if tdls: wheres.append(f'''target.tdl IN ({("'"+("','".join(tdls))+"'")})''')
+  if tfams: wheres.append(f'''target.fam IN ({("'"+("','".join(tfams))+"'")})''')
+  if wheres: sql+=(' WHERE '+(' AND '.join(wheres)))
+  logging.debug(sql)
   df = read_sql_query(sql, dbcon)
-  if tdls: logging.info('TDLs: {}'.format(",".join(tdls)))
-  if tfams: logging.info('TargetFamilies: {}'.format(",".join(tfams)))
+  if tdls: logging.info(f'''TDLs: {",".join(tdls)}''')
+  if tfams: logging.info(f'''TargetFamilies: {",".join(tfams)}''')
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('rows: {}'.format(df.shape[0]))
-  logging.info('Target count: {}'.format(df.tcrdTargetId.nunique()))
-  logging.info('Protein count: {}'.format(df.tcrdProteinId.nunique()))
-  logging.info('Uniprot count: {}'.format(df.uniprotId.nunique()))
-  logging.info('ENSP count: {}'.format(df.ensemblProteinId.nunique()))
-  logging.info('ENSG count: {}'.format(df.ensemblGeneId.nunique()))
-  logging.info('GeneSymbol count: {}'.format(df.tcrdGeneSymbol.nunique()))
+  logging.info(f'rows: {df.shape[0]}')
+  logging.info(f'Target count: {df.tcrdTargetId.nunique()}')
+  logging.info(f'Protein count: {df.tcrdProteinId.nunique()}')
+  logging.info(f'Uniprot count: {df.uniprotId.nunique()}')
+  logging.info(f'ENSP count: {df.ensemblProteinId.nunique()}')
+  logging.info(f'ENSG count: {df.ensemblGeneId.nunique()}')
+  logging.info(f'GeneSymbol count: {df.tcrdGeneSymbol.nunique()}')
   return df
 
 #############################################################################
