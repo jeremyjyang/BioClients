@@ -38,6 +38,11 @@ if __name__=='__main__':
       ids.append(line.strip())
   elif args.ids:
     ids = re.split(r'\s*,\s*', args.ids.strip())
+  else:
+    ids=[]
+
+  if ids:
+    logging.info(f"IDs: {len(ids)}")
 
   if re.match("^get_", args.op) and not ids:
     parser.error('--i or --ids required.')

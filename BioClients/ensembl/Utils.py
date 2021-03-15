@@ -39,7 +39,7 @@ def ListSpecies(base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def GetInfo(ids, base_url=BASE_URL, fout=None):
-  n_err=0; tags=[]; df=pd.DataFrame(); tq=None;
+  n_out=0; n_err=0; tags=[]; df=None; tq=None;
   for id_this in ids:
     if tq is not None: tq.update()
     url_this = base_url+'/lookup/id/'+id_this+'?content-type=application/json&expand=0'
@@ -53,11 +53,14 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
     if not tags:
       for tag in gene.keys():
         if type(gene[tag]) not in (list, dict): tags.append(tag) #Only simple metadata.
-    df = pd.concat([df, pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else ['']) for j in range(len(tags))})])
-    if tq is not None: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    df_this = pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else ['']) for j in range(len(tags))})
+    if fout:
+      df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      n_out += 1
+    df = pd.concat([df, df_this])
+    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="genes")
   if tq is not None: tq.close()
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f"n_ids: {len(ids)}; n_out: {df.shape[0]}; n_err: {n_err}")
+  logging.info(f"n_ids: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
   return df
 
 ##############################################################################
