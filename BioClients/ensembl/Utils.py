@@ -40,6 +40,7 @@ def ListSpecies(base_url=BASE_URL, fout=None):
 ##############################################################################
 def GetInfo(ids, base_url=BASE_URL, fout=None):
   n_out=0; n_err=0; tags=[]; df=None; tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   for id_this in ids:
     if tq is not None: tq.update()
     url_this = base_url+'/lookup/id/'+id_this+'?content-type=application/json&expand=0'
@@ -58,7 +59,7 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
       df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out += 1
     df = pd.concat([df, df_this])
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids), unit="genes")
   if tq is not None: tq.close()
   logging.info(f"n_ids: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
   return df
@@ -66,6 +67,7 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
 ##############################################################################
 def GetXrefs(ids, base_url=BASE_URL, fout=None):
   n_err=0; tags=None; dbcounts={}; df=pd.DataFrame(); tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   for id_this in ids:
     if tq is not None: tq.update()
     url_this = base_url+'/xrefs/id/'+id_this
@@ -83,7 +85,7 @@ def GetXrefs(ids, base_url=BASE_URL, fout=None):
       if not tags: tags = list(xref.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:([str(xref[tags[j]])] if tags[j] in xref else ['']) for j in range(len(tags))})])
       n_out+=1
-    if tq is not None: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids), unit="genes")
   if tq is not None: tq.close()
   for key in sorted(dbcounts.keys()):
     logging.info(f"Xref counts, db = {key:12s}: {dbcounts[key]:5d}")

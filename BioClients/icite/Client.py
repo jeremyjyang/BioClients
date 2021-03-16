@@ -21,9 +21,11 @@ if __name__=='__main__':
   parser.add_argument("--api_host", default=icite.API_HOST)
   parser.add_argument("--api_base_path", default=icite.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
+  parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress notification.")
   args = parser.parse_args()
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  # logging.PROGRESS = 15 (custom)
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   base_url='https://'+args.api_host+args.api_base_path
 

@@ -36,9 +36,11 @@ if __name__=='__main__':
   parser.add_argument("--dbpw")
   parser.add_argument("--dbname")
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
+  parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress notification.")
   args = parser.parse_args()
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  # logging.PROGRESS = 15 (custom)
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   params = util_yaml.ReadParamFile(args.param_file) if os.path.isfile(args.param_file) else {}
   if args.dbhost: params['DBHOST'] = args.dbhost 
