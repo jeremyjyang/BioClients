@@ -13,7 +13,12 @@ from .. import gwascatalog
 #
 ##############################################################################
 if __name__=='__main__':
-  epilog = "Examples: PubmedId=28530673; gcst=GCST004364,GCST000227; EfoUri=EFO_0004232; snpId=rs6085920"
+  epilog = """\
+Example PMIDs: 28530673;
+Example GCSTs: GCST004364, GCST000227;
+Example EFOIDs: EFO_0004232;
+Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
+"""
   parser = argparse.ArgumentParser(description='GWAS Catalog REST API client', epilog=epilog)
   searchtypes=['pubmedmid', 'gcst', 'efotrait', 'efouri', 'accessionid', 'rs']
   ops = ['list_studies', 'search_studies', 'get_studyAssociations', 'get_snps']
@@ -27,13 +32,15 @@ if __name__=='__main__':
   parser.add_argument("--api_host", default=gwascatalog.API_HOST)
   parser.add_argument("--api_base_path", default=gwascatalog.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
+  parser.add_argument("-q", "--quiet", default=0, action="count")
   args = parser.parse_args()
 
   base_url = 'https://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, 'w') if args.ofile else sys.stdout
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  # logging.PROGRESS = 15 (custom)
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   t0 = time.time()
 

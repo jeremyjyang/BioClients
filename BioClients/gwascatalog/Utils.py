@@ -53,12 +53,13 @@ sra = strongestRiskAllele
 https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=associationByStudy
   """
   n_id=0; n_assn=0; n_loci=0; n_arg=0; n_sra=0; n_snp=0; df=None; tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   gcsts=set([]); tags_assn=[]; tags_study=[]; tags_locus=[]; tags_sra=[]; tags_arg=[];
   url = base_url+'/studies'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
-    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="studies")
-    tq.update()
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="studies")
+    if tq is not None: tq.update()
     url_this = url+f'/{id_this}/associations?projection=associationByStudy'
     rval = rest.Utils.GetURL(url_this, parse_json=True)
     if not rval: continue
@@ -104,6 +105,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
     if n_id==nmax:
       logging.info(f"NMAX IDs reached: {nmax}")
       break
+  if tq is not None: tq.close()
   n_gcst = len(gcsts)
   logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}")
   return(df)
@@ -117,11 +119,12 @@ gc = genomicContext
   """
   n_snp=0; n_gene=0; n_loc=0; df=None; tq=None;
   tags_snp=[]; tags_loc=[]; tags_gc=[]; tags_gcloc=[];  tags_gene=[]; 
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   url = base_url+'/singleNucleotidePolymorphisms'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
-    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="snps")
-    tq.update()
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="snps")
+    if tq is not None: tq.update()
     url_this = url+'/'+id_this
     snp = rest.Utils.GetURL(url_this, parse_json=True)
     if not snp: continue
@@ -143,10 +146,15 @@ gc = genomicContext
       gcloc = gc['location']
       df_gcloc = pd.DataFrame({tags_gcloc[j]:[gcloc[tags_gcloc[j]]] for j in range(len(tags_gcloc))})
       gene = gc['gene']
+      try: gene["ensemblGeneIds"] = (",".join([gid["ensemblGeneId"] for gid in gene["ensemblGeneIds"]]))
+      except: pass
+      try: gene["entrezGeneIds"] = (",".join([gid["entrezGeneId"] for gid in gene["entrezGeneIds"]]))
+      except: pass
       df_gene = pd.DataFrame({tags_gene[j]:[gene[tags_gene[j]]] for j in range(len(tags_gene))})
       df_snp = pd.concat([df_snp, df_gc, df_gcloc, df_gene], axis=1)
       df_this = pd.concat([df_this, df_snp], axis=0)
       n_gene+=1
+    if tq is not None: tq.close()
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
     df = pd.concat([df, df_this], axis=0)
     n_snp+=1
