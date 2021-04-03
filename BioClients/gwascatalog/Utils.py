@@ -39,10 +39,10 @@ def ListStudies(base_url=BASE_URL, fout=None):
             tags.append(tag) #Only simple metadata.
       df_this = pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})
       if fout: df_this.to_csv(fout, "\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
-      df = pd.concat([df, df_this])
+      if fout is None: df = pd.concat([df, df_this])
       n_study+=1
   logging.info(f"n_study: {n_study}")
-  return(df)
+  if fout is None: return(df)
 
 ##############################################################################
 def GetStudyAssociations(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
@@ -100,7 +100,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
           snp_href = sra['_links']['snp']['href'] if '_links' in sra and 'snp' in sra['_links'] and 'href' in sra['_links']['snp'] else ''
           if snp_href: n_snp+=1
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_id==0), mode=('w' if n_id==0 else 'a'))
-    df = pd.concat([df, df_this], axis=0)
+    if fout is None: df = pd.concat([df, df_this], axis=0)
     n_id+=1
     if n_id==nmax:
       logging.info(f"NMAX IDs reached: {nmax}")
@@ -108,7 +108,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
   if tq is not None: tq.close()
   n_gcst = len(gcsts)
   logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}")
-  return(df)
+  if fout is None: return(df)
 
 ##############################################################################
 def GetSnps(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
@@ -156,13 +156,13 @@ gc = genomicContext
       n_gene+=1
     if tq is not None: tq.close()
     if fout: df_this.to_csv(fout, "\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
-    df = pd.concat([df, df_this], axis=0)
+    if fout is None: df = pd.concat([df, df_this], axis=0)
     n_snp+=1
     if n_snp==nmax:
       logging.info(f"NMAX IDs reached: {nmax}")
       break
   logging.info(f"SNPs: {n_snp}; genes: {n_gene}")
-  return(df)
+  if fout is None: return(df)
 
 ##############################################################################
 def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
@@ -193,10 +193,10 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
           if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
             tags.append(tag) #Only simple metadata.
       n_study+=1
-      df = pd.concat([df, pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})])
+      if fout is None: df = pd.concat([df, pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})])
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_study: {n_study}")
-  return(df)
+  if fout is None: return(df)
 
 ##############################################################################
