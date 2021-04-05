@@ -9,7 +9,7 @@ from .. import ensembl
 #
 ##############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl REST API client", epilog="Example ID: ENSG00000157764")
+  parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl REST API client", epilog="Example IDs: ENSG00000157764, ENSG00000160785")
   ops = ["list_species", "get_xrefs", "get_info", "show_version"]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003)")
