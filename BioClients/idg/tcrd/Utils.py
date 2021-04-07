@@ -170,6 +170,40 @@ LEFT OUTER JOIN
   return df
 
 #############################################################################
+def ListTargetsByDTO(dbcon, fout):
+  sql = """
+SELECT DISTINCT
+	target.id tcrdTargetId,
+	target.name tcrdTargetName,
+	target.fam tcrdTargetFamily,
+	protein.id tcrdProteinId,
+	protein.sym tcrdGeneSymbol,
+	CONVERT(protein.geneid, CHAR) ncbiGeneId,
+	protein.uniprot uniprotId,
+	p2dto.dtoid dtoId,
+	CONVERT(p2dto.generation, CHAR) dtoGeneration,
+	dto.name dtoClass
+FROM
+	target
+	JOIN t2tc ON t2tc.target_id = target.id
+	JOIN protein ON protein.id = t2tc.protein_id
+	LEFT OUTER JOIN p2dto ON p2dto.protein_id = protein.id
+	LEFT OUTER JOIN dto ON dto.dtoid = p2dto.dtoid
+ORDER BY
+	target.id, protein.id, p2dto.generation DESC
+"""
+  logging.debug(sql)
+  df = read_sql_query(sql, dbcon, coerce_float=False)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"rows: {df.shape[0]}")
+  logging.info(f"Target count: {df.tcrdTargetId.nunique()}")
+  logging.info(f"Protein count: {df.tcrdProteinId.nunique()}")
+  logging.info(f"Uniprot count: {df.uniprotId.nunique()}")
+  logging.info(f"GeneSymbol count: {df.tcrdGeneSymbol.nunique()}")
+  logging.info(f"DTO_ID count: {df.dtoId.nunique()}")
+  return df
+
+#############################################################################
 def GetTargetPage(dbcon, tid, fout):
   df = GetTargets(dbcon, [tid], "TID", None)
   target = df.to_dict(orient='records')

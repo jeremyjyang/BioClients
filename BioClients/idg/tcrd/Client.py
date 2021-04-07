@@ -15,7 +15,7 @@ if __name__=='__main__':
   parser = argparse.ArgumentParser(description='TCRD MySql client utility', epilog=epilog)
   ops = ['info', 'listTables', 'listColumns', 'tableRowCounts', 'tdlCounts', 
 	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
-	'listTargetFamilies',
+	'listTargetsByDTO', 'listTargetFamilies',
 	'listDiseases', 'listDiseaseTypes',
 	'listPhenotypes', 'listPhenotypeTypes',
 	'getTargets', 'getTargetsByXref',
@@ -132,6 +132,9 @@ if __name__=='__main__':
 
   elif args.op=='listTargetFamilies':
     tcrd.Utils.ListTargetFamilies(dbcon, fout)
+
+  elif args.op=='listTargetsByDTO':
+    tcrd.Utils.ListTargetsByDTO(dbcon, fout)
 
   elif args.op=='listDiseases':
     tcrd.Utils.ListDiseases(dbcon, fout)
