@@ -193,9 +193,10 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
           if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
             tags.append(tag) #Only simple metadata.
       n_study+=1
-      if fout is None: df = pd.concat([df, pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})])
+      df_this = pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, "\t", index=False)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
-  if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_study: {n_study}")
   if fout is None: return(df)
 
