@@ -35,7 +35,7 @@ if __name__=='__main__':
   API_HOST='apps.nlm.nih.gov'
   API_BASE_PATH='/medlineplus/services/mpconnect_service.cfm'
   ops = ["get_code"]
-  epilog = "Supported codesystems: {}".format('\n\t'.join(sorted(medline.Utils.CODESYSTEMS.keys())))
+  epilog = f"Supported codesystems: {sorted(medline.Utils.CODESYSTEMS.keys())}"
   parser = argparse.ArgumentParser(description='MedlinePlus REST API client', epilog=epilog)
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--i", dest="ifile", help="input code ID file (one per line)")
@@ -65,13 +65,13 @@ if __name__=='__main__':
     fin.close()
   elif args.ids:
     ids = re.split('[, ]+', args.ids.strip())
-  if len(ids)>0: logging.info('Input IDs: %d'%(len(ids)))
+  if len(ids)>0: logging.info(f"Input IDs: {len(ids)}")
 
   if args.op=="get_code":
     medline.Utils.GetCode(api_base_url, args.codesys.upper(), ids, fout)
 
   else:
-    parser.error('Operation invalid: {}'.format(args.op))
+    parser.error(f"Operation invalid: {args.op}")
 
-  logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))))
+  logging.info(f"Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}")
 
