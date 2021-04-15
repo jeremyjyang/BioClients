@@ -22,14 +22,10 @@
 ###	JSONP: knowledgeResponseType=application/javascript&callback=CallbackFunction
 ###	  where CallbackFunction is a name you give the call back function.
 ##############################################################################
-### Not clear if this API is good.  The text on MedlinePlus web pages such
-### as https://medlineplus.gov/druginfo/meds/a697035.html not available via
-### API?
-##############################################################################
 import sys,os,re,time,logging
 import urllib.parse,json
 #
-from ..util import rest
+from ...util import rest
 #
 CODESYSTEMS = {
 	'SNOWMEDCT':	'2.16.840.1.113883.6.96',
@@ -40,8 +36,12 @@ CODESYSTEMS = {
 	'LOINC'	:	'2.16.840.1.113883.6.1'
 	}
 #
+API_HOST='apps.nlm.nih.gov'
+API_BASE_PATH='/medlineplus/services/mpconnect_service.cfm'
+API_BASE_URL='https://'+API_HOST+API_BASE_PATH
+#
 ##############################################################################
-def GetCode(base_url, codesys, codes, fout):
+def GetCode(codes, codesys, base_url=API_BASE_URL, fout=None):
   url=base_url
   url+=('?knowledgeResponseType=application/json')
   url+=('&mainSearchCriteria.v.cs='+CODESYSTEMS[codesys])

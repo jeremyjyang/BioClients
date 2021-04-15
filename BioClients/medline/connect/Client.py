@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ##############################################################################
-### Medline utilities - access SNOMED and ICD codes
+### MedlinePlus Connect utilities - access SNOMED and ICD codes
 ### https://medlineplus.gov/connect/technical.html
 ### https://medlineplus.gov/connect/service.html
 ##############################################################################
@@ -22,28 +22,22 @@
 ###	JSONP: knowledgeResponseType=application/javascript&callback=CallbackFunction
 ###	  where CallbackFunction is a name you give the call back function.
 ##############################################################################
-### Not clear if this API is good.  The text on MedlinePlus web pages such
-### as https://medlineplus.gov/druginfo/meds/a697035.html not available via
-### API?
-##############################################################################
 import sys,os,re,argparse,time,logging
 #
-from .. import medline
+from ... import medline
 #
 ##############################################################################
 if __name__=='__main__':
-  API_HOST='apps.nlm.nih.gov'
-  API_BASE_PATH='/medlineplus/services/mpconnect_service.cfm'
   ops = ["get_code"]
-  epilog = f"Supported codesystems: {sorted(medline.Utils.CODESYSTEMS.keys())}"
+  epilog = f"Supported codesystems: {sorted(medline.connect.Utils.CODESYSTEMS.keys())}"
   parser = argparse.ArgumentParser(description='MedlinePlus REST API client', epilog=epilog)
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--i", dest="ifile", help="input code ID file (one per line)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--ids", help="code ID list (comma-separated)(e.g. 250.33)")
-  parser.add_argument("--codesys", choices=medline.Utils.CODESYSTEMS.keys(), default="RXNORM", help="code system")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--codesys", choices=medline.connect.Utils.CODESYSTEMS.keys(), default="RXNORM", help="code system")
+  parser.add_argument("--api_host", default=medline.connect.Utils.API_HOST)
+  parser.add_argument("--api_base_path", default=medline.connect.Utils.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -68,7 +62,7 @@ if __name__=='__main__':
   if len(ids)>0: logging.info(f"Input IDs: {len(ids)}")
 
   if args.op=="get_code":
-    medline.Utils.GetCode(api_base_url, args.codesys.upper(), ids, fout)
+    medline.connect.Utils.GetCode(ids, args.codesys.upper(), api_base_url, fout)
 
   else:
     parser.error(f"Operation invalid: {args.op}")
