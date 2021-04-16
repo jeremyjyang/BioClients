@@ -97,12 +97,21 @@ Some relationships:
 """
 ###
 import sys,os,re,yaml,json,csv,logging,requests,time
+import pandas as pd
 from functools import total_ordering
 #
 from lxml import etree
 from pyquery import PyQuery
 #
 from ..util import rest
+#
+###
+API_HOST='uts-ws.nlm.nih.gov'
+API_BASE_PATH="/rest"
+API_AUTH_SERVICE="http://umlsks.nlm.nih.gov"
+API_AUTH_HOST="utslogin.nlm.nih.gov"
+API_AUTH_ENDPOINT='/cas/v1/api-key'
+API_HEADERS={"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent":"python" }
 #
 ## elements common to 'Concept' and 'SourceAtomCluster' class
 UMLS_COMMON_FIELDS=['classType','name','ui','atomCount','definitions','atoms','defaultPreferredAtom']
@@ -186,13 +195,13 @@ class Authentication:
     d = PyQuery(response.text)
 
     if response.status_code not in (200, 201):
-      logging.error('HTTP RESPONSE CODE: %d (%s)'%(response.status_code, str(d)))
+      logging.error(f'HTTP RESPONSE CODE: {response.status_code} ({d})')
       return None
       
     ## Extract the entire URL needed (action attribute),
     ## to make a POST call to this URL in the getst method.
     tgt = d.find('form').attr('action')
-    logging.debug('tgt = %s'%str(tgt))
+    logging.debug(f'tgt = {tgt}')
     return tgt
 
   def getst(self, tgt):
@@ -210,7 +219,7 @@ def UmlsAuthGetTicket(auth, tgt, tries = 10, sleep = 1):
       tkt = auth.getst(tgt)
       return tkt
     except Exception as e:
-      logging.error('%d. %s'%(i, str(e)))
+      logging.error(f'{i}. {e}')
       time.sleep(sleep)
       continue
   return None
@@ -223,7 +232,7 @@ def UmlsApiGet(url, auth, tgt, params={}, tries = 10, sleep = 1):
       response = requests.get(url,params=params)
       return response
     except Exception as e:
-      logging.info('%d. %s'%(i,str(e)))
+      logging.error(f'{i}. {e}')
       time.sleep(sleep)
       continue
   return None
@@ -247,29 +256,29 @@ def XrefConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
     n_in+=1
     if nmax and n_in>nmax: break
     if skip and n_in<=skip:
-      logging.debug('[%s] skipping...'%id_query)
+      logging.debug(f'[{id_query}] skipping...')
       continue
-    url=base_url+("/content/"+str(ver)+("/source/%s/"%str(src) if src else "/CUI/")+str(id_query))
-    logging.debug('%d. url="%s"'%(n_in,url))
+    url = base_url+(f"/content/{ver}/source/{src}/" if src else f"/CUI/")+str(id_query))
+    logging.debug(f'{n_in}. url="{url}"')
     response = UmlsApiGet(url, auth, tgt)
     response.encoding = 'utf-8'
     try:
       items = json.loads(response.text)
     except Exception as e:
-      logging.info('%d. [%s] %s'%(n_in, id_query, str(e)))
-      logging.debug('response.text="%s"'%response.text)
+      logging.info(f'{n_in}. [{id_query}] {e}')
+      logging.debug(f'response.text="{response.text}"')
       continue
     logging.debug(json.dumps(items, indent=4))
     result = items["result"]
     for key in UMLS_COMMON_FIELDS+UMLS_OPTIONAL_FIELDS:
-      logging.info('%14s: %s'%(key,(result[key] if key in result else '')))
+      logging.info(f"""{key:14s}: {(result[key] if key in result else '')}""") 
     if 'semanticTypes' in result:
       for i,styp in enumerate(result["semanticTypes"]):
         for key in styp.keys():
-          logging.info('Semantic type %d. %s: %s'%(i+1, key, styp[key]))
+          logging.info(f'Semantic type {i+1}. {key}: {styp[key]}')
     if n_out==0 or not result_tags:
       result_tags = result.keys()
-      id_tag = ('%s_id'%src if src else 'CUI')
+      id_tag = (f'{src}_id' if src else 'CUI')
       fout.write('\t'.join([id_tag]+result_tags)+'\n')
     vals = [id_query]
     for tag in result_tags:
@@ -304,8 +313,8 @@ def XrefConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
       vals.append(str(val))
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
-  logging.info('n_concept: %d'%n_concept)
-  logging.info('n_out: %d'%n_out)
+  logging.info(f'n_concept: {n_concept}')
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
 def GetCodes(base_url, ver, auth, cuis, srcs, fout):

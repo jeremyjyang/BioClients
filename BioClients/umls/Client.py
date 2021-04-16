@@ -48,18 +48,12 @@ from .. import umls
 #
 #############################################################################
 if __name__=='__main__':
-  API_HOST='uts-ws.nlm.nih.gov'
-  API_BASE_PATH="/rest"
-  API_AUTH_SERVICE="http://umlsks.nlm.nih.gov"
-  API_AUTH_HOST="utslogin.nlm.nih.gov"
-  API_AUTH_ENDPOINT='/cas/v1/api-key'
-  API_HEADERS={"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent":"python" }
   SRCS_PREFERRED= "ATC,HPO,ICD10,ICD10CM,ICD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO"
-  EPILOG="""\
+  EPILOG=f"""\
 All get* operations require --idsrc CUI, CUIs as inputs.
 CUI = Concept Unique Identifier;
-Preferred/default sources: {srcs_preferred}
-""".format(srcs_preferred=SRCS_PREFERRED)
+Preferred/default sources: {SRCS_PREFERRED}
+"""
   parser = argparse.ArgumentParser(description='UMLS REST API client utility', epilog=EPILOG)
   ops = ['getCodes', 'getAtoms', 'getRelations', 'listSources', 'xrefConcept', 'search', 'searchByTUI']
   searchTypes = ['exact', 'words', 'leftTruncation', 'rightTruncation', 'approximate',
@@ -79,11 +73,11 @@ Preferred/default sources: {srcs_preferred}
   parser.add_argument("--skip", default=0, type=int)
   parser.add_argument("--nmax", default=0, type=int)
   parser.add_argument("--version", default="current", help="API version")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
-  parser.add_argument("--api_auth_host", default=API_AUTH_HOST)
-  parser.add_argument("--api_auth_endpoint", default=API_AUTH_ENDPOINT)
-  parser.add_argument("--api_auth_service", default=API_AUTH_SERVICE)
+  parser.add_argument("--api_host", default=umls.Utils.API_HOST)
+  parser.add_argument("--api_base_path", default=umls.Utils.API_BASE_PATH)
+  parser.add_argument("--api_auth_host", default=umls.Utils.API_AUTH_HOST)
+  parser.add_argument("--api_auth_endpoint", default=umls.Utils.API_AUTH_ENDPOINT)
+  parser.add_argument("--api_auth_service", default=umls.Utils.API_AUTH_SERVICE)
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.umls.yaml")
   parser.add_argument("--api_key", help="API key")
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -105,7 +99,8 @@ Preferred/default sources: {srcs_preferred}
     parser.error('Please specify valid API_KEY via --api_key or --param_file') 
 
   api_auth_url = 'https://'+args.api_auth_host+args.api_auth_endpoint
-  auth = umls.Utils.Authentication(params['API_KEY'], args.api_auth_service, api_auth_url, API_HEADERS)
+  auth = umls.Utils.Authentication(params['API_KEY'],
+args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
   auth.setVerbosity(args.verbose)
 
   ids=[];
@@ -115,7 +110,7 @@ Preferred/default sources: {srcs_preferred}
       line=fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('input IDs: %d'%(len(ids)))
+    logging.info(f'input IDs: {len(ids)}')
     fin.close()
   elif args.id:
     ids.append(args.id)
@@ -128,14 +123,14 @@ Preferred/default sources: {srcs_preferred}
   if args.srcs:
     for src in re.split(r'[,\s]+', args.srcs.strip()):
       if not srclist.has_src(src):
-          parser.error('Source unknown: "%s"'%src)
+          parser.error(f'Source unknown: "{src}"')
 
   if args.op == 'listSources':
     fout.write("abbreviation\tshortName\tpreferredName\n")
     for i,src in enumerate(srclist.sources):
       abbr,name,prefname = src
-      fout.write('%s\t%s\t%s\n'%(abbr, name, prefname))
-    logging.info('n_src: %d'%len(srclist.sources))
+      fout.write(f'{abbr}\t{name}\t{prefname}\n')
+    logging.info(f'n_src: {len(srclist.sources)}')
 
   elif args.op == 'xrefConcept':
     umls.Utils.XrefConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
@@ -155,9 +150,9 @@ Preferred/default sources: {srcs_preferred}
     umls.Utils.Search(base_url, args.version, auth, args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, fout)
 
   elif args.op == 'searchByTUI':
-    parser.error('{} NOT IMPLEMENTED YET.'.format(args.op))
+    parser.error(f'{args.op} NOT IMPLEMENTED YET.')
 
   else:
-    parser.error('Invalid operation: %s'%args.op)
+    parser.error(f'Invalid operation: {args.op}')
 
-  logging.info(('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
+  logging.info(f'Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}')
