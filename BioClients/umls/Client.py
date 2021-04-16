@@ -48,31 +48,28 @@ from .. import umls
 #
 #############################################################################
 if __name__=='__main__':
-  SRCS_PREFERRED= "ATC,HPO,ICD10,ICD10CM,ICD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO"
-  EPILOG=f"""\
-All get* operations require --idsrc CUI, CUIs as inputs.
-CUI = Concept Unique Identifier;
-Preferred/default sources: {SRCS_PREFERRED}
+  SRCS_PREFERRED = "ATC,HPO,ICD10,ICD10CM,ICD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO"
+  EPILOG = f"""\
+All get* operations require --idsrc CUI, CUIs as inputs; CUI = Concept Unique Identifier.
 """
   parser = argparse.ArgumentParser(description='UMLS REST API client utility', epilog=EPILOG)
   ops = ['getCodes', 'getAtoms', 'getRelations', 'listSources', 'xrefConcept', 'search', 'searchByTUI']
-  searchTypes = ['exact', 'words', 'leftTruncation', 'rightTruncation', 'approximate',
-	'normalizedString']
+  searchTypes = ['exact', 'words', 'leftTruncation', 'rightTruncation', 'approximate', 'normalizedString']
   inputTypes = ['atom', 'code', 'sourceConcept', 'sourceDescriptor', 'sourceUi', 'tty']
   returnIdTypes = ['aui', 'concept', 'code', 'sourceConcept', 'sourceDescriptor', 'sourceUi']
-  parser.add_argument("op", choices=ops, help='operation')
+  parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--id", help="ID (ex:C0018787)")
   parser.add_argument("--idfile", help="input IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--idsrc", default="CUI", help="query ID source (default: CUI)")
-  parser.add_argument("--searchType", choices=searchTypes, default='words')
-  parser.add_argument("--inputType", choices=inputTypes, default='atom')
-  parser.add_argument("--returnIdType", choices=returnIdTypes, default='concept')
-  parser.add_argument("--srcs", default=SRCS_PREFERRED, help='sources to include in response')
+  parser.add_argument("--searchType", choices=searchTypes, default='words', help=f" [words]")
+  parser.add_argument("--inputType", choices=inputTypes, default='atom', help=f" [atom]")
+  parser.add_argument("--returnIdType", choices=returnIdTypes, default='concept', help=f" [concept]")
+  parser.add_argument("--srcs", default=SRCS_PREFERRED, help=f"sources to include in response [{SRCS_PREFERRED}]")
   parser.add_argument("--searchQuery", help='string or code')
   parser.add_argument("--skip", default=0, type=int)
   parser.add_argument("--nmax", default=0, type=int)
-  parser.add_argument("--version", default="current", help="API version")
+  parser.add_argument("--api_version", default=f"{umls.Utils.API_VERSION}", help=f"API version {umls.Utils.API_VERSION}")
   parser.add_argument("--api_host", default=umls.Utils.API_HOST)
   parser.add_argument("--api_base_path", default=umls.Utils.API_BASE_PATH)
   parser.add_argument("--api_auth_host", default=umls.Utils.API_AUTH_HOST)
@@ -118,7 +115,7 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
   t0 = time.time()
 
   srclist = umls.Utils.SourceList()
-  srclist.initFromApi(base_url, args.version, auth)
+  srclist.initFromApi(base_url, args.api_version, auth)
 
   if args.srcs:
     for src in re.split(r'[,\s]+', args.srcs.strip()):
@@ -133,21 +130,21 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
     logging.info(f'n_src: {len(srclist.sources)}')
 
   elif args.op == 'xrefConcept':
-    umls.Utils.XrefConcept(base_url, args.version, args.idsrc, auth, ids, args.skip, args.nmax, fout)
+    umls.Utils.XrefConcept(args.idsrc, ids, args.skip, args.nmax, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getRelations':
-    umls.Utils.GetRelations(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
+    umls.Utils.GetRelations(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getAtoms':
-    umls.Utils.GetAtoms(base_url, args.version, auth, ids, args.skip, args.nmax, args.srcs, fout)
+    umls.Utils.GetAtoms(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getCodes':
-    umls.Utils.GetCodes(base_url, args.version, auth, ids, args.srcs, fout)
+    umls.Utils.GetCodes(ids, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'search':
     if not args.searchQuery:
       parser.error('search requires --searchQuery')
-    umls.Utils.Search(base_url, args.version, auth, args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, fout)
+    umls.Utils.Search(args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'searchByTUI':
     parser.error(f'{args.op} NOT IMPLEMENTED YET.')
@@ -155,4 +152,4 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
   else:
     parser.error(f'Invalid operation: {args.op}')
 
-  logging.info(f'Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}')
+  logging.info(f"""Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}""")

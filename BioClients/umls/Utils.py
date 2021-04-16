@@ -108,9 +108,11 @@ from ..util import rest
 ###
 API_HOST='uts-ws.nlm.nih.gov'
 API_BASE_PATH="/rest"
+API_BASE_URL=f"https://{API_HOST}{API_BASE_PATH}"
 API_AUTH_SERVICE="http://umlsks.nlm.nih.gov"
 API_AUTH_HOST="utslogin.nlm.nih.gov"
 API_AUTH_ENDPOINT='/cas/v1/api-key'
+API_VERSION="current"
 API_HEADERS={"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain", "User-Agent":"python" }
 #
 ## elements common to 'Concept' and 'SourceAtomCluster' class
@@ -145,7 +147,7 @@ class SourceList:
   def initFromFile(self, sfile):
     fin = open(sfile)
     if not fin:
-      logging.error('Could not open %s'%sfile)
+      logging.error(f'Could not open {sfile}')
       return
     csvReader = csv.reader(fin, delimiter='\t', quotechar='"')
     row = csvReader.next() #ignore header
@@ -159,7 +161,7 @@ class SourceList:
     fin.close()
 
   def initFromApi(self, base_url, ver, auth):
-    url = base_url+('/metadata/%s/sources'%ver)
+    url = (f'{base_url}/metadata/{ver}/sources')
     tgt = auth.gettgt()
     response = UmlsApiGet(url, auth, tgt)
     response.encoding = 'utf-8'
@@ -191,7 +193,7 @@ class Authentication:
 
   def gettgt(self):
     response = requests.post(self.url, data={'apikey':self.apikey}, headers=self.headers)
-    logging.debug('response = %s'%str(response))
+    logging.debug(f'response = {response}')
     d = PyQuery(response.text)
 
     if response.status_code not in (200, 201):
@@ -247,7 +249,7 @@ def ReadParamFile(fparam):
   return params
 
 #############################################################################
-def XrefConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
+def XrefConcept(src, ids, skip, nmax, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
   """Find UMLS concept/CUI from external source cross-reference."""
   n_in=0; n_concept=0; n_out=0;
   result_tags=None;
@@ -258,7 +260,7 @@ def XrefConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
     if skip and n_in<=skip:
       logging.debug(f'[{id_query}] skipping...')
       continue
-    url = base_url+(f"/content/{ver}/source/{src}/" if src else f"/CUI/")+str(id_query))
+    url = (f"{base_url}/content/{ver}/source/{src}/{id_query}" if src else f"/CUI/{id_query}")
     logging.debug(f'{n_in}. url="{url}"')
     response = UmlsApiGet(url, auth, tgt)
     response.encoding = 'utf-8'
@@ -317,24 +319,26 @@ def XrefConcept(base_url, ver, src, auth, ids, skip, nmax, fout):
   logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def GetCodes(base_url, ver, auth, cuis, srcs, fout):
-  n_atom=0;
-  fout.write('CUI\tsrc\tatom_code\tatom_name\n')
+def GetCodes(cuis, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
+  n_out=0; df=None;
   for cui in cuis:
-    codes = Cui2Code(base_url, ver, auth, cui, srcs)
+    codes = Cui2Code(cui, srcs, auth, ver, base_url)
     for src in sorted(codes.keys()):
       atoms = sorted(list(codes[src]))
       for atom in atoms:
-        fout.write('%s\t%s\t%s\t%s\n'%(cui, src, atom.code, atom.name))
-        n_atom+=1
-  logging.info('n_cui: %d'%len(cuis))
-  logging.info('n_atom: %d'%n_atom)
+        df_this = pd.DataFrame({'CUI':[cui], 'src':[src], 'atom_code':atom.code, 'atom_name':atom.name})
+        if fout is None: df = pd.concat([df, df_this])
+        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        n_out+=1
+  logging.info(f'n_cui: {len(cuis)}')
+  logging.info(f'n_out: {n_out}')
+  if fout is None: return df
 
 #############################################################################
-def Cui2Code(base_url, ver, auth, cui, srcs):
+def Cui2Code(cui, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL):
   n_atom=0; pNum=1; params={}; codes={};
   if srcs: params['sabs']=srcs
-  url = base_url+('/content/%s/CUI/%s/atoms'%(ver, cui))
+  url = (f'{base_url}/content/{ver}/CUI/{cui}/atoms')
   tgt = auth.gettgt()
   while True:
     params['pageNumber'] = pNum
@@ -362,28 +366,27 @@ def Cui2Code(base_url, ver, auth, cui, srcs):
     pageNumber = items["pageNumber"]
     pageCount = items["pageCount"]
     if pageNumber!=pNum:
-      logging.error('pageNumber!=pNum (%d!=%d)'%(pageNumber, pNum))
+      logging.error(f'pageNumber!=pNum ({pageNumber}!={pNum})')
       break
     elif pNum==pageCount:
-      logging.debug('(done) pageNumber==pageCount (%d)'%(pageNumber))
+      logging.debug(f'(done) pageNumber==pageCount ({pageNumber})')
       break
     else:
       pNum+=1
   return codes
 
 #############################################################################
-def GetAtoms(base_url, ver, auth, cuis, skip, nmax, srcs, fout):
+def GetAtoms(cuis, skip, nmax, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
   '''Expected fields: sourceDescriptor,suppressible,code,name,language,descendants,classType,sourceConcept,obsolete,relations,parents,children,concept,ui,rootSource,definitions,attributes,ancestors,termType'''
-  n_in=0; n_atom=0; n_out=0;
-  atom_tags=None;
+  n_in=0; n_atom=0; n_out=0; df=None; tags=None;
   tgt = auth.gettgt()
   for cui in cuis:
     n_in+=1
     if skip and n_in<=skip:
-      logging.debug('[%s] skipping...'%cui)
+      logging.debug(f'[{cui}] skipping...')
       continue
     pNum=1;
-    url=base_url+('/content/%s/CUI/%s/atoms'%(ver,cui))
+    url = (f'{base_url}/content/{ver}/CUI/{cui}/atoms')
     params={}
     if srcs: params['sabs']=srcs
     while True:
@@ -392,61 +395,50 @@ def GetAtoms(base_url, ver, auth, cuis, skip, nmax, srcs, fout):
       if not response:
         break
       if response.status_code != 200:
-        logging.error('response.status_code = "%s"'%(response.status_code))
+        logging.error(f'response.status_code = "{response.status_code}"')
         break
       response.encoding = 'utf-8'
-      logging.debug('params = %s'%str(params))
+      logging.debug(f'params = {str(params)}')
       logging.debug(response.text)
       items = json.loads(response.text)
       logging.debug(json.dumps(items, indent=4))
       result = items["result"]
       for atom in result:
         n_atom+=1
-        if n_out==0 or not atom_tags:
-          atom_tags = atom.keys()
-          fout.write('\t'.join(atom_tags)+'\n')
-        vals = []
-        code = atom['code'] if 'code' in atom else None
-        if code: code = re.sub(r'^.*/', '', code)
-        for tag in atom_tags:
-          val=(atom[tag] if tag in atom else '')
-          if tag=='concept': val = re.sub(r'^.*/','',val)
-          if type(val) is str:
-            val = val.replace(base_url, '')
-          if tag in ('relations', 'parents', 'children','descendants','ancestors', 'attributes', 'contentViewMemberships'):
-            if val and val!='NONE': val = '*'
-          if tag in ('code', 'sourceConcept'):
-            val = re.sub(r'^.*/', '', val)
-          vals.append(str(val))
-        fout.write('\t'.join(vals)+'\n')
+        if not tags: tags = list(atom.keys())
+        for tag in ('relations', 'parents', 'children','descendants','ancestors', 'attributes', 'contentViewMemberships'):
+            if tag in atom and atom[tag]!='NONE': atom[tag] = '*'
+        df_this = pd.DataFrame({tag:[atom[tag] if tag in atom else ''] for tag in tags})
+        if fout is None: df = pd.concat([df, df_this])
+        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
         n_out+=1
       pageSize = items["pageSize"]
       pageNumber = items["pageNumber"]
       pageCount = items["pageCount"]
       if pageNumber!=pNum:
-        logging.error('pageNumber!=pNum (%d!=%d)'%(pageNumber,pNum))
+        logging.error(f'pageNumber!=pNum ({pageNumber}!={pNum})')
         break
       elif pNum==pageCount:
-        logging.debug('(done) pageNumber==pageCount (%d)'%(pageNumber))
+        logging.debug(f'(done) pageNumber==pageCount ({pageNumber})')
         break
       else:
         pNum+=1
     if nmax and n_in==nmax: break
-  logging.info('n_atom: %d'%n_atom)
-  logging.info('n_out: %d'%n_out)
+  logging.info(f'n_atom: {n_atom}')
+  logging.info(f'n_out: {n_out}')
+  if fout is None: return df
 
 #############################################################################
-def GetRelations(base_url, ver, auth, cuis, skip, nmax, srcs, fout):
-  n_in=0; n_rel=0; n_out=0;
-  rel_tags=None;
+def GetRelations(cuis, skip, nmax, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
+  n_in=0; n_rel=0; n_out=0; tags=None; df=None;
   tgt = auth.gettgt()
   for cui in cuis:
     n_in+=1
     if skip and n_in<=skip:
-      logging.debug('[%s] skipping...'%cui)
+      logging.debug(f'[{cui}] skipping...')
       continue
     pNum=1;
-    url=base_url+('/content/%s/CUI/%s/relations'%(ver,cui))
+    url = (f'{base_url}/content/{ver}/CUI/{cui}/relations')
     params={}
     if srcs: params['sabs']=srcs
     while True:
@@ -455,55 +447,48 @@ def GetRelations(base_url, ver, auth, cuis, skip, nmax, srcs, fout):
       if not response:
         break
       if response.status_code != 200:
-        logging.error('response.status_code = "%s"'%(response.status_code))
+        logging.error(f'response.status_code = "{response.status_code}"')
         break
       response.encoding = 'utf-8'
-      logging.debug('params = %s'%str(params))
-      logging.debug('%s'%response.text)
+      logging.debug(f'params = {str(params)}')
+      logging.debug(f'{response.text}')
       items = json.loads(response.text)
       logging.debug(json.dumps(items, indent=4))
       result = items["result"]
       for rel in result:
         n_rel+=1
-        if n_out==0 or not rel_tags:
-          rel_tags=rel.keys()
-          fout.write('\t'.join(['cui']+rel_tags)+'\n')
-        vals = [cui]
-        for tag in rel_tags:
-          val=(rel[tag] if tag in rel else '')
-          if type(val) is str:
-            val = val.replace(base_url, '')
-          if tag in ('relatedId'):
-            val = re.sub(r'^.*/', '', val)
-          vals.append(str(val))
-        fout.write('\t'.join(vals)+'\n')
+        if not tags: tags = list(rel.keys())
+        df_this = pd.DataFrame({tag:[rel[tag] if tag in rel else ''] for tag in tags})
+        df_this["cui"] = [cui]
+        if fout is None: df = pd.concat([df, df_this])
+        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
         n_out+=1
       pageSize = items["pageSize"]
       pageNumber = items["pageNumber"]
       pageCount = items["pageCount"]
       if pageNumber!=pNum:
-        logging.error(': pageNumber!=pNum (%d!=%d)'%(pageNumber,pNum))
+        logging.error(f': pageNumber!=pNum ({pageNumber}!={pNum})')
         break
       elif pNum==pageCount:
         break
       else:
         pNum+=1
     if nmax and n_in==nmax: break
-  logging.info('n_rel: %d'%n_rel)
-  logging.info('n_out: %d'%n_out)
+  logging.info(f'n_rel: {n_rel}')
+  logging.info(f'n_out: {n_out}')
+  if fout is None: return df
 
 #############################################################################
-def Search(base_url, ver, auth, query, searchType, inputType, returnIdType, srcs, fout):
+def Search(query, searchType, inputType, returnIdType, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
   '''Expected fields: ui, rootSource, name, uri'''
-  src_counts={};
-  n_item=0; n_out=0; pNum=1; item_tags=None;
-  url = base_url+('/search/%s'%(ver))
+  src_counts={}; n_item=0; n_out=0; pNum=1; tags=None; df=None;
+  url = (f'{base_url}/search/{ver}')
   params = {'string':query,'searchType':searchType,'inputType':inputType,'returnIdType':returnIdType}
   if srcs: params['sabs'] = srcs
   tgt = auth.gettgt()
   while True:
     params['pageNumber']=pNum
-    logging.debug('params = %s'%str(params))
+    logging.debug(f'params = {str(params)}')
     response = UmlsApiGet(url, auth, tgt, params=params)
     response.encoding = 'utf-8'
     items = json.loads(response.text)
@@ -519,30 +504,26 @@ def Search(base_url, ver, auth, query, searchType, inputType, returnIdType, srcs
     elif len(items)==1 and items[0]['name']=='NO RESULTS':
       break
     elif pageNumber!=pNum:
-      logging.debug('pageNumber!=pNum (%d!=%d)'%(pageNumber,pNum))
+      logging.debug(f'pageNumber!=pNum ({pageNumber}!={pNum})')
       break
     for item in items:
       n_item+=1
-      if n_out==0 or not item_tags:
-        item_tags = item.keys()
-        fout.write('\t'.join(item_tags)+'\n')
+      if not tags: tags = list(item.keys())
       vals = []
       cui = item['ui'] if 'ui' in item else None
       if 'rootSource' in item:
         if not item['rootSource'] in src_counts:
           src_counts[item['rootSource']]=0
         src_counts[item['rootSource']]+=1
-      for tag in item_tags:
-        val=(item[tag] if tag in item else '')
-        if type(val) is str:
-          val = val.replace(base_url, '')
-        vals.append(str(val))
-      fout.write('\t'.join(vals)+'\n')
+      df_this = pd.DataFrame({tag:[item[tag] if tag in item else ''] for tag in tags})
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out+=1
     pNum+=1
-  logging.info('n_item: %d'%n_item)
-  logging.info('n_out: %d'%n_out)
+  logging.info(f'n_item: {n_item}')
+  logging.info(f'n_out: {n_out}')
   for src in sorted(src_counts.keys()):
-    logging.info('%16s: %3d items'%(src,src_counts[src]))
+    logging.info(f'{src:16s}: {src_counts[src]:3d} items')
+  if fout is None: return df
 
 #############################################################################
