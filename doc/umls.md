@@ -111,3 +111,86 @@ API_KEY: "===REPLACE-WITH-KEY-HERE==="
   RQ : related and possibly synonymous.
   RU : Related, unspecified
   SY : source asserted synonymy.
+
+## Example commands
+
+```
+python3 -m BioClients.umls.Client -h
+usage: Client.py [-h] [--id ID] [--idfile IDFILE] [--o OFILE] [--idsrc IDSRC]
+                 [--searchType {exact,words,leftTruncation,rightTruncation,approximate,normalizedString}]
+                 [--inputType {atom,code,sourceConcept,sourceDescriptor,sourceUi,tty}]
+                 [--returnIdType {aui,concept,code,sourceConcept,sourceDescriptor,sourceUi}]
+                 [--srcs SRCS] [--searchQuery SEARCHQUERY] [--skip SKIP]
+                 [--nmax NMAX] [--api_version API_VERSION]
+                 [--api_host API_HOST] [--api_base_path API_BASE_PATH]
+                 [--api_auth_host API_AUTH_HOST]
+                 [--api_auth_endpoint API_AUTH_ENDPOINT]
+                 [--api_auth_service API_AUTH_SERVICE]
+                 [--param_file PARAM_FILE] [--api_key API_KEY] [-v]
+                 {getCodes,getAtoms,getRelations,listSources,xrefConcept,search,searchByTUI}
+
+UMLS REST API client utility
+
+positional arguments:
+  {getCodes,getAtoms,getRelations,listSources,xrefConcept,search,searchByTUI}
+                        OPERATION (select one)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --id ID               ID (ex:C0018787)
+  --idfile IDFILE       input IDs
+  --o OFILE             output (TSV)
+  --idsrc IDSRC         query ID source (default: CUI)
+  --searchType {exact,words,leftTruncation,rightTruncation,approximate,normalizedString}
+                        [words]
+  --inputType {atom,code,sourceConcept,sourceDescriptor,sourceUi,tty}
+                        [atom]
+  --returnIdType {aui,concept,code,sourceConcept,sourceDescriptor,sourceUi}
+                        [concept]
+  --srcs SRCS           sources to include in response [ATC,HPO,ICD10,ICD10CM,I
+                        CD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO]
+  --searchQuery SEARCHQUERY
+                        string or code
+  --skip SKIP
+  --nmax NMAX
+  --api_version API_VERSION
+                        API version current
+  --api_host API_HOST
+  --api_base_path API_BASE_PATH
+  --api_auth_host API_AUTH_HOST
+  --api_auth_endpoint API_AUTH_ENDPOINT
+  --api_auth_service API_AUTH_SERVICE
+  --param_file PARAM_FILE
+  --api_key API_KEY     API key
+  -v, --verbose
+
+All get* operations require --idsrc CUI, CUIs as inputs; CUI = Concept Unique
+Identifier.
+```
+
+```
+python3 -m BioClients.umls.Client getCodes --id C0018787
+CUI	src	atom_code	atom_name
+C0018787	MSH	D006321	Heart
+C0018787	MSH	D006321	Hearts
+C0018787	MTH	NOCODE	Heart
+C0018787	NCI	C12727	Cardiac
+C0018787	NCI	C12727	Heart
+C0018787	NCI	TCGA	Heart
+C0018787	OMIM	MTHU000110	Heart
+C0018787	SNOMEDCT_US	80891009	Cardiac structure
+C0018787	SNOMEDCT_US	80891009	Heart structure
+C0018787	SNOMEDCT_US	80891009	Heart
+C0018787	SNOMEDCT_US	80891009	Heart structure (body structure)
+INFO:n_cui: 1
+INFO:n_out: 11
+```
+
+```
+python3 -m BioClients.umls.Client getAtoms --id C0018787
+```
+
+```
+python3 -m BioClients.umls.Client search --searchType words --searchQuery "Parkinson"
+python3 -m BioClients.umls.Client search --searchType leftTruncation --searchQuery "Alzheimer"
+```

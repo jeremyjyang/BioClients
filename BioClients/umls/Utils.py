@@ -96,7 +96,7 @@ Some relationships:
  SY : source asserted synonymy.
 """
 ###
-import sys,os,re,yaml,json,csv,logging,requests,time
+import sys,os,re,yaml,json,urllib.parse,csv,logging,requests,time
 import pandas as pd
 from functools import total_ordering
 #
@@ -215,7 +215,7 @@ class Authentication:
     self.verbosity=v
 
 #############################################################################
-def UmlsAuthGetTicket(auth, tgt, tries = 10, sleep = 1):
+def UmlsAuthGetTicket(auth, tgt, tries=10, sleep=1):
   for i in range(1, tries+1):
     try:
       tkt = auth.getst(tgt)
@@ -227,11 +227,11 @@ def UmlsAuthGetTicket(auth, tgt, tries = 10, sleep = 1):
   return None
 
 #############################################################################
-def UmlsApiGet(url, auth, tgt, params={}, tries = 10, sleep = 1):
+def UmlsApiGet(url, auth, tgt, params={}, tries=10, sleep=1):
   for i in range(1,tries+1):
     try:
       params['ticket'] = UmlsAuthGetTicket(auth, tgt)
-      response = requests.get(url,params=params)
+      response = requests.get(url, params=params)
       return response
     except Exception as e:
       logging.error(f'{i}. {e}')
@@ -350,7 +350,7 @@ def Cui2Code(cui, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL):
       logging.error(str(e))
       break
     logging.debug (json.dumps(items, indent=4))
-    atoms = items["result"]
+    atoms = items["result"] if "result" in items else []
     for atom in atoms:
       n_atom+=1
       src = atom['rootSource'] if 'rootSource' in atom else None
@@ -362,9 +362,9 @@ def Cui2Code(cui, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL):
       a = Atom(cui, src, code, name)
       if not src in codes: codes[src] = set()
       codes[src].add(a)
-    pageSize = items["pageSize"]
-    pageNumber = items["pageNumber"]
-    pageCount = items["pageCount"]
+    pageSize = items["pageSize"] if "pageSize" in items else None
+    pageNumber = items["pageNumber"] if "pageNumber" in items else None
+    pageCount = items["pageCount"] if "pageCount" in items else None
     if pageNumber!=pNum:
       logging.error(f'pageNumber!=pNum ({pageNumber}!={pNum})')
       break
@@ -480,10 +480,13 @@ def GetRelations(cuis, skip, nmax, srcs, auth, ver=API_VERSION, base_url=API_BAS
 
 #############################################################################
 def Search(query, searchType, inputType, returnIdType, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None):
-  '''Expected fields: ui, rootSource, name, uri'''
+  """Retrieves CUIs for a search term.
+Expected fields: ui, rootSource, name, uri.
+See https://documentation.uts.nlm.nih.gov/rest/search/
+"""
   src_counts={}; n_item=0; n_out=0; pNum=1; tags=None; df=None;
   url = (f'{base_url}/search/{ver}')
-  params = {'string':query,'searchType':searchType,'inputType':inputType,'returnIdType':returnIdType}
+  params = {'string':query, 'searchType':searchType, 'inputType':inputType, 'returnIdType':returnIdType}
   if srcs: params['sabs'] = srcs
   tgt = auth.gettgt()
   while True:

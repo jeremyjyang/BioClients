@@ -51,6 +51,7 @@ if __name__=='__main__':
   SRCS_PREFERRED = "ATC,HPO,ICD10,ICD10CM,ICD9CM,MDR,MSH,MTH,NCI,OMIM,RXNORM,SNOMEDCT_US,WHO"
   EPILOG = f"""\
 All get* operations require --idsrc CUI, CUIs as inputs; CUI = Concept Unique Identifier.
+Example CUIs: C34488, C0018787, C0016644
 """
   parser = argparse.ArgumentParser(description='UMLS REST API client utility', epilog=EPILOG)
   ops = ['getCodes', 'getAtoms', 'getRelations', 'listSources', 'xrefConcept', 'search', 'searchByTUI']
@@ -58,7 +59,7 @@ All get* operations require --idsrc CUI, CUIs as inputs; CUI = Concept Unique Id
   inputTypes = ['atom', 'code', 'sourceConcept', 'sourceDescriptor', 'sourceUi', 'tty']
   returnIdTypes = ['aui', 'concept', 'code', 'sourceConcept', 'sourceDescriptor', 'sourceUi']
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
-  parser.add_argument("--id", help="ID (ex:C0018787)")
+  parser.add_argument("--ids", help="IDs (comma-separated) (ex:C0018787)")
   parser.add_argument("--idfile", help="input IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--idsrc", default="CUI", help="query ID source (default: CUI)")
@@ -104,13 +105,13 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
   if args.idfile:
     fin = open(args.idfile)
     while True:
-      line=fin.readline()
+      line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info(f'input IDs: {len(ids)}')
     fin.close()
-  elif args.id:
-    ids.append(args.id)
+  elif args.ids:
+    ids = re.split(r'[,\s]', args.ids)
+  if ids: logging.info(f'input IDs: {len(ids)}')
 
   t0 = time.time()
 
