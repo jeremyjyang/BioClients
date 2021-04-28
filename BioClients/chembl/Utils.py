@@ -11,45 +11,51 @@ from ..util import rest
 #
 NCHUNK=100
 #
+API_HOST='www.ebi.ac.uk'
+API_BASE_PATH='/chembl/api/data'
+BASE_URL='https://'+API_HOST+API_BASE_PATH
+#
 ##############################################################################
-def Status(base_url):
+def Status(base_url=BASE_URL, fout=None):
   rval=rest.Utils.GetURL(base_url+'/status.json',parse_json=True)
   db_ver = rval['chembl_db_version'] if 'chembl_db_version' in rval else ''
   api_ver = rval['api_version'] if 'api_version' in rval else ''
   status = rval['status'] if 'status' in rval else ''
   logging.debug(json.dumps(rval,sort_keys=True,indent=2))
-  return api_ver, db_ver, status
+  df = pd.DataFrame({"api_ver":[api_ver], "db_ver":[db_ver], "status":[status]})
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 #############################################################################
-def GetTargetByUniprot(base_url, ids, fout):
+def GetTargetByUniprot(ids, base_url=BASE_URL, fout=None):
   n_out=0;
   ids_chembl = set()
   fout.write("UniprotId\ttarget_chembl_id\n")
   for uniprot in ids:
     id_chembl=None
-    rval = rest.Utils.GetURL(base_url+'/target.json?target_components__accession=%s'%uniprot, parse_json=True)
-    targets = rval['targets'] if 'targets' in rval else []
+    rval = rest.Utils.GetURL(f"{base_url}/target.json?target_components__accession={uniprot}", parse_json=True)
+    targets = rval["targets"] if "targets" in rval else []
     for target in targets:
-      id_chembl = target['target_chembl_id']
+      id_chembl = target["target_chembl_id"]
       ids_chembl.add(id_chembl)
-      fout.write("%s\t\%s\n"%(uniprot, id_chembl))
+      fout.write(f"{uniprot}\t\{id_chembl}\n")
       n_out+=1
     if len(ids_chembl)>1:
-      logging.info('Uniprot ambiguous: %s'%(uniprot))
+      logging.info(f"Uniprot ambiguous: {uniprot}")
     for id_chembl in list(ids_chembl):
-      logging.debug('Uniprot: %s -> ChEMBL: %s'%(uniprot, id_chembl))
-  logging.info('n_out: %d'%(n_out))
+      logging.debug(f"Uniprot: {uniprot} -> ChEMBL: {id_chembl}")
+  logging.info(f"n_out: {n_out}")
 
 #############################################################################
-def GetActivity(api_host, api_base_path, ids, resource, pmin, fout):
+def GetActivity(ids, resource, pmin, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   '''Get activity data and necessary references only, due to size concerns.  resource = assay|target|molecule.  Filter on pChEMBL value, standardized negative log molar half-max response activity.'''
   n_act=0; n_out=0; n_pval=0; n_pval_ok=0; tags=None; tq=None;
   for id_this in ids:
     if tq is not None: tq.update()
-    url_next = (api_base_path+'/activity.json?%s_chembl_id=%s&limit=%d'%(resource, id_this, NCHUNK))
+    url_next = (f"{api_base_path}/activity.json?{resource}_chembl_id={id_this}&limit={NCHUNK}")
     while True:
-      rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
-      acts = rval['activities'] if 'activities' in rval else []
+      rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+      acts = rval["activities"] if "activities" in rval else []
       for act in acts:
         logging.debug(json.dumps(act, sort_keys=True, indent=2))
         n_act+=1
@@ -58,38 +64,38 @@ def GetActivity(api_host, api_base_path, ids, resource, pmin, fout):
           for tag in tags[:]:
             if type(act[tag]) in (dict, list, tuple):
               tags.remove(tag)
-              logging.debug('Ignoring field ({0}): "{1}"'.format(type(act[tag]), tag))
+              logging.debug(f'Ignoring field ({type(act[tag])}): "{tag}"')
           fout.write('\t'.join(tags)+'\n')
         vals = [(str(act[tag]) if tag in act else '') for tag in tags]
         if pmin is not None:
           try:
-            pval = float(act['pchembl_value'])
+            pval = float(act["pchembl_value"])
             n_pval+=1
             if pval >= pmin:
               n_pval_ok+=1
               fout.write('\t'.join(vals)+'\n')
               n_out+=1
-              logging.debug('[%d] pVal ok (%4.1f >= %4.1f)'%(n_act,pval,pmin))
+              logging.debug(f"[{n_act}] pVal ok ({pval:4.1f} >= {pmin:4.1f})")
             else:
-              logging.debug('[%d] pVal low (%4.1f < %4.1f)'%(n_act,pval,pmin))
+              logging.debug(f"[{n_act}] pVal low ({pval:4.1f} < {pmin:4.1f})")
           except:
-            logging.debug('[%d] pVal missing.'%n_act)
+            logging.debug(f"[{n_act}] pVal missing.")
         else:
           fout.write('\t'.join(vals)+'\n')
           n_out+=1
-      total_count = rval['page_meta']['total_count'] if 'page_meta' in rval and 'total_count' in rval['page_meta'] else None
-      url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
+      total_count = rval["page_meta"]["total_count"] if "page_meta" in rval and "total_count" in rval["page_meta"] else None
+      url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
       if not tq: tq = tqdm.tqdm(total=len(ids), unit=resource+"s")
       if not url_next: break
-  logging.info('n_qry: %d; n_act: %d; n_out: %d'%(len(ids), n_act, n_out))
+  logging.info(f"n_qry: {len(ids)}; n_act: {n_act}; n_out: {n_out}")
   if pmin is not None:
-    logging.info('n_pval: %d; n_pval_ok: %d; pVals missing: %d'%(n_pval,n_pval_ok,n_act-n_pval))
+    logging.info(f"n_pval: {n_pval}; n_pval_ok: {n_pval_ok}; pVals missing: {n_act-n_pval}")
 
 #############################################################################
-def GetActivityProperties(base_url, ids, fout):
+def GetActivityProperties(ids, base_url=BASE_URL, fout=None):
   n_out=0; tags=None;
   for id_this in ids:
-    act = rest.Utils.GetURL((base_url+'/activity/%s.json'%(id_this)), parse_json=True)
+    act = rest.Utils.GetURL((f'{base_url}/activity/{id_this}.json'), parse_json=True)
     assay_chembl_id = act['assay_chembl_id'] if 'assay_chembl_id' in act else ""
     molecule_chembl_id = act['molecule_chembl_id'] if 'molecule_chembl_id' in act else ""
     props = act['activity_properties'] if 'activity_properties' in act else []
@@ -101,13 +107,13 @@ def GetActivityProperties(base_url, ids, fout):
       vals = [str(prop[tag]) if tag in prop else '' for tag in tags]
       fout.write(('\t'.join([id_this, assay_chembl_id, molecule_chembl_id]+vals))+'\n')
       n_out+=1
-  logging.info('n_qry: %d; n_out: %d'%(len(ids), n_out))
+  logging.info(f"n_qry: {len(ids)}; n_out: {n_out}")
 
 #############################################################################
-def ListTargets(api_host, api_base_path, skip, nmax, fout):
+def ListTargets(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   '''One row per target.  Ignore synonyms. If one-component, single protein, include UniProt accession.'''
   n_tgt=0; n_cmt=0; n_out=0; tags=None; tq=None;
-  url_next = (api_base_path+'/target.json?limit=%d&offset=%d'%(NCHUNK, skip))
+  url_next = (f'{api_base_path}/target.json?limit={NCHUNK}&offset={skip}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     tgts = rval['targets'] if rval and 'targets' in rval else []
@@ -119,17 +125,17 @@ def ListTargets(api_host, api_base_path, skip, nmax, fout):
         for tag in tags[:]:
           if type(tgt[tag]) in (dict, list, tuple):
             tags.remove(tag)
-            logging.debug('Ignoring field ({0}): "{1}"'.format(type(tgt[tag]), tag))
+            logging.debug(f'Ignoring field ({type(tgt[tag])}): "{tag}"')
         tags.extend(['component_count', 'accession'])
         fout.write('\t'.join(tags)+'\n')
       vals = [str(tgt[tag]) if tag in tgt else '' for tag in tags]
       if 'target_components' in tgt and tgt['target_components']:
         cmts = tgt['target_components']
         n_cmt+=len(cmts)
-        vals.append('%d'%len(cmts))
+        vals.append(f'{len(cmts)}')
         vals.append(cmts[0]['accession'] if len(cmts)==1 else '')
       else:
-        logging.debug('no-component target: %s'%vals[0])
+        logging.debug(f'no-component target: {vals[0]}')
         vals.extend(['', ''])
       fout.write(('\t'.join(vals))+'\n')
       n_out+=1
@@ -140,16 +146,16 @@ def ListTargets(api_host, api_base_path, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="tgts")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_targets: %d; n_target_components: %d; n_out: %d'%(n_tgt, n_cmt, n_out))
+  logging.info(f'n_targets: {n_tgt}; n_target_components: {n_cmt}; n_out: {n_out}')
 
 #############################################################################
-def GetTarget(base_url, ids, fout):
+def GetTarget(ids, base_url=BASE_URL, fout=None):
   '''One row per target.  Ignore synonyms. If one-component, single protein, include UniProt accession.'''
   n_tgt=0; n_cmt=0; n_out=0; tags=None; tq=None;
   for id_this in ids:
-    tgt = rest.Utils.GetURL(base_url+'/target/%s.json'%id_this, parse_json=True)
+    tgt = rest.Utils.GetURL(f'{base_url}/target/{id_this}.json', parse_json=True)
     if not tgt:
-      logging.error('Not found: "%s"'%id_this)
+      logging.error(f'Not found: "{id_this}"')
       continue
     n_tgt+=1
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="tgts")
@@ -159,7 +165,7 @@ def GetTarget(base_url, ids, fout):
       for tag in tags[:]:
         if type(tgt[tag]) in (dict, list, tuple):
           tags.remove(tag)
-          logging.debug('Ignoring field ({0}): "{1}"'.format(type(tgt[tag]), tag))
+          logging.debug(f'Ignoring field ({type(tgt[tag])}): "{tag}"')
       tags.extend(['component_count', 'accession'])
       fout.write('\t'.join(tags)+'\n')
     logging.debug(json.dumps(tgt,sort_keys=True,indent=2))
@@ -170,17 +176,17 @@ def GetTarget(base_url, ids, fout):
       vals.append('%d'%len(cmts))
       vals.append(str(cmts[0]['accession']) if len(cmts)==1 else '')
     else:
-      logging.debug('no-component target: %s'%vals[0])
+      logging.debug(f'no-component target: {vals[0]}')
       vals.extend(['', ''])
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
-  logging.info('n_qry: %d; n_targets: %d; n_target_components: %d; n_out: %d'%(len(ids), n_tgt, n_cmt, n_out))
+  logging.info(f'n_qry: {len(ids)}; n_targets: {n_tgt}; n_target_components: {n_cmt}; n_out: {n_out}')
 
 #############################################################################
-def GetTargetComponents(base_url, ids, fout):
+def GetTargetComponents(ids, base_url=BASE_URL, fout=None):
   n_tgt=0; n_out=0; tags=[]; cmt_tags=[];
   for id_this in ids:
-    tgt = rest.Utils.GetURL(base_url+'/target/%s.json'%id_this, parse_json=True)
+    tgt = rest.Utils.GetURL(f'{base_url}/target/{id_this}.json', parse_json=True)
     if not tgt: continue
     n_tgt+=1
     vals = [str(tgt[tag]) if tag in tgt else '' for tag in tags]
@@ -201,15 +207,15 @@ def GetTargetComponents(base_url, ids, fout):
 
       fout.write(('\t'.join(vals))+'\n')
       n_out+=1
-  logging.info('n_qry: %d; n_targets: %d; n_out: %d'%(len(ids), n_tgt, n_out))
+  logging.info(f'n_qry: {len(ids)}; n_targets: {n_tgt}; n_out: {n_out}')
 
 #############################################################################
-def GetDocument(base_url, ids, fout):
+def GetDocument(ids, base_url=BASE_URL, fout=None):
   n_pmid=0; n_doi=0; n_out=0; tags=None;
   for id_this in ids:
-    doc = rest.Utils.GetURL(base_url+'/document/%s.json'%id_this, parse_json=True)
+    doc = rest.Utils.GetURL(f'{base_url}/document/{id_this}.json', parse_json=True)
     if not doc:
-      logging.error('Not found: "%s"'%id_this)
+      logging.error(f'Not found: "{id_this}"')
       continue
     if not tags:
       tags = list(doc.keys())
@@ -220,10 +226,10 @@ def GetDocument(base_url, ids, fout):
     vals = [str(doc[tag]) if tag in doc else '' for tag in tags]
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
-  logging.info('n_qry: %d; n_pmid: %d; n_doi: %d; n_out: %d'%(len(ids), n_pmid, n_doi, n_out))
+  logging.info(f'n_qry: {len(ids)}; n_pmid: {n_pmid}; n_doi: {n_doi}; n_out: {n_out}')
 
 #############################################################################
-def ListSources(api_host, api_base_path, fout):
+def ListSources(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None;
   url_next = (api_base_path+'/source.json')
   while True:
@@ -240,10 +246,10 @@ def ListSources(api_host, api_base_path, fout):
       n_out+=1
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%n_out)
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def ListCellLines(api_host, api_base_path, fout):
+def ListCellLines(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_clo=0; n_efo=0; n_out=0; tags=None;
   url_next = (api_base_path+'/cell_line.json')
   while True:
@@ -263,10 +269,10 @@ def ListCellLines(api_host, api_base_path, fout):
       n_out+=1
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d; n_clo: %d; n_efo: %d'%(n_out, n_clo, n_efo))
+  logging.info(f'n_out: {n_out}; n_clo: {n_clo}; n_efo: {n_efo}')
 
 #############################################################################
-def ListOrganisms(api_host, api_base_path, fout):
+def ListOrganisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None;
   url_next = (api_base_path+'/organism.json')
   while True:
@@ -284,10 +290,10 @@ def ListOrganisms(api_host, api_base_path, fout):
       n_out+=1
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%(n_out))
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def ListProteinClasses(api_host, api_base_path, fout):
+def ListProteinClasses(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None;
   url_next = (api_base_path+'/protein_class.json')
   while True:
@@ -305,12 +311,12 @@ def ListProteinClasses(api_host, api_base_path, fout):
       n_out+=1
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%(n_out))
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def ListDrugIndications(api_host, api_base_path, skip, nmax, fout):
+def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_efo=0; n_out=0; tags=None; tq=None;
-  url_next = (api_base_path+'/drug_indication.json?limit=%d&offset=%d'%(NCHUNK, skip))
+  url_next = (f'{api_base_path}/drug_indication.json?limit={NCHUNK}&offset={skip}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     if not rval: break
@@ -322,7 +328,7 @@ def ListDrugIndications(api_host, api_base_path, skip, nmax, fout):
         for tag in tags[:]:
           if type(din[tag]) in (dict, list, tuple):
             tags.remove(tag)
-          logging.debug('Ignoring field ({0}): "{1}"'.format(type(din[tag]), tag))
+          logging.debug(f'Ignoring field ({type(din[tag])}): "{tag}"')
         fout.write('\t'.join(tags)+'\n')
       logging.debug(json.dumps(din, sort_keys=True, indent=2))
       if 'efo_id' in din and din['efo_id']: n_efo+=1
@@ -336,10 +342,10 @@ def ListDrugIndications(api_host, api_base_path, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="inds")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d; n_efo: %d'%(n_out, n_efo))
+  logging.info(f'n_out: {n_out}; n_efo: {n_efo}')
 
 #############################################################################
-def ListTissues(api_host, api_base_path, fout):
+def ListTissues(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_bto=0; n_efo=0; n_caloha=0; n_uberon=0; n_out=0; tags=None; tq=None;
   url_next = (api_base_path+'/tissue.json')
   while True:
@@ -364,10 +370,10 @@ def ListTissues(api_host, api_base_path, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="tissues")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d; n_bto: %d; n_efo: %d; n_caloha: %d; n_uberon: %d'%(n_out, n_bto, n_efo, n_caloha, n_uberon))
+  logging.info(f'n_out: {n_out}; n_bto: {n_bto}; n_efo: {n_efo}; n_caloha: {n_caloha}; n_uberon: {n_uberon}')
 
 #############################################################################
-def ListMechanisms(api_host, api_base_path, fout):
+def ListMechanisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None; tq=None;
   url_next = (api_base_path+'/mechanism.json')
   while True:
@@ -388,12 +394,12 @@ def ListMechanisms(api_host, api_base_path, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="mechs")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%(n_out))
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def ListDocuments(api_host, api_base_path, skip, nmax, fout):
+def ListDocuments(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_pmid=0; n_doi=0; n_out=0; n_err=0; tags=None; tq=None;
-  url_next = (api_base_path+'/document.json?limit=%d&offset=%d'%(NCHUNK, skip))
+  url_next = (f'{api_base_path}/document.json?limit={NCHUNK}&offset={skip}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     if not rval: break
@@ -416,13 +422,13 @@ def ListDocuments(api_host, api_base_path, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="docs")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d; n_pmid: %d; n_doi: %d'%(n_out, n_pmid, n_doi))
+  logging.info(f'n_out: {n_out}; n_pmid: {n_pmid}; n_doi: {n_doi}')
 
 #############################################################################
-def GetAssay(base_url, ids, fout):
+def GetAssay(ids, base_url=BASE_URL, fout=None):
   n_out=0; tags=None;
   for id_this in ids:
-    assay = rest.Utils.GetURL(base_url+'/assay/%s.json'%id_this, parse_json=True)
+    assay = rest.Utils.GetURL(f'{base_url}/assay/{id_this}.json', parse_json=True)
     if not assay:
       continue
     if not tags:
@@ -430,17 +436,17 @@ def GetAssay(base_url, ids, fout):
       for tag in tags[:]:
         if type(assay[tag]) in (dict, list, tuple):
           tags.remove(tag)
-          logging.debug('Ignoring field ({0}): "{1}"'.format(type(assay[tag]), tag))
+          logging.debug(f'Ignoring field ({type(assay[tag])}): "{tag}"')
       fout.write('\t'.join(tags)+'\n')
     vals = [(str(assay[tag]) if tag in assay else '') for tag in tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
-  logging.info('n_in: %d; n_out: %d'%(len(ids), n_out))
+  logging.info(f'n_in: {len(ids)}; n_out: {n_out}')
 
 #############################################################################
-def ListAssays(api_host, api_base_path, skip, nmax, fout):
+def ListAssays(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_ass=0; n_out=0; tags=None; tq=None;
-  url_next = (api_base_path+'/assay.json?offset=%d&limit=%d'%(skip, NCHUNK))
+  url_next = (f'{api_base_path}/assay.json?offset={skip}&limit={NCHUNK}')
   t0 = time.time()
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
@@ -453,7 +459,7 @@ def ListAssays(api_host, api_base_path, skip, nmax, fout):
         for tag in tags[:]:
           if type(assay[tag]) in (dict, list, tuple):
             tags.remove(tag)
-            logging.debug('Ignoring field ({0}): "{1}"'.format(type(assay[tag]), tag))
+            logging.debug(f'Ignoring field ({type(assay[tag])}): "{tag}"')
         fout.write('\t'.join(tags)+'\n')
       vals = [(str(assay[tag]).replace('\t', ' ') if tag in assay else '') for tag in tags]
       fout.write('\t'.join(vals)+'\n')
@@ -465,16 +471,16 @@ def ListAssays(api_host, api_base_path, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="assays")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: {}'.format(n_out))
-  logging.info('Elapsed time: {}'.format(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
+  logging.info(f'n_out: {n_out}')
+  logging.info(f"""Elapsed time: {time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))}""")
 
 #############################################################################
-def SearchAssays(api_host, api_base_path, asrc, atype, skip, nmax, fout):
+def SearchAssays(asrc, atype, skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   '''Select assays based on source and optionally type.'''
   n_ass=0; n_out=0; tags=None; tq=None;
-  url_next = (api_base_path+'/assay.json'+'?offset=%d&limit=%d'%(skip, NCHUNK))
-  if asrc: url_next+=('&src_id=%d'%(asrc))
-  if atype: url_next+=('&assay_type=%s'%(atype))
+  url_next = (f'{api_base_path}/assay.json?offset={skip}&limit={NCHUNK}')
+  if asrc: url_next+=(f'&src_id={asrc}')
+  if atype: url_next+=(f'&assay_type={atype}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     if not rval: break
@@ -486,7 +492,7 @@ def SearchAssays(api_host, api_base_path, asrc, atype, skip, nmax, fout):
         for tag in tags[:]:
           if type(assay[tag]) in (dict, list, tuple):
             tags.remove(tag)
-            logging.debug('Ignoring field ({0}): "{1}"'.format(type(assay[tag]), tag))
+            logging.debug(f'Ignoring field ({type(assay[tag])}): "{tag}"')
         fout.write('\t'.join(tags)+'\n')
       vals = [(str(assay[tag]) if tag in assay else '') for tag in tags]
       fout.write('\t'.join(vals)+'\n')
@@ -498,14 +504,14 @@ def SearchAssays(api_host, api_base_path, asrc, atype, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="assays")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_assay: %d; n_out: %d'%(n_ass, n_out))
+  logging.info(f'n_assay: {n_ass}; n_out: {n_out}')
 
 ##############################################################################
-def GetMolecule(base_url, ids, fout):
+def GetMolecule(ids, base_url=BASE_URL, fout=None):
   '''Ignore molecule_synonyms.'''
   n_out=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
   for id_this in ids:
-    mol = rest.Utils.GetURL(base_url+'/molecule/%s.json'%id_this, parse_json=True)
+    mol = rest.Utils.GetURL(f'{base_url}/molecule/{id_this}.json', parse_json=True)
     if not mol: continue
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
     tq.update()
@@ -514,7 +520,7 @@ def GetMolecule(base_url, ids, fout):
       for tag in tags[:]:
         if type(mol[tag]) in (dict, list, tuple):
           tags.remove(tag)
-          logging.debug('Ignoring field ({0}): "{1}"'.format(type(mol[tag]), tag))
+          logging.debug(f'Ignoring field ({type(mol[tag])}): "{tag}"')
       struct_tags = sorted(mol['molecule_structures'].keys())
       struct_tags.remove('molfile')
       prop_tags = sorted(mol['molecule_properties'].keys())
@@ -526,15 +532,15 @@ def GetMolecule(base_url, ids, fout):
     vals.extend([(str(mol['molecule_properties'][tag]) if 'molecule_properties' in mol and tag in mol['molecule_properties'] else '') for tag in prop_tags])
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
-  logging.info('n_in: %d; n_out: %d'%(len(ids), n_out))
+  logging.info(f'n_in: {len(ids)}; n_out: {n_out}')
 
 #############################################################################
-def ListMolecules(api_host, api_base_path, dev_phase, skip, nmax, fout):
+def ListMolecules(dev_phase, skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   '''Ignore synonyms here.'''
   n_mol=0; n_out=0; n_err=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
-  url_next=(api_base_path+'/molecule.json?limit=%d'%NCHUNK)
-  if skip: url_next+=('&offset=%d'%skip)
-  if dev_phase: url_next+=('&max_phase=%d'%dev_phase)
+  url_next=(f'{api_base_path}/molecule.json?limit={NCHUNK}')
+  if skip: url_next+=(f'&offset={skip}')
+  if dev_phase: url_next+=(f'&max_phase={dev_phase}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     if not rval: break
@@ -547,7 +553,7 @@ def ListMolecules(api_host, api_base_path, dev_phase, skip, nmax, fout):
         for tag in tags[:]:
           if type(mol[tag]) in (dict, list, tuple):
             tags.remove(tag)
-            logging.debug('Ignoring field ({0}): "{1}"'.format(type(mol[tag]), tag))
+            logging.debug(f'Ignoring field ({type(mol[tag])}): "{tag}"')
         struct_tags = sorted(mol['molecule_structures'].keys())
         struct_tags.remove('molfile')
         prop_tags = sorted(mol['molecule_properties'].keys())
@@ -562,15 +568,15 @@ def ListMolecules(api_host, api_base_path, dev_phase, skip, nmax, fout):
     if nmax and n_mol>=nmax: break
     total_count = rval['page_meta']['total_count'] if 'page_meta' in rval and 'total_count' in rval['page_meta'] else None
     if not tq: tq = tqdm.tqdm(total=total_count, unit="mols")
-    if n_out%1000==0: logging.info('%d/%s out/total'%(n_out, total_count))
+    if n_out%1000==0: logging.info(f'{n_out}/{total_count} out/total')
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%(n_out))
+  logging.info(f'n_out: {n_out}')
 
 #############################################################################
-def ListDrugs(api_host, api_base_path, skip, nmax, fout):
+def ListDrugs(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_mol=0; n_out=0; n_err=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
-  url_next = (api_base_path+'/drug.json?limit=%d&offset=%d'%(NCHUNK, skip))
+  url_next = (f'{api_base_path}/drug.json?limit={NCHUNK}&offset={skip}')
   while True:
     rval = rest.Utils.GetURL('https://'+api_host+url_next, parse_json=True)
     if not rval: break
@@ -583,7 +589,7 @@ def ListDrugs(api_host, api_base_path, skip, nmax, fout):
         for tag in tags[:]:
           if type(mol[tag]) in (dict, list, tuple):
             tags.remove(tag)
-            logging.debug('Ignoring field ({0}): "{1}"'.format(type(mol[tag]), tag))
+            logging.debug(f'Ignoring field ({type(mol[tag])}): "{tag}"')
         struct_tags = sorted(mol['molecule_structures'].keys())
         struct_tags.remove('molfile')
         prop_tags = sorted(mol['molecule_properties'].keys())
@@ -601,17 +607,17 @@ def ListDrugs(api_host, api_base_path, skip, nmax, fout):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="drugs")
     url_next = rval['page_meta']['next'] if 'page_meta' in rval and 'next' in rval['page_meta'] else None
     if not url_next: break
-  logging.info('n_out: %d'%(n_out))
+  logging.info(f'n_out: {n_out}')
 
 ##############################################################################
-def SearchMoleculeByName(base_url, ids, fout):
+def SearchMoleculeByName(ids, base_url=BASE_URL, fout=None):
   """IDs should be names/synonyms."""
   n_out=0; n_notfound=0; synonym_tags=None;
   tags = ["molecule_chembl_id"]
   for id_this in ids:
-    rval = rest.Utils.GetURL((base_url+'/molecule/search?q=%s'%urllib.parse.quote(id_this)), headers={'Accept':'application/json'}, parse_json=True)
+    rval = rest.Utils.GetURL(f'{base_url}/molecule/search?q={urllib.parse.quote(id_this)}', headers={'Accept':'application/json'}, parse_json=True)
     if not rval:
-      logging.info('Not found: "{0}"'.format(id_this))
+      logging.info(f'Not found: "{id_this}"')
       n_notfound+=1
       continue
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
@@ -632,15 +638,14 @@ def SearchMoleculeByName(base_url, ids, fout):
         vals.extend([(str(synonym[tag]) if tag in synonym else '') for tag in synonym_tags])
         fout.write(('\t'.join(vals))+'\n')
         n_out+=1
-  logging.info('n_in: %d; n_found: %d; n_out: %d'%(len(ids), len(ids)-n_notfound, n_out))
-
+  logging.info(f'n_in: {len(ids)}; n_found: {len(ids)-n_notfound}; n_out: {n_out}')
 
 #############################################################################
-def GetMoleculeByInchikey(base_url, ids, fout):
+def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
   """Requires InChI key, e.g. "GHBOEFUAGSHXPO-XZOTUCIWSA-N"."""
   n_out=0; tags=[]; struct_tags=[];
   for id_this in ids:
-    mol = rest.Utils.GetURL(base_url+'/molecule/%s.json'%id_this, parse_json=True)
+    mol = rest.Utils.GetURL(f'{base_url}/molecule/{id_this}.json', parse_json=True)
     if not mol:
       continue
     struct = mol['molecule_structures'] if 'molecule_structures' in mol else None
@@ -655,6 +660,6 @@ def GetMoleculeByInchikey(base_url, ids, fout):
     vals = [(str(mol[tag]) if tag in mol else '') for tag in tags]+[(str(struct[tag]) if tag in struct else '') for tag in struct_tags]
     fout.write('\t'.join(vals)+'\n')
     n_out+=1
-  logging.info('n_qry: %d; n_out: %d; n_not_found: %d'%(len(ids), n_out, len(ids)-n_out))
+  logging.info(f'n_qry: {len(ids)}; n_out: {n_out}; n_not_found: {len(ids)-n_out}')
 
 #############################################################################

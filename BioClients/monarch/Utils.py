@@ -50,30 +50,30 @@ import urllib,urllib.parse
 #
 from ..util import rest
 #
-API_HOST='monarchinitiative.org'
-API_BASE_PATH=''
-BASE_URL = 'https://'+API_HOST+API_BASE_PATH
+API_HOST="monarchinitiative.org"
+API_BASE_PATH=""
+BASE_URL = "https://"+API_HOST+API_BASE_PATH
 #
 ##############################################################################
 def GetDisease(ids, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    disease = rest.Utils.GetURL(base_url+f'/disease/{id_this}.json', parse_json=True)
+    disease = rest.Utils.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags:
       tags = list(disease.keys())
       for tag in ("relationships", "equivalentNodes", "equivalentClasses", "bundleJS", "bundleCSS"):
         tags.remove(tag)
     df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('IDs in: {}; n_out: {}'.format(len(ids), df.shape[0]))
-  return df
+  logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 ##############################################################################
 def GetDiseaseRelationships(ids, base_url=BASE_URL, fout=None):
   tags_dis=[]; tags_rel=[]; df=pd.DataFrame();
   for id_this in ids:
-    disease = rest.Utils.GetURL(base_url+f'/disease/{id_this}.json', parse_json=True)
+    disease = rest.Utils.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags_dis:
       for tag in disease.keys():
@@ -86,9 +86,9 @@ def GetDiseaseRelationships(ids, base_url=BASE_URL, fout=None):
         pd.DataFrame({tags_dis[j]:[disease[tags_dis[j]]] for j in range(len(tags_dis))}),
         pd.DataFrame({tags_rel[j]:[rel[tags_rel[j]]] for j in range(len(tags_rel))}) ], axis=1)
       df = pd.concat([df, df_this], axis=0)
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('IDs in: {}; n_out: {}'.format(len(ids), df.shape[0]))
-  return df
+  logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 ##############################################################################
 def GetPhenotype(ids, base_url=BASE_URL, fout=None):
@@ -98,13 +98,13 @@ def GetPhenotype(ids, base_url=BASE_URL, fout=None):
 def GetGene(ids, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for gid in ids:
-    gene = rest.Utils.GetURL(base_url+f'/gene/{gid}.json', parse_json=True)
+    gene = rest.Utils.GetURL(f"{base_url}/gene/{gid}.json", parse_json=True)
     logging.debug((json.dumps(gene, indent=2, sort_keys=False)))
     if not tags: tags = list(gene.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('IDs in: {}; n_out: {}'.format(len(ids), df.shape[0]))
-  return df
+  logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 ##############################################################################
 ### Guess: The matches each consist of a 3-tuple,
@@ -115,59 +115,59 @@ def GetGene(ids, base_url=BASE_URL, fout=None):
 ##############################################################################
 def ComparePhenotypes(idAs, idBs, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
-  #fout.write('idA,typeA,labelA,taxonA,idB,typeB,labelB,taxonB,url,matchidA,matchlabelA,matchidB,matchlabelB,matchidLCS,matchlabelLCS,matchicA,matchicB,matchicLCS\n')
+  #fout.write("idA,typeA,labelA,taxonA,idB,typeB,labelB,taxonB,url,matchidA,matchlabelA,matchidB,matchlabelB,matchidLCS,matchlabelLCS,matchicA,matchicB,matchicLCS\n")
   for idA in idAs:
-    url_this = base_url+'/compare/{}/{}.json'.format(idA, (','.join(idBs)))
+    url_this = f"{base_url}/compare/{idA}/{(','.join(idBs))}.json"
     rval = rest.Utils.GetURL(url_this, parse_json=True)
     logging.debug(json.dumps(rval, indent=2, sort_keys=False))
     cmpr = rval
     if not tags: tags = list(cmpr.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[cmpr[tags[j]]] for j in range(len(tags))})])
 
-#    A = cmpr['a'] if 'a' in cmpr else {}
-#    typeA = A['type'] if 'type' in A else ''
-#    idAx = A['id'] if 'id' in A else ''
-#    labelA = A['label'] if 'label' in A else ''
-#    taxonA = A['taxon']['id'] if ('taxon' in A and 'id' in A['taxon']) else {}
-#    logging.info('A[type]: "%s" ; A[id]: "%s" ; A[label]: "%s"'%(typeA, idA, labelA))
-#    resource = cmpr['resource'] if 'resource' in cmpr else {}
+#    A = cmpr["a"] if "a" in cmpr else {}
+#    typeA = A["type"] if "type" in A else ""
+#    idAx = A["id"] if "id" in A else ""
+#    labelA = A["label"] if "label" in A else ""
+#    taxonA = A["taxon"]["id"] if ("taxon" in A and "id" in A["taxon"]) else {}
+#    logging.info("A[type]: "%s" ; A[id]: "%s" ; A[label]: "%s""%(typeA, idA, labelA))
+#    resource = cmpr["resource"] if "resource" in cmpr else {}
 #    for key in resource.keys():
-#      logging.info('resource[%s]: %s'%(key,resource[key]))
-#    metadata = cmpr['metadata'] if 'metadata' in cmpr else {}
+#      logging.info("resource[%s]: %s"%(key,resource[key]))
+#    metadata = cmpr["metadata"] if "metadata" in cmpr else {}
 #    for key in metadata.keys():
-#      logging.info('metadata[%s]: %s'%(key,str(metadata[key])))
-#    Bs = cmpr['b'] if 'b' in cmpr else []
+#      logging.info("metadata[%s]: %s"%(key,str(metadata[key])))
+#    Bs = cmpr["b"] if "b" in cmpr else []
 #    for B in Bs:
-#      labelB = B['label'] if 'label' in B else ''
-#      typeB = B['type'] if 'type' in B else ''
-#      idB = B['id'] if 'id' in B else ''
+#      labelB = B["label"] if "label" in B else ""
+#      typeB = B["type"] if "type" in B else ""
+#      idB = B["id"] if "id" in B else ""
 #      logging.info('B[type]: "%s" ; B[id]: "%s" ; B[label]: "%s"'%(typeB, idB, labelB))
-#      bscore = B['score'] if 'score' in B else {}
-#      taxonB = B['taxon']['id'] if ('taxon' in B and 'id' in B['taxon']) else {}
-#      matches = B['matches'] if 'matches' in B else []
+#      bscore = B["score"] if "score" in B else {}
+#      taxonB = B["taxon"]["id"] if ("taxon" in B and "id" in B["taxon"]) else {}
+#      matches = B["matches"] if "matches" in B else []
 #      vals_ab=[idA,typeA,labelA,taxonA,idB,typeB,labelB,taxonB,url_this]
 #      for m in matches:
 #        n_match+=1
-#        mA = m['a'] if 'a' in m else {}
-#        matchidA = mA['id'] if 'id' in mA else ''
-#        matchlabelA = mA['label'] if 'label' in mA else ''
-#        mB = m['b'] if 'b' in m else {}
-#        matchidB = mB['id'] if 'id' in mB else ''
-#        matchlabelB = mB['label'] if 'label' in mB else ''
-#        mLCS = m['lcs'] if 'lcs' in m else {}
-#        matchidLCS = mLCS['id'] if 'id' in mLCS else ''
-#        matchlabelLCS = mLCS['label'] if 'label' in mLCS else ''
-#        matchicA = mA['IC'] if 'IC' in mA else '' #same as LCS?
-#        matchicB = mB['IC'] if 'IC' in mB else '' #same as LCS?
-#        matchicLCS = mLCS['IC'] if 'IC' in mLCS else ''
+#        mA = m["a"] if "a" in m else {}
+#        matchidA = mA["id"] if "id" in mA else ""
+#        matchlabelA = mA["label"] if "label" in mA else ""
+#        mB = m["b"] if "b" in m else {}
+#        matchidB = mB["id"] if "id" in mB else ""
+#        matchlabelB = mB["label"] if "label" in mB else ""
+#        mLCS = m["lcs"] if "lcs" in m else {}
+#        matchidLCS = mLCS["id"] if "id" in mLCS else ""
+#        matchlabelLCS = mLCS["label"] if "label" in mLCS else ""
+#        matchicA = mA["IC"] if "IC" in mA else "" #same as LCS?
+#        matchicB = mB["IC"] if "IC" in mB else "" #same as LCS?
+#        matchicLCS = mLCS["IC"] if "IC" in mLCS else ""
 #        vals_this=vals_ab+[matchidA,matchlabelA,matchidB,matchlabelB,matchidLCS,matchlabelLCS,matchicA,matchicB,matchicLCS]
-#        fout.write('\t'.join([str(val) for val in vals_this])+'\n')
+#        fout.write("\t".join([str(val) for val in vals_this])+"\n")
 #        n_out+=1
 
-  if fout: df.to_csv(fout, "\t", index=False)
-  logging.info('n_comparison = {} ({}x{})'.format(len(idAs)*len(idBs), len(idAs), len(idBs)))
-  #logging.info('n_match = {}; n_out = {}'%(n_match, n_out))
-  logging.info('n_out: {}'.format(df.shape[0]))
-  return df
+  logging.info(f"n_comparison = {len(idAs)*len(idBs)} ({len(idAs)}x{len(idBs)})")
+  #logging.info("n_match = {n_match}; n_out = {n_out}")
+  logging.info(f"n_out: {df.shape[0]}")
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 ##############################################################################

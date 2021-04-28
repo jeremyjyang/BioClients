@@ -17,7 +17,7 @@ from wikidataintegrator.wdi_core import WDItemEngine
 def Rq2Df(rq):
   r = WDItemEngine.execute_sparql_query(rq)['results']['bindings']
   df = pd.DataFrame([{k:v['value'] for k,v in item.items()} for item in r])
-  logging.debug("df.shape: {},{}".format(df.shape[0], df.shape[1]))
+  logging.debug(f"rows: {df.shape[0]}; cols: {df.shape[1]}")
   return(df)
 
 #############################################################################
@@ -28,8 +28,8 @@ def ListDrugTargetPairs(fout=None):
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  if fout: df.to_csv(fout, '\t', index=False)
-  return df
+  if fout is not None: df.to_csv(fout, '\t', index=False)
+  else: return df
 
 #############################################################################
 def ListGeneDiseasePairs(fout=None):
@@ -39,8 +39,8 @@ def ListGeneDiseasePairs(fout=None):
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  if fout: df.to_csv(fout, '\t', index=False)
-  return df
+  if fout is not None: df.to_csv(fout, '\t', index=False)
+  else: return df
 
 #############################################################################
 def Test(fout=None):
@@ -49,7 +49,7 @@ def Test(fout=None):
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en" . }
 }"""
   df = Rq2Df(rq)
-  if fout: df.to_csv(fout, '\t', index=False)
-  return df
+  if fout is not None: df.to_csv(fout, '\t', index=False)
+  else: return df
 
 #############################################################################

@@ -82,7 +82,7 @@ NCBIGene:26564 (mouse gene)
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  base_url = 'http://'+args.api_host+args.api_base_path
+  base_url = 'https://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile,"w") if args.ofile else sys.stdout
 
@@ -98,10 +98,10 @@ NCBIGene:26564 (mouse gene)
     fin.close()
   elif args.idAs:
     idAs = re.split(r'[,\s]+', args.idAs)
-  logging.info('Input idAs: %d'%(len(idAs)))
+  logging.info("Input idAs: {len(idAs)}")
   if args.idBs:
     idBs = re.split(r'[,\s]+', args.idBs)
-  logging.info('Input idBs: %d'%(len(idBs)))
+  logging.info("Input idBs: {len(idBs)}")
 
   if args.op=="get_disease":
     monarch.Utils.GetDisease(idAs, base_url, fout)
@@ -110,7 +110,7 @@ NCBIGene:26564 (mouse gene)
     monarch.Utils.GetDiseaseRelationships(idAs, base_url, fout)
 
   elif args.op=="get_phenotype":
-    parser.error("Unimplemented operation: {0}".format(args.op))
+    parser.error(f"Unimplemented operation: {args.op}")
     #monarch.Utils.GetPhenotype(idAs, base_url, fout)
 
   elif args.op=="get_gene":
@@ -122,4 +122,4 @@ NCBIGene:26564 (mouse gene)
   else:
     parser.error(f"Invalid operation: {args.op}")
 
-  logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))))
+  logging.info(f"Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}")
