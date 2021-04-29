@@ -3,7 +3,7 @@
 DrugCentral db utility functions.
 """
 import os,sys,re,logging,yaml
-import pandas
+import pandas as pd
 from pandas.io.sql import read_sql_query
 import psycopg2,psycopg2.extras
 
@@ -18,7 +18,7 @@ def Connect(dbhost, dbport, dbname, dbusr, dbpw):
 #############################################################################
 def Version(dbcon, dbschema="public", fout=None):
   sql = (f"SELECT * FROM {dbschema}.dbversion")
-  logging.debug("SQL: {}".format(sql))
+  logging.debug(f"SQL: {sql}")
   df = read_sql_query(sql, dbcon)
   if fout: df.to_csv(fout, "\t", index=False)
   return df
@@ -42,7 +42,7 @@ def ListColumns(dbcon, dbschema="public", fout=None):
     df_this = read_sql_query(sql2, dbcon)
     df_this["schema"] = dbschema
     df_this["table"] = tname
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   df = df[["schema", "table", "column_name", "data_type"]]
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
@@ -68,7 +68,7 @@ def ListTablesRowCounts(dbcon, dbschema="public", fout=None):
     df_this = read_sql_query(sql2, dbcon)
     df_this["schema"] = dbschema
     df_this["table"] = tname
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   df = df[["schema", "table", "rowcount"]]
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
@@ -97,7 +97,7 @@ def ListStructures2Molfile(dbcon, dbschema="public", fout=None):
   """fout is required arg."""
   n_out=0;
   cur = dbcon.cursor()
-  cur.execute("SELECT molfile, id, name FROM {0}.structures WHERE molfile IS NOT NULL".format(dbschema))
+  cur.execute(f"SELECT molfile, id, name FROM {dbschema}.structures WHERE molfile IS NOT NULL")
   for row in cur:
     molfile = re.sub(r'^[\s]*\n', str(row["id"])+"\n", row["molfile"])
     fout.write(molfile)
@@ -229,11 +229,42 @@ JOIN drug_class drug_class2 ON drug_class2.name = ddi.drug_class2
   return df
 
 #############################################################################
+def SearchProducts(dbcon, terms, fout=None):
+  """Search names via Pg regular expression (SIMILAR TO)."""
+  df=None;
+  for term in terms:
+    sql= f"""\
+SELECT DISTINCT
+	s.id struct_id,
+	s.name struct_name,
+	p.id product_id,
+	p.ndc_product_code,
+	p.form product_form,
+	p.generic_name product_generic_name,
+	p.product_name,
+	p.route product_route
+FROM
+	structures AS s
+JOIN 
+	active_ingredient ai ON ai.struct_id = s.id
+JOIN 
+	product p ON p.ndc_product_code = ai.ndc_product_code
+WHERE
+	p.product_name.name ~* '{term}' OR p.generic_name product_generic_name ~* '{term}' 
+"""
+    logging.debug(f"SQL: {sql}")
+    df_this = read_sql_query(sql, dbcon)
+    df = pd.concat([df, df_this])
+  logging.info(f"n_out: {df.shape[0]}")
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
+
+#############################################################################
 def SearchIndications(dbcon, terms, fout=None):
   """Search names via Pg regular expression (SIMILAR TO)."""
   df=None;
   for term in terms:
-    sql="""\
+    sql=f"""\
 SELECT DISTINCT
 	omop.concept_id omop_concept_id,
 	omop.concept_name omop_concept_name,
@@ -247,11 +278,11 @@ JOIN
 	structures s ON omop.struct_id = s.id
 WHERE
 	omop.relationship_name = 'indication'
-	AND (omop.concept_name ~* '{0}' OR omop.snomed_full_name ~* '{0}')
-""".format(term)
-    logging.debug("SQL: {}".format(sql))
+	AND (omop.concept_name ~* '{term}' OR omop.snomed_full_name ~* '{term}')
+"""
+    logging.debug(f"SQL: {sql}")
     df_this = read_sql_query(sql, dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -282,7 +313,7 @@ WHERE
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -294,7 +325,7 @@ def GetStructure(dbcon, ids, fout=None):
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -309,7 +340,7 @@ def GetStructureByXref(dbcon, xref_type, ids, fout=None):
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -321,7 +352,7 @@ def GetStructureBySynonym(dbcon, ids, fout=None):
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -333,7 +364,7 @@ def GetStructureXrefs(dbcon, ids, fout=None):
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -367,7 +398,7 @@ WHERE
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -399,7 +430,7 @@ WHERE
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -435,6 +466,29 @@ ORDER BY
   return df
 
 #############################################################################
+def GetStructureSynonyms(dbcon, ids, fout=None):
+  df=None;
+  sql="""\
+SELECT DISTINCT
+	s.id struct_id,
+	s.name struct_name,
+	synonyms.name AS synonym
+FROM
+	structures AS s
+JOIN 
+	synonyms ON synonyms.id = s.id
+WHERE 
+	s.id = '{}'
+"""
+  for id_this in ids:
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    df = df_this if df is None else pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
+
+#############################################################################
 def GetStructureAtcs(dbcon, ids, fout=None):
   df=None;
   sql="""\
@@ -465,7 +519,7 @@ WHERE
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = df_this if df is None else pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
@@ -496,7 +550,7 @@ WHERE
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = read_sql_query(sql.format(id_this), dbcon)
-    df = df_this if df is None else pandas.concat([df, df_this])
+    df = pd.concat([df, df_this])
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
