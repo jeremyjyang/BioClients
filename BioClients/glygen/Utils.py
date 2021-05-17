@@ -2,6 +2,8 @@
 """
 Utility functions for GlyCan REST API.
 https://api.glygen.org/
+
+curl -X GET "https://api.glygen.org/glycan/detail/G00053MO/" -H "accept: application/json"
 """
 ###
 import sys,os,re,json,collections,time,urllib.parse,logging,tqdm
