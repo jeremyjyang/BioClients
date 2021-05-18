@@ -8,43 +8,42 @@ Doc: https://www.nlm.nih.gov/mesh/xml_data_elements.html
 """
 ###
 import sys,os,re,logging
+#import pandas as pd
 import xml.etree.cElementTree as ElementTree
 from xml.parsers import expat
 
 #############################################################################
 def Desc2Csv(branch, fin, fout):
-  fout.write('id\ttreenum\tterm\n')
+  fout.write("id\ttreenum\tterm\n")
   n_elem=0; n_term=0;
   for event, elem in ElementTree.iterparse(fin):
     meshid,meshterm,desclass,treenum = None,None,None,None;
     n_elem+=1
-    logging.debug('Event:%6s, elem.tag:%6s, elem.text:"%6s"'%(event,elem.tag,elem.text.strip() if elem.text else ''))
-    if elem.tag == 'DescriptorRecord':
-      if elem.attrib['DescriptorClass'] != '1': continue
+    logging.debug(f"""Event:{event:6s}, elem.tag:{elem.tag:6s}, elem.text:'{(elem.text.strip() if elem.text else ''):6s}'""")
+    if elem.tag == "DescriptorRecord":
+      if elem.attrib["DescriptorClass"] != "1": continue
       meshid,meshterm,desclass,treenum = None,None,None,None;
-      meshid=elem.findtext('DescriptorUI')
-      #treenum=elem.findtext('TreeNumberList/TreeNumber')
-      elems = elem.findall('TreeNumberList/TreeNumber')
+      meshid=elem.findtext("DescriptorUI")
+      #treenum=elem.findtext("TreeNumberList/TreeNumber")
+      elems = elem.findall("TreeNumberList/TreeNumber")
       treenums = map(lambda e: e.text, elems)
       for treenum in treenums:
-        if (re.match(r'^%s'%branch,treenum)): break
-      meshterm=elem.findtext('DescriptorName/String')
+        if (re.match(f"^{branch}", treenum)): break
+      meshterm=elem.findtext("DescriptorName/String")
       #See also: ConceptList/Concept/TermList/Term/String (may be multiple)
-
       if not meshid:
-        logging.info('skipping, no meshid: %s'%str(elem))
+        logging.info(f"skipping, no meshid: {elem}")
       elif not meshterm:
-        logging.info('meshid: %s ; skipping, no meshterm'%meshid)
+        logging.info(f"meshid: {meshid} ; skipping, no meshterm")
       elif not treenum:
-        logging.info('meshid: %s ; skipping, no treenum'%meshid)
-      elif not re.match(r'^%s'%branch,treenum):
-        logging.info('meshid: %s ; skipping, non-%s treenum: %s'%(meshid,branch,treenum))
+        logging.info(f"meshid: {meshid} ; skipping, no treenum")
+      elif not re.match(f"^{branch}", treenum):
+        logging.info(f"meshid: {meshid} ; skipping, non-{branch} treenum: {treenum}")
       else:
-        fout.write('%s\t%s\t%s\n'%(meshid,treenum,meshterm))
+        fout.write(f"{meshid}\t{treenum}\t{meshterm}\n")
         n_term+=1
-
-  logging.info('DEBUG: n_elem: %d'%n_elem)
-  logging.info('DEBUG: n_term: %d'%n_term)
+  logging.info(f"n_elem: {n_elem}")
+  logging.info(f"n_term: {n_term}")
 
 #############################################################################
 ### SCRClass
@@ -61,27 +60,27 @@ def Desc2Csv(branch, fin, fout):
 ### These cannot be identified from the supplementary file alone.
 #############################################################################
 def Supp2Csv(branch, fin, fout):
-  fout.write('id\tterm\tid_to\tterm_to\n')
+  fout.write("id\tterm\tid_to\tterm_to\n")
   n_elem=0; n_term=0;
   for event,elem in ElementTree.iterparse(fin):
     meshid,name,meshid_to,meshterm_to = None,None,None,None;
     n_elem+=1
-    logging.debug('Event:%6s, elem.tag:%6s, elem.text:"%6s"'%(event,elem.tag,elem.text.strip() if elem.text else ''))
-    if elem.tag == 'SupplementalRecord':
-      scrclass = elem.attrib['SCRClass']
-      if branch not in ('C', 'D'): continue
-      if branch=='C' and scrclass!='3': continue #disease-only
-      if branch=='D' and scrclass!='1': continue #chemical-only
-      meshid=elem.findtext('SupplementalRecordUI')
-      name=elem.findtext('SupplementalRecordName/String')
-      mtlist=elem.find('HeadingMappedToList')
+    logging.debug(f"""Event:{event:6s}, elem.tag:{elem.tag:6s}, elem.text:'{(elem.text.strip() if elem.text else ''):6s}'""")
+    if elem.tag == "SupplementalRecord":
+      scrclass = elem.attrib["SCRClass"]
+      if branch not in ("C", "D"): continue
+      if branch=="C" and scrclass!="3": continue #disease-only
+      if branch=="D" and scrclass!="1": continue #chemical-only
+      meshid=elem.findtext("SupplementalRecordUI")
+      name=elem.findtext("SupplementalRecordName/String")
+      mtlist=elem.find("HeadingMappedToList")
       if mtlist is None:
         continue
-      meshid_to=mtlist.findtext('HeadingMappedTo/DescriptorReferredTo/DescriptorUI')
-      meshterm_to=mtlist.findtext('HeadingMappedTo/DescriptorReferredTo/DescriptorName/String')
-      fout.write('%s\t%s\t%s\t%s\n'%(meshid,name,meshid_to,meshterm_to))
+      meshid_to=mtlist.findtext("HeadingMappedTo/DescriptorReferredTo/DescriptorUI")
+      meshterm_to=mtlist.findtext("HeadingMappedTo/DescriptorReferredTo/DescriptorName/String")
+      fout.write(f"{meshid}\t{name}\t{meshid_to}\t{meshterm_to}\n")
       n_term+=1
-  logging.debug('n_elem: %d'%n_elem)
-  logging.info('n_term: %d'%n_term)
+  logging.info(f"n_elem: {n_elem}")
+  logging.info(f"n_term: {n_term}")
 
 #############################################################################

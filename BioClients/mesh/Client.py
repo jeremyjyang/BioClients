@@ -44,15 +44,14 @@ BRANCHES={
 #############################################################################
 if __name__=='__main__':
   BRANCH='C'
-  epilog='''
+  EPILOG = f"""
 operations:
 desc2csv: descriptors XML input;
 supp2csv: supplementary records XML input;
 Branches:
-	%(BRANCHLIST)s
-'''%{'BRANCHLIST':('\n\t'.join(['%s: %s'%(k,BRANCHES[k]) for k in sorted(BRANCHES.keys())])) }
-
-  parser = argparse.ArgumentParser(description='MeSH XML utility', epilog=epilog)
+	{"; ".join([f"{k}: {BRANCHES[k]}" for k in sorted(BRANCHES.keys())])}
+"""
+  parser = argparse.ArgumentParser(description='MeSH XML utility', epilog=EPILOG)
   ops=['desc2csv', 'supp2csv']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input MeSH XML file [stdin]")
@@ -69,10 +68,10 @@ Branches:
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.op == "desc2csv":
-    mesh.Utils.Desc2Csv(branch, fin, fout)
+    mesh.Utils.Desc2Csv(args.branch, fin, fout)
 
   elif args.op == "supp2csv":
-    mesh.Utils.Supp2Csv(branch, fin, fout)
+    mesh.Utils.Supp2Csv(args.branch, fin, fout)
 
   else:
-    parser.error('Invalid operation: %s'%args.op)
+    parser.error(f"Invalid operation: {args.op}")
