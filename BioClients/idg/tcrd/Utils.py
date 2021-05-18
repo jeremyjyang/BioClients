@@ -424,3 +424,25 @@ def ListPhenotypeTypes(dbcon, fout):
   return df
 
 #############################################################################
+def ListPublications(dbcon, fout):
+  df=None; n_out=0;
+  sql="""
+SELECT
+	id AS pmid,
+	title,
+	journal,
+	date,
+	authors,
+	REPLACE(abstract, '\n', ' ') AS abstract
+FROM
+	pubmed
+"""
+  df_itr = pd.read_sql(sql, dbcon, chunksize=1000)
+  for df_this in df_itr:
+    if fout is not None: df_this.to_csv(fout, "\t", index=False)
+    else: df = pd.concat([df, df_this])
+    n_out += df_this.shape[0]
+  logging.info(f"rows: {n_out}")
+  if fout is None: return df
+
+#############################################################################
