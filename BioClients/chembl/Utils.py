@@ -640,8 +640,10 @@ def SearchMoleculeByName(ids, base_url=BASE_URL, fout=None):
 #############################################################################
 def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
   """Requires InChI key, e.g. "GHBOEFUAGSHXPO-XZOTUCIWSA-N"."""
-  n_out=0; tags=[]; struct_tags=[];
+  n_out=0; tags=[]; struct_tags=[]; df=None; tq=None;
   for id_this in ids:
+    if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
+    tq.update()
     mol = rest.Utils.GetURL(f"{base_url}/molecule/{id_this}.json", parse_json=True)
     if not mol:
       continue
@@ -653,10 +655,17 @@ def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
       for tag in struct.keys():
         if type(struct[tag]) not in (list,dict): struct_tags.append(tag)
       struct_tags.remove("molfile")
-      fout.write('\t'.join(tags+struct_tags)+'\n')
-    vals = [(str(mol[tag]) if tag in mol else "") for tag in tags]+[(str(struct[tag]) if tag in struct else "") for tag in struct_tags]
-    fout.write('\t'.join(vals)+'\n')
+    df_this = pd.concat([
+	pd.DataFrame({tag:[(mol[tag] if tag in mol else None)] for tag in tags}),
+	pd.DataFrame({tag:[(struct[tag] if tag in struct else None)] for tag in struct_tags})],
+	axis=1)
+    if fout is None:
+      df = pd.concat([df, df_this])
+    else:
+      df_this.to_csv(fout, "\t", index=False)
     n_out+=1
+  tq.close()
   logging.info(f"n_qry: {len(ids)}; n_out: {n_out}; n_not_found: {len(ids)-n_out}")
+  if fout is None: return df
 
 #############################################################################
