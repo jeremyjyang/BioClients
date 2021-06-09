@@ -158,16 +158,16 @@ if __name__=='__main__':
     chembl.Utils.GetMoleculeByInchikey(ids, base_url, fout)
 
   elif args.op == "get_activity_by_mol":
-    chembl.Utils.GetActivity(ids, 'molecule', args.pmin, args.api_host, args.api_base_path, fout)
+    chembl.Utils.GetActivity(ids, 'molecule', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_by_assay":
-    chembl.Utils.GetActivity(ids, 'assay', args.pmin, args.api_host, args.api_base_path, fout)
+    chembl.Utils.GetActivity(ids, 'assay', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_by_target":
-    chembl.Utils.GetActivity(ids, 'target', args.pmin, args.api_host, args.api_base_path, fout)
+    chembl.Utils.GetActivity(ids, 'target', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_properties":
-    chembl.Utils.GetActivityProperties(ids, base_url, fout)
+    chembl.Utils.GetActivityProperties(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "get_target":
     chembl.Utils.GetTarget(ids, base_url, fout)

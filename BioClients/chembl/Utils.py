@@ -45,15 +45,17 @@ def GetTargetByUniprot(ids, base_url=BASE_URL, fout=None):
   logging.info(f"n_out: {n_out}")
 
 #############################################################################
-def GetActivity(ids, resource, pmin, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
+def GetActivity(ids, resource, pmin, skip=0, nmax=None, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   '''Get activity data and necessary references only, due to size concerns.  resource = assay|target|molecule.  Filter on pChEMBL value, standardized negative log molar half-max response activity.'''
   n_act=0; n_out=0; n_pval=0; n_pval_ok=0; tags=None; tq=None;
-  for id_this in ids:
-    if not tq: tq = tqdm.tqdm(total=len(ids), unit=resource+"s")
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if not tq: tq = tqdm.tqdm(total=len(ids)-skip, unit=resource+"s")
     tq.update()
     url_next = (f"{api_base_path}/activity.json?{resource}_chembl_id={id_this}&limit={NCHUNK}")
     while True:
       rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+      if rval is None: break
       acts = rval["activities"] if "activities" in rval else []
       for act in acts:
         logging.debug(json.dumps(act, sort_keys=True, indent=2))
@@ -85,14 +87,16 @@ def GetActivity(ids, resource, pmin, api_host=API_HOST, api_base_path=API_BASE_P
       total_count = rval["page_meta"]["total_count"] if "page_meta" in rval and "total_count" in rval["page_meta"] else None
       url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
       if not url_next: break
+    if nmax and i>=(nmax-skip): break
   logging.info(f"n_qry: {len(ids)}; n_act: {n_act}; n_out: {n_out}")
   if pmin is not None:
     logging.info(f"n_pval: {n_pval}; n_pval_ok: {n_pval_ok}; pVals missing: {n_act-n_pval}")
 
 #############################################################################
-def GetActivityProperties(ids, base_url=BASE_URL, fout=None):
+def GetActivityProperties(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None;
-  for id_this in ids:
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
     act = rest.Utils.GetURL((f"{base_url}/activity/{id_this}.json"), parse_json=True)
     assay_chembl_id = act["assay_chembl_id"] if "assay_chembl_id" in act else ""
     molecule_chembl_id = act["molecule_chembl_id"] if "molecule_chembl_id" in act else ""
@@ -105,6 +109,7 @@ def GetActivityProperties(ids, base_url=BASE_URL, fout=None):
       vals = [str(prop[tag]) if tag in prop else "" for tag in tags]
       fout.write(('\t'.join([id_this, assay_chembl_id, molecule_chembl_id]+vals))+'\n')
       n_out+=1
+    if nmax and i>=(nmax-skip): break
   logging.info(f"n_qry: {len(ids)}; n_out: {n_out}")
 
 #############################################################################
