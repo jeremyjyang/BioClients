@@ -104,7 +104,7 @@ if __name__=='__main__':
     fin.close()
   elif args.ids:
     ids = re.split('[, ]+', args.ids.strip())
-  if len(ids)>0: logging.info('Input IDs: %d'%(len(ids)))
+  if len(ids)>0: logging.info(f"Input IDs: {len(ids)}")
 
   if args.op[:3]=="get" and not (args.ifile or args.ids):
     parser.error(f"--i or --ids required for operation {args.op}.")
@@ -173,7 +173,7 @@ if __name__=='__main__':
     chembl.Utils.GetTarget(ids, base_url, fout)
 
   elif args.op == "get_target_components":
-    chembl.Utils.GetTargetComponents(ids, base_url, fout)
+    chembl.Utils.GetTargetComponents(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "get_target_by_uniprot":
     chembl.Utils.GetTargetByUniprot(ids, base_url, fout)
@@ -187,8 +187,8 @@ if __name__=='__main__':
   elif args.op == "search_assays":
     if not (args.assay_source or args.assay_type): parser.error('--assay_source and/or --assay_type required.')
     if args.assay_type and args.assay_type[0].upper() not in ('B', 'F', 'P', 'A', 'U'):
-      parser.error('Invalid assay type: {0}'.format(args.assay_type))
+      parser.error(f"Invalid assay type: {args.assay_type}")
     chembl.Utils.SearchAssays(args.assay_source, args.assay_type, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   else:
-    parser.error('Invalid operation: {0}'.format(args.op))
+    parser.error(f"Invalid operation: {args.op}")

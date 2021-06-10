@@ -88,6 +88,7 @@ def GetActivity(ids, resource, pmin, skip=0, nmax=None, api_host=API_HOST, api_b
       url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
       if not url_next: break
     if nmax and i>=(nmax-skip): break
+  if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_act: {n_act}; n_out: {n_out}")
   if pmin is not None:
     logging.info(f"n_pval: {n_pval}; n_pval_ok: {n_pval_ok}; pVals missing: {n_act-n_pval}")
@@ -149,6 +150,7 @@ def ListTargets(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout
     if not tq: tq = tqdm.tqdm(total=total_count, unit="tgts")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_targets: {n_tgt}; n_target_components: {n_cmt}; n_out: {n_out}")
 
 #############################################################################
@@ -183,12 +185,16 @@ def GetTarget(ids, base_url=BASE_URL, fout=None):
       vals.extend(["", ""])
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
+  if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_targets: {n_tgt}; n_target_components: {n_cmt}; n_out: {n_out}")
 
 #############################################################################
-def GetTargetComponents(ids, base_url=BASE_URL, fout=None):
-  n_tgt=0; n_out=0; tags=[]; cmt_tags=[];
-  for id_this in ids:
+def GetTargetComponents(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+  n_tgt=0; n_out=0; tags=[]; cmt_tags=[]; df=None; tq=None;
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if not tq: tq = tqdm.tqdm(total=len(ids)-skip, unit="tgts")
+    tq.update()
     tgt = rest.Utils.GetURL(f"{base_url}/target/{id_this}.json", parse_json=True)
     if not tgt: continue
     n_tgt+=1
@@ -204,13 +210,19 @@ def GetTargetComponents(ids, base_url=BASE_URL, fout=None):
         for tag in cmt.keys():
           if type(cmt[tag]) not in (dict, list, tuple):
             cmt_tags.append(tag)
-        fout.write('\t'.join(tags+cmt_tags)+'\n')
-
-      vals = [(str(tgt[tag]) if tag in tgt else "") for tag in tags]+[(str(cmt[tag]) if tag in cmt else "") for tag in cmt_tags]
-
-      fout.write(('\t'.join(vals))+'\n')
-      n_out+=1
+      df_this = pd.concat([
+	pd.DataFrame({tag:[(tgt[tag] if tag in tgt else None)] for tag in tags}),
+	pd.DataFrame({tag:[(cmt[tag] if tag in cmt else None)] for tag in cmt_tags})],
+	axis=1)
+      if fout is None:
+        df = pd.concat([df, df_this])
+      else:
+        df_this.to_csv(fout, "\t", index=False)
+      n_out+=df_this.shape[0]
+    if nmax and i>=(nmax-skip): break
+  if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_targets: {n_tgt}; n_out: {n_out}")
+  if fout is None: return df
 
 #############################################################################
 def GetDocument(ids, base_url=BASE_URL, fout=None):
@@ -345,6 +357,7 @@ def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PA
     if not tq: tq = tqdm.tqdm(total=total_count, unit="inds")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}; n_efo: {n_efo}")
 
 #############################################################################
@@ -373,6 +386,7 @@ def ListTissues(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="tissues")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}; n_bto: {n_bto}; n_efo: {n_efo}; n_caloha: {n_caloha}; n_uberon: {n_uberon}")
 
 #############################################################################
@@ -397,6 +411,7 @@ def ListMechanisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
     if not tq: tq = tqdm.tqdm(total=total_count, unit="mechs")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}")
 
 #############################################################################
@@ -425,6 +440,7 @@ def ListDocuments(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fo
     if not tq: tq = tqdm.tqdm(total=total_count, unit="docs")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}; n_pmid: {n_pmid}; n_doi: {n_doi}")
 
 #############################################################################
@@ -474,6 +490,7 @@ def ListAssays(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=
     if not tq: tq = tqdm.tqdm(total=total_count, unit="assays")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}")
   logging.info(f"""Elapsed time: {time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))}""")
 
@@ -507,6 +524,7 @@ def SearchAssays(asrc, atype, skip, nmax, api_host=API_HOST, api_base_path=API_B
     if not tq: tq = tqdm.tqdm(total=total_count, unit="assays")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_assay: {n_ass}; n_out: {n_out}")
 
 ##############################################################################
@@ -535,6 +553,7 @@ def GetMolecule(ids, base_url=BASE_URL, fout=None):
     vals.extend([(str(mol["molecule_properties"][tag]) if "molecule_properties" in mol and tag in mol["molecule_properties"] else "") for tag in prop_tags])
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
+  if tq is not None: tq.close()
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}")
 
 #############################################################################
@@ -573,6 +592,7 @@ def ListMolecules(dev_phase, skip, nmax, api_host=API_HOST, api_base_path=API_BA
     if not tq: tq = tqdm.tqdm(total=total_count, unit="mols")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}")
 
 #############################################################################
@@ -609,6 +629,7 @@ def ListDrugs(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=N
     if not tq: tq = tqdm.tqdm(total=total_count, unit="drugs")
     url_next = rval["page_meta"]["next"] if "page_meta" in rval and "next" in rval["page_meta"] else None
     if not url_next: break
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}")
 
 ##############################################################################
@@ -669,7 +690,7 @@ def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
     else:
       df_this.to_csv(fout, "\t", index=False)
     n_out+=1
-  tq.close()
+  if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_out: {n_out}; n_not_found: {len(ids)-n_out}")
   if fout is None: return df
 
