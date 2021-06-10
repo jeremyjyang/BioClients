@@ -225,9 +225,12 @@ def GetTargetComponents(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   if fout is None: return df
 
 #############################################################################
-def GetDocument(ids, base_url=BASE_URL, fout=None):
-  n_pmid=0; n_doi=0; n_out=0; tags=None;
-  for id_this in ids:
+def GetDocument(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+  n_pmid=0; n_doi=0; n_out=0; tags=None; tq=None;
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if not tq: tq = tqdm.tqdm(total=len(ids)-skip, unit="docs")
+    tq.update()
     doc = rest.Utils.GetURL(f"{base_url}/document/{id_this}.json", parse_json=True)
     if not doc:
       logging.error(f'Not found: "{id_this}"')
@@ -241,6 +244,7 @@ def GetDocument(ids, base_url=BASE_URL, fout=None):
     vals = [str(doc[tag]) if tag in doc else "" for tag in tags]
     fout.write(('\t'.join(vals))+'\n')
     n_out+=1
+  if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_pmid: {n_pmid}; n_doi: {n_doi}; n_out: {n_out}")
 
 #############################################################################

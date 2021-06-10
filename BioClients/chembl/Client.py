@@ -179,7 +179,7 @@ if __name__=='__main__':
     chembl.Utils.GetTargetByUniprot(ids, base_url, fout)
 
   elif args.op == "get_document":
-    chembl.Utils.GetDocument(ids, base_url, fout)
+    chembl.Utils.GetDocument(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "search_mols_by_name":
     chembl.Utils.SearchMoleculeByName(ids, base_url, fout)
