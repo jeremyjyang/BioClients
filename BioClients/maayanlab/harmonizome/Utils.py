@@ -9,10 +9,14 @@ https://amp.pharm.mssm.edu/Harmonizome/api/1.0/gene/NANOG?showAssociations=true
 """
 import sys,os,re,json,logging
 
-from ..util import rest
+from ...util import rest
+#
+API_HOST='amp.pharm.mssm.edu'
+API_BASE_PATH='/Harmonizome/api/1.0'
+BASE_URL='https://'+API_HOST+API_BASE_PATH
 #
 ##############################################################################
-def GetGene(base_url, ids, fout):
+def GetGene(ids, base_url=BASE_URL, fout=None):
   """Gene symbols expected, e.g. NANOG."""
   n_out=0; tags=None;
   for id_this in ids:
@@ -27,7 +31,7 @@ def GetGene(base_url, ids, fout):
   logging.info("n_out: %d"%(n_out))
 
 ##############################################################################
-def GetGeneAssociations(base_url, ids, fout):
+def GetGeneAssociations(ids, base_url=BASE_URL, fout=None):
   """Gene symbols expected, e.g. NANOG."""
   n_out=0; gene_tags=[]; assn_tags=[];
   for id_this in ids:

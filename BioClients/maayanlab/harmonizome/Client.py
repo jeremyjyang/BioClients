@@ -5,21 +5,19 @@ See: http://amp.pharm.mssm.edu/Harmonizome/documentation
 ###
 import sys,os,re,argparse,time,json,logging
 #
-from .. import maayanlab
+from ... import maayanlab
 #
 #
 ##############################################################################
 if __name__=='__main__':
-  API_HOST='amp.pharm.mssm.edu'
-  API_BASE_PATH='/Harmonizome/api/1.0'
   parser = argparse.ArgumentParser(description='MaayanLab Harmonizome REST API client')
   ops = [ 'get_gene', 'get_gene_associations' ]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input IDs")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=maayanlab.harmonizome.API_HOST)
+  parser.add_argument("--api_base_path", default=maayanlab.harmonizome.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -41,15 +39,15 @@ if __name__=='__main__':
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
-  logging.info('Input queries: %d'%(len(ids)))
+  logging.info(f"Input queries: {len(ids)}")
 
   if args.op == "get_gene":
-    maayanlab.Utils.GetGene(base_url, ids, fout)
+    maayanlab.harmonizome.Utils.GetGene(ids, base_url, fout)
 
   elif args.op == "get_gene_associations":
-    maayanlab.Utils.GetGeneAssociations(base_url, ids, fout)
+    maayanlab.harmonizome.Utils.GetGeneAssociations(ids, base_url, fout)
 
   else:
-    parser.error("Invalid operation: %s"%args.op)
+    parser.error(f"Invalid operation: {args.op}")
 
-  logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
+  logging.info(f"elapsed time: {time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))}")

@@ -21,3 +21,8 @@ For Sparql endpoints.
 ##  `xml`
 
 Processing XML with `xml.etree.ElementTree`.
+
+##  `hdf`
+
+[HDF5](https://www.hdfgroup.org/) (hierarchical data format)
+file processing, using [h5py, HDF5 for Python](https://docs.h5py.org/).
