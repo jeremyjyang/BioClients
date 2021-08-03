@@ -58,7 +58,7 @@ def GetCounts(tfrom, tto, base_url=API_BASE_URL):
 def Info(base_url=API_BASE_URL):
   url=(base_url+'?search=(serious:1)&limit=1')
   try:
-    rval=rest.Utils.GetURL(url,parse_json=True)
+    rval=rest.Utils.GetURL(url, parse_json=True)
   except Exception as e:
     logging.error(str(e))
     return None
@@ -77,12 +77,10 @@ Sample first n records.  However no guarantee sampling contains all fields.
   except Exception as e:
     logging.error(str(e))
     return None
-
   logging.info(f"Fields from sampled records, N = {n}")
   fields=set()
   for result in rval['results']:
     fields |= GetFieldsIn(result,'')
-
   return sorted(list(fields))
 
 #############################################################################
@@ -140,9 +138,8 @@ def DrugID(drug, id_field):
 #############################################################################
 def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, api_key, base_url=API_BASE_URL, fout=None):
   '''The API seems to disallow limit exceeding 100.  So we need to iterate using skip.'''
-  rval=None
+  rval=None; qrys=[]; df=None;
   url = (base_url+f"?api_key={api_key}&search=")
-  qrys=[]
   if drug_cl:	qrys.append(f"(patient.drug.openfda.pharm_class_epc:{drug_cl.replace(' ','+')})")
   if drug_ind:	qrys.append(f"(patient.drug.drugindication:{drug_ind.replace(' ','+')})")
   if drug_unii:	qrys.append(f"(patient.drug.openfda.unii:{drug_unii})")
@@ -155,20 +152,11 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
   if len(qrys)==0:
     logging.error('No query specified.')
     return rval
-
   url+=('+AND+'.join(qrys))
-
-  drugnames_all = set()
-  uniis_all = set()
-  rxns_all = set()
-
-  fout.write('ReportID,ReceiptDate,Drugname,UNII,ProductNDC,Seriousness,Event\n')
-
+  drugnames_all = set(); uniis_all = set(); rxns_all = set()
   ser_counts =  {s:0 for s in ('F','H','S','')}
-
-  fromtime = time.localtime()
-  totime = time.strptime('19000101','%Y%m%d')
-
+  fromtime = time.strptime('19000101','%Y%m%d')
+  totime = time.localtime()
   ndone=0; nchunk=100; n_report=0;
   while nmax==0 or ndone<nmax:
     if nmax>ndone: nchunk = min(nchunk, nmax-ndone)
@@ -179,7 +167,6 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
       logging.error(str(e))
       break
     if not rval: break
-
     results = rval['results']
     logging.debug(f"results: {len(results)}")
 
@@ -194,41 +181,39 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
       rec_time = time.strptime(recdate,'%Y%m%d')
       fromtime = min(fromtime,rec_time)
       totime = max(totime,rec_time)
-
       drugs = result['patient']['drug']
-      ser=('F' if 'seriousnessdeath' in result else ('H' if 'seriousnesshospitalization' in result else ('S' if 'serious' in result else '')))
-
+      ser = ('F' if 'seriousnessdeath' in result else ('H' if 'seriousnesshospitalization' in result else ('S' if 'serious' in result else '')))
       ser_counts[ser]+=1
-
-      drugnames = set()
-      uniis = set()
-      rxns = set()
-
+      drugnames = set(); uniis = set(); rxns = set()
       for drug in drugs:
         drugname=DrugName(drug)
         unii=DrugID(drug,'unii')
         ndc=DrugID(drug,'product_ndc')
         drugnames.add(drugname)
         uniis.add(unii)
-
         for reaction in reactions:
           rxn=reaction['reactionmeddrapt']
-          fout.write('%s,%s,"%s","%s","%s","%s","%s"\n'%(report_id,recdate,drugname,unii,ndc,ser,rxn))
           rxns.add(rxn)
-
-      logging.debug(f"{n_report}. Report: {report_id} [{recdate}] seriousness: {ser}")
-      logging.debug(f"\treactions: {(', '.join(list(rxns)))}")
-      logging.debug(f"\tdrugs: {(', '.join(list(drugnames)))}")
-
+          df_this = pd.DataFrame(
+		{"ReportID":[report_id],
+		"ReceiptDate":[recdate],
+		"Drugname":[drugname],
+		"UNII":[unii],
+		"ProductNDC":[ndc],
+		"Seriousness":[ser],
+		"Event":[rxn]})
+          if fout is None: df = pd.concat([df, df_this])
+          else: df_this.to_csv(fout, "\t", index=False)
+      logging.debug(f"{n_report}. Report: {report_id} [{recdate}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
       uniis_all |= uniis
       drugnames_all |= drugnames
       rxns_all |= rxns
-
-    logging.debug(json.dumps(rval,indent=2))
+    logging.debug(json.dumps(rval, indent=2))
     ndone+=nchunk
     if nmax>0 and ndone>=nmax: break
 
-  logging.info(f"reports: {n_report}; drugs: {len(uniis_all)}; reactions: {len(rxns_all)}")
-  logging.info(f"report seriousness: {str(ser_counts)} ; total: {sum(ser_counts.values())}")
-  logging.info(f"report date range: ({time.strftime('%d %b %Y',fromtime)} - {time.strftime('%d %b %Y',totime)})")
-  return
+  logging.info(f"N_report: {n_report}; drugs: {len(uniis_all)}; reactions: {len(rxns_all)}")
+  logging.info(f"Seriousness: {str(ser_counts)}; total: {sum(ser_counts.values())}")
+  logging.info(f"Daterange: ({time.strftime('%Y%m%d',fromtime)}-{time.strftime('%Y%m%d',totime)})")
+  if fout is None:
+    return df

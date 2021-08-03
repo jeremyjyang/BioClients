@@ -49,7 +49,7 @@ Example UNII: 786Z46389E
 
   api_base_url = 'https://'+args.api_host+args.api_base_path
 
-  fout = open(args.ofile,"w+") if args.ofile else sys.stdout
+  fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
   params = ReadParamFile(args.param_file)
   if args.api_key: params['API_KEY'] = args.api_key
