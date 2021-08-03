@@ -30,6 +30,7 @@ OpenFDA Adverse Events Reports REST API utility functions.
 	6 = unknown
 """
 import sys,os,re,time,json,logging
+import pandas as pd
 #
 from ...util import rest
 #
@@ -39,41 +40,45 @@ REST_RETRY_WAIT=5
 DRUG_ID_FIELDS = ['unii','rxcui','nui','spl_id','product_ndc','package_ndc']
 DRUG_NAME_FIELDS = ['generic_name','brand_name','substance_name']
 
+API_HOST='api.fda.gov'
+API_BASE_PATH='/drug/event.json'
+API_BASE_URL='https://'+API_HOST+API_BASE_PATH
+
 ##############################################################################
-def GetCounts(base_url, tfrom, tto):
+def GetCounts(tfrom, tto, base_url=API_BASE_URL):
   txt=''
   try:
-    rval=rest.Utils.GetURL(base_url+'?search=receivedate:[%s+TO+%s]&count=receivedate'%(tfrom,tto))
-    txt+=('%s\n'%(str(rval)))
+    rval=rest.Utils.GetURL(base_url+f"?search=receivedate:[{tfrom}+TO+{tto}]&count=receivedate")
+    txt+=(f"{rval}\n")
   except Exception as e:
-    logging.error('%s'%(e))
+    logging.error(str(e))
   return txt
 
 #############################################################################
-def Info(base_url):
+def Info(base_url=API_BASE_URL):
   url=(base_url+'?search=(serious:1)&limit=1')
   try:
     rval=rest.Utils.GetURL(url,parse_json=True)
   except Exception as e:
-    logging.error('%s'%(e))
+    logging.error(str(e))
     return None
   meta = rval['meta']
   return meta
 
 #############################################################################
-def GetFields(base_url):
+def GetFields(base_url=API_BASE_URL):
   '''Show fields where value is either (1) string, or (2) list of strings.
 Sample first n records.  However no guarantee sampling contains all fields.
 '''
   n=100
-  url=(base_url+'?search=(serious:1)&limit=%d'%n)
+  url = (base_url+f"?search=(serious:1)&limit={n}")
   try:
     rval=rest.Utils.GetURL(url,parse_json=True)
   except Exception as e:
-    logging.error('%s'%(e))
+    logging.error(str(e))
     return None
 
-  logging.info('NOTE: Fields from sampled records, N = %d'%n)
+  logging.info(f"Fields from sampled records, N = {n}")
   fields=set()
   for result in rval['results']:
     fields |= GetFieldsIn(result,'')
@@ -81,7 +86,7 @@ Sample first n records.  However no guarantee sampling contains all fields.
   return sorted(list(fields))
 
 #############################################################################
-def GetFieldsIn(obj,path):
+def GetFieldsIn(obj, path):
   fields=set()
   if type(obj) is str: return
   elif type(obj) is list:
@@ -90,7 +95,7 @@ def GetFieldsIn(obj,path):
       fields|=GetFieldsIn(obj2,path)
   elif type(obj) is dict:
     for field in obj.keys():
-      path_this=('%s%s%s'%(path,('.' if path else ''),field))
+      path_this = (f"{path}{'.' if path else ''}{field}")
       if type(obj[field]) is str:
         fields.add(path_this)
       elif type(obj[field]) is list:
@@ -99,9 +104,9 @@ def GetFieldsIn(obj,path):
             fields.add(path_this)
           else:
             for obj2 in obj[field]:
-              fields|=(GetFieldsIn(obj2,path_this))
+              fields|=(GetFieldsIn(obj2, path_this))
       else:
-        fields|=GetFieldsIn(obj[field],path_this)
+        fields|=GetFieldsIn(obj[field], path_this)
   return fields
 
 #############################################################################
@@ -115,9 +120,9 @@ def DrugName(drug):
           break
     if not name:
       for id_field in DRUG_ID_FIELDS:
-        if id_field in drug['openfda'] :
+        if id_field in drug['openfda']:
           if len(drug['openfda'][id_field])>0:
-            name=('%s=%s'%(id_field,drug['openfda'][id_field][0]))
+            name = (f"{id_field}={drug['openfda'][id_field][0]}")
             break
   else:
     if 'medicinalproduct' in drug :
@@ -125,7 +130,7 @@ def DrugName(drug):
   return name
 
 #############################################################################
-def DrugID(drug,id_field):
+def DrugID(drug, id_field):
   if 'openfda' in drug :
     if id_field in drug['openfda'] :
       if len(drug['openfda'][id_field])>0:
@@ -133,20 +138,20 @@ def DrugID(drug,id_field):
   return ''
 
 #############################################################################
-def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, fout, base_url, api_key):
+def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, api_key, base_url=API_BASE_URL, fout=None):
   '''The API seems to disallow limit exceeding 100.  So we need to iterate using skip.'''
   rval=None
-  url=(base_url+'?api_key=%s&search='%api_key)
+  url = (base_url+f"?api_key={api_key}&search=")
   qrys=[]
-  if drug_cl:	qrys.append('(patient.drug.openfda.pharm_class_epc:%s)'%(drug_cl.replace(' ','+')))
-  if drug_ind:	qrys.append('(patient.drug.drugindication:%s)'%(drug_ind.replace(' ','+')))
-  if drug_unii:	qrys.append('(patient.drug.openfda.unii:%s)'%(drug_unii))
-  if drug_ndc:	qrys.append('(patient.drug.openfda.ndc:%s)'%(drug_ndc))
-  if drug_spl:	qrys.append('(patient.drug.openfda.spl:%s)'%(drug_spl))
-  if fatal:	qrys.append('(seriousnessdeath:1)')
-  if serious:	qrys.append('(serious:1)')
-  if tfrom:	qrys.append('(receivedate:[%s+TO+%s])'%(tfrom,tto))
-  if rawquery:	qrys.append('(%s)'%rawquery.replace(' ','+'))
+  if drug_cl:	qrys.append(f"(patient.drug.openfda.pharm_class_epc:{drug_cl.replace(' ','+')})")
+  if drug_ind:	qrys.append(f"(patient.drug.drugindication:{drug_ind.replace(' ','+')})")
+  if drug_unii:	qrys.append(f"(patient.drug.openfda.unii:{drug_unii})")
+  if drug_ndc:	qrys.append(f"(patient.drug.openfda.ndc:{drug_ndc})")
+  if drug_spl:	qrys.append(f"(patient.drug.openfda.spl:{drug_spl})")
+  if fatal:	qrys.append(f"(seriousnessdeath:1)")
+  if serious:	qrys.append(f"(serious:1)")
+  if tfrom:	qrys.append(f"(receivedate:[{tfrom}+TO+{tto}])")
+  if rawquery:	qrys.append(f"({rawquery.replace(' ','+')})")
   if len(qrys)==0:
     logging.error('No query specified.')
     return rval
@@ -166,24 +171,22 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
 
   ndone=0; nchunk=100; n_report=0;
   while nmax==0 or ndone<nmax:
-    if nmax>ndone: nchunk=min(nchunk,nmax-ndone)
-    url_this=url+('&limit=%d'%(nchunk))+('&skip=%d'%ndone if ndone>0 else '')
-
-    logging.debug('url="%s"'%url_this)
+    if nmax>ndone: nchunk = min(nchunk, nmax-ndone)
+    url_this = url+(f"&limit={nchunk}")+(f"&skip={ndone}" if ndone>0 else '')
     try:
-      rval=rest.Utils.GetURL(url_this,parse_json=True)
+      rval = rest.Utils.GetURL(url_this, parse_json=True)
     except Exception as e:
-      logging.error('%s'%(e))
+      logging.error(str(e))
       break
     if not rval: break
 
     results = rval['results']
-    logging.debug('results: %d'%len(results))
+    logging.debug(f"results: {len(results)}")
 
     for result in results:
       report_id = result['safetyreportid']
-      if not 'drug' in result['patient'] :
-        logging.error('report [ID=%s] missing drug[s].'%(report_id))
+      if not 'drug' in result['patient']:
+        logging.error(f"report [ID={report_id}] missing drug[s].")
         continue
       n_report+=1
       reactions = result['patient']['reaction']
@@ -213,9 +216,9 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
           fout.write('%s,%s,"%s","%s","%s","%s","%s"\n'%(report_id,recdate,drugname,unii,ndc,ser,rxn))
           rxns.add(rxn)
 
-      logging.debug('%d. Report: %s [%s] seriousness: %s'%(n_report,report_id,recdate,ser))
-      logging.debug('\treactions: %s'%(', '.join(list(rxns))))
-      logging.debug('\tdrugs: %s'%(', '.join(list(drugnames))))
+      logging.debug(f"{n_report}. Report: {report_id} [{recdate}] seriousness: {ser}")
+      logging.debug(f"\treactions: {(', '.join(list(rxns)))}")
+      logging.debug(f"\tdrugs: {(', '.join(list(drugnames)))}")
 
       uniis_all |= uniis
       drugnames_all |= drugnames
@@ -225,8 +228,7 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
     ndone+=nchunk
     if nmax>0 and ndone>=nmax: break
 
-  logging.info('reports: %d ; drugs: %d ; reactions: %d'%(n_report,len(uniis_all),len(rxns_all)))
-  logging.info('report seriousness: %s ; total: %d'%(str(ser_counts),sum(ser_counts.values())))
-  logging.info('report date range: (%s - %s)'%(time.strftime('%d %b %Y',fromtime),time.strftime('%d %b %Y',totime)))
-
+  logging.info(f"reports: {n_report}; drugs: {len(uniis_all)}; reactions: {len(rxns_all)}")
+  logging.info(f"report seriousness: {str(ser_counts)} ; total: {sum(ser_counts.values())}")
+  logging.info(f"report date range: ({time.strftime('%d %b %Y',fromtime)} - {time.strftime('%d %b %Y',totime)})")
   return
