@@ -138,7 +138,8 @@ def DrugID(drug, id_field):
 #############################################################################
 def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, api_key, base_url=API_BASE_URL, fout=None):
   '''The API seems to disallow limit exceeding 100.  So we need to iterate using skip.'''
-  rval=None; qrys=[]; df=None;
+  rval=None; qrys=[]; df=None; tags=[]; n_out=0;
+  tags_result=[]; tags_patient=[]; tags_drug=[]; tags_reaction=[];
   url = (base_url+f"?api_key={api_key}&search=")
   if drug_cl:	qrys.append(f"(patient.drug.openfda.pharm_class_epc:{drug_cl.replace(' ','+')})")
   if drug_ind:	qrys.append(f"(patient.drug.drugindication:{drug_ind.replace(' ','+')})")
@@ -161,57 +162,80 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
   while nmax==0 or ndone<nmax:
     if nmax>ndone: nchunk = min(nchunk, nmax-ndone)
     url_this = url+(f"&limit={nchunk}")+(f"&skip={ndone}" if ndone>0 else '')
-    try:
-      rval = rest.Utils.GetURL(url_this, parse_json=True)
-    except Exception as e:
-      logging.error(str(e))
-      break
+    rval = rest.Utils.GetURL(url_this, parse_json=True)
     if not rval: break
     results = rval['results']
-    logging.debug(f"results: {len(results)}")
-
+    logging.debug(f"N_results_this: {len(results)}")
     for result in results:
-      report_id = result['safetyreportid']
       if not 'drug' in result['patient']:
-        logging.error(f"report [ID={report_id}] missing drug[s].")
+        logging.warning(f"Report [ID={result['safetyreportid']}] missing drug[s].")
         continue
       n_report+=1
-      reactions = result['patient']['reaction']
-      recdate=result['receiptdate']
-      rec_time = time.strptime(recdate,'%Y%m%d')
-      fromtime = min(fromtime,rec_time)
-      totime = max(totime,rec_time)
-      drugs = result['patient']['drug']
+      if not tags_result:
+        for tag in result.keys():
+          if type(result[tag]) not in (list, dict):
+            tags_result.append(tag) #Only simple metadata.
+      df_result = pd.DataFrame({tags_result[j]:[result[tags_result[j]]] if tags_result[j] in result else [None] for j in range(len(tags_result))})
       ser = ('F' if 'seriousnessdeath' in result else ('H' if 'seriousnesshospitalization' in result else ('S' if 'serious' in result else '')))
       ser_counts[ser]+=1
+      fromtime = min(fromtime, time.strptime(result['receiptdate'],'%Y%m%d'))
+      totime = max(totime, time.strptime(result['receiptdate'],'%Y%m%d'))
+      patient = result['patient']
+      logging.debug(json.dumps(patient, indent=2))
+      if not tags_patient:
+        for tag in patient.keys():
+          if type(patient[tag]) not in (list, dict):
+            tags_patient.append(tag) #Only simple metadata.
+      df_patient = pd.DataFrame({tags_patient[j]:[patient[tags_patient[j]]] if tags_patient[j] in patient else [None] for j in range(len(tags_patient))})
+      reactions = patient['reaction']
+      drugs = patient['drug']
       drugnames = set(); uniis = set(); rxns = set()
       for drug in drugs:
-        drugname=DrugName(drug)
-        unii=DrugID(drug,'unii')
-        ndc=DrugID(drug,'product_ndc')
-        drugnames.add(drugname)
-        uniis.add(unii)
+        logging.debug(json.dumps(drug, indent=2))
+        if not tags_drug:
+          for tag in drug.keys():
+            if type(drug[tag]) not in (list, dict):
+              tags_drug.append(tag) #Only simple metadata.
+        df_drug = pd.DataFrame({tags_drug[j]:[drug[tags_drug[j]]] if tags_drug[j] in drug else [None] for j in range(len(tags_drug))})
+        drugnames.add(DrugName(drug))
+        uniis.add(DrugID(drug, 'unii'))
         for reaction in reactions:
-          rxn=reaction['reactionmeddrapt']
-          rxns.add(rxn)
-          df_this = pd.DataFrame(
-		{"ReportID":[report_id],
-		"ReceiptDate":[recdate],
-		"Drugname":[drugname],
-		"UNII":[unii],
-		"ProductNDC":[ndc],
-		"Seriousness":[ser],
-		"Event":[rxn]})
+          logging.debug(json.dumps(reaction, indent=2))
+          if not tags_reaction:
+            for tag in reaction.keys():
+              if type(reaction[tag]) not in (list, dict):
+                tags_reaction.append(tag) #Only simple metadata.
+          df_reaction = pd.DataFrame({tags_reaction[j]:[reaction[tags_reaction[j]]] if tags_reaction[j] in reaction else [None] for j in range(len(tags_reaction))})
+
+#          df_this = pd.DataFrame(
+#		{"ReportID":[result['safetyreportid']],
+#		"ReceiptDate":[result['receiptdate']],
+#		"Drugname":[DrugName(drug)],
+#		"UNII":[DrugID(drug, 'unii')],
+#		"ProductNDC":[DrugID(drug, 'product_ndc')],
+#		"Seriousness":[ser],
+#		"Event":[reaction['reactionmeddrapt']]})
+
+          df_drug_extra = pd.DataFrame({
+		"Drugname":[DrugName(drug)],
+		"UNII":[DrugID(drug, 'unii')],
+		"ProductNDC":[DrugID(drug, 'product_ndc')]})
+
+          df_this = pd.concat([df_result, df_patient, df_drug_extra, df_drug, df_reaction], axis=1)
+          #df_this = df_this.dropna(how="all")
+
+          rxns.add(reaction['reactionmeddrapt'])
           if fout is None: df = pd.concat([df, df_this])
-          else: df_this.to_csv(fout, "\t", index=False)
-      logging.debug(f"{n_report}. Report: {report_id} [{recdate}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
+          else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+          n_out += df_this.shape[0]
+      logging.debug(f"{n_report}. Report: {result['safetyreportid']} [{result['receiptdate']}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
       uniis_all |= uniis
       drugnames_all |= drugnames
       rxns_all |= rxns
-    logging.debug(json.dumps(rval, indent=2))
     ndone+=nchunk
     if nmax>0 and ndone>=nmax: break
 
+  logging.info(f"n_out: {n_out}")
   logging.info(f"N_report: {n_report}; drugs: {len(uniis_all)}; reactions: {len(rxns_all)}")
   logging.info(f"Seriousness: {str(ser_counts)}; total: {sum(ser_counts.values())}")
   logging.info(f"Daterange: ({time.strftime('%Y%m%d',fromtime)}-{time.strftime('%Y%m%d',totime)})")
