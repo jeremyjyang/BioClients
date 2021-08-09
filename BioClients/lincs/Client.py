@@ -24,7 +24,9 @@ Dataset IDs: EDS-1013,EDS-1014;
 Search Terms: cancer, vorinostat, MCF7.
 """
   parser = argparse.ArgumentParser(description=f'LINCS REST API client ({lincs.Utils.API_HOST})', epilog=epilog)
-  ops = ['get_gene', 'get_compound', 'get_dataset',
+  ops = [
+	'get_gene', 'get_compound', 'get_dataset',
+	'list_genes', 'list_compounds', 'list_datasets',
 	'search_dataset', 'search_signature',
 	'get_signature'
 	]
@@ -63,6 +65,9 @@ Search Terms: cancer, vorinostat, MCF7.
 
   elif args.op == 'get_compound':
     lincs.Utils.GetCompound(ids, base_url, fout)
+
+  elif args.op == 'list_compounds':
+    lincs.Utils.ListCompounds(base_url, fout)
 
   elif args.op == 'get_dataset':
     lincs.Utils.GetDataset(ids, base_url, fout)

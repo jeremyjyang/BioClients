@@ -8,6 +8,7 @@ http://www.ilincs.org/ilincs/APIdocumentation
 """
 ###
 import sys,os,re,json,logging
+import urllib,urllib.parse
 import pandas as pd
 #
 from ..util import rest
@@ -60,6 +61,31 @@ def GetCompound(ids, base_url=BASE_URL, fout=None):
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"IDs: {len(ids)}; n_cpd: {df.shape[0]}")
   return df
+
+#############################################################################
+def ListCompounds(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=pd.DataFrame();
+  skip=0; nchunk=100;
+  while True:
+    filter_arg = """%7B"skip"%3A"""+str(skip)+"""%2C"limit"%3A"""+str(nchunk)+"""%7D"""
+    #url = f"{base_url}/Compounds?filter={urllib.parse.quote(filter_arg)}"
+    url = f"{base_url}/Compounds?filter={filter_arg}"
+    rval = rest.Utils.GetURL(url, parse_json=True)
+    if not rval: break
+    compounds = rval
+    for compound in compounds:
+      logging.debug(json.dumps(compound, indent=2))
+      if not tags:
+        tags = [tag for tag in compound.keys() if type(compound[tag]) not in (list, dict)]
+      df_this = pd.DataFrame({tags[j]:[compound[tags[j]]] for j in range(len(tags))})
+      if fout is None:
+        df = pd.concat([df, df_this])
+      else:
+        df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      n_out += df_this.shape[0]
+    skip += nchunk
+  logging.info(f"n_out: {n_out}")
+  if fout is None: return df
 
 #############################################################################
 def SearchDataset(searchTerm, lincs, base_url=BASE_URL, fout=None):
