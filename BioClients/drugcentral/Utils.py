@@ -144,6 +144,26 @@ ORDER BY
   return df
 
 #############################################################################
+def ListXrefs(dbcon, xref_type=None, fout=None):
+  sql="""\
+SELECT
+	idn.id_type xref_type,
+	idn.identifier xref,
+	s.id dc_struct_id,
+	s.name dc_struct_name
+FROM
+	identifier idn
+	JOIN structures s ON s.id=idn.struct_id
+"""
+  if xref_type:
+    sql += f"WHERE idn.id_type = '{xref_type}'"
+  logging.debug(f"SQL: {sql}")
+  df = read_sql_query(sql, dbcon)
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
+
+#############################################################################
 def ListIndications(dbcon, fout=None):
   sql="""\
 SELECT DISTINCT
