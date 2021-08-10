@@ -2,7 +2,7 @@
 """
 DrugCentral db utility functions.
 """
-import os,sys,re,logging,yaml
+import os,sys,re,json,logging,yaml
 import pandas as pd
 from pandas.io.sql import read_sql_query
 import psycopg2,psycopg2.extras
@@ -349,6 +349,30 @@ def GetStructure(dbcon, ids, fout=None):
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
+
+#############################################################################
+def GetDrugPage(dbcon, struct_id, fout):
+  """Structure, with IDs, names, xrefs, and ATCs, plus associated products."""
+  df_struct = GetStructure(dbcon, [struct_id], None) # Should return one row.
+  drug = df_struct.to_dict(orient='records')[0]
+
+  #Add xrefs
+  df_xrefs = GetStructureXrefs(dbcon, [struct_id], None)
+  drug["xrefs"] = df_xrefs[["xref_type", "xref"]].to_dict(orient='records')
+
+  #Add names
+  df_names = GetStructureSynonyms(dbcon, [struct_id], None)
+  drug["synonyms"] = df_names["synonym"].tolist()
+
+  #Add ATCs 
+  df_atcs = GetStructureAtcs(dbcon, [struct_id], None)
+  drug["atcs"] = df_atcs[["atc_code","atc_l1_code","atc_l1_name","atc_l2_code","atc_l2_name","atc_l3_code","atc_l3_name","atc_l4_code","atc_l4_name","atc_substance"]].to_dict(orient='records')
+
+  #Add products 
+  df_products = GetStructureProducts(dbcon, [struct_id], None)
+  drug["products"] = df_products[["product_id","ndc_product_code","product_form","product_generic_name","product_name","product_route","product_marketing_status","product_active_ingredient_count"]].to_dict(orient='records')
+
+  fout.write(json.dumps(drug, indent=2))
 
 #############################################################################
 def GetStructureByXref(dbcon, xref_type, ids, fout=None):
