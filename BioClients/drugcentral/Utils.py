@@ -480,6 +480,43 @@ WHERE
   return df
 
 #############################################################################
+def GetStructureTargets(dbcon, ids, fout=None):
+  df=None; n_out=0;
+  sql="""\
+SELECT DISTINCT
+	atf.struct_id,
+	atf.target_id,
+	atf.target_name,
+	atf.gene,
+	atf.action_type,
+	atf.act_source,
+	atf.act_type,
+	atf.act_comment,
+	atf.relation,
+	atf.moa,
+	atf.moa_source,
+	atf.moa_source_url,
+	r.pmid AS ref_pmid,
+	r.doi AS ref_doi,
+	r.title AS ref_title,
+	r.dp_year AS ref_year
+FROM
+	act_table_full atf
+	JOIN structures s ON s.id = atf.struct_id
+	LEFT OUTER JOIN reference r ON r.id = atf.moa_ref_id
+WHERE
+	atf.struct_id = {}
+"""
+  for id_this in ids:
+    logging.debug(sql.format(id_this))
+    df_this = read_sql_query(sql.format(id_this), dbcon)
+    if fout is None: df = pd.concat([df, df_this])
+    else: df_this.to_csv(fout, "\t", index=False)
+    n_out += df_this.shape[0]
+  logging.info(f"n_out: {n_out}")
+  return df
+
+#############################################################################
 def ListAtcs(dbcon, fout=None):
   """List ATC codes and drug count for which drugs exist."""
   sql="""\

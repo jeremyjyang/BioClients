@@ -23,6 +23,7 @@ if __name__=='__main__':
 	"get_structure_orangebook_products",
 	"get_structure_atcs",
 	"get_structure_synonyms",
+	"get_structure_targets",
 	"get_product",
 	"get_product_structures",
 	"get_indication_structures",
@@ -87,7 +88,7 @@ if __name__=='__main__':
     dbcon = drugcentral.Utils.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
   except Exception as e:
     logging.error("Connect failed.")
-    parser.error("{0}".format(str(e)))
+    parser.error(f"{e}")
 
   if args.op=='list_tables':
     drugcentral.Utils.ListTables(dbcon, args.dbschema, fout)
@@ -157,6 +158,9 @@ if __name__=='__main__':
 
   elif args.op=='get_structure_synonyms':
     drugcentral.Utils.GetStructureSynonyms(dbcon, ids, fout)
+
+  elif args.op=='get_structure_targets':
+    drugcentral.Utils.GetStructureTargets(dbcon, ids, fout)
 
   elif args.op=='get_product_structures':
     drugcentral.Utils.GetProductStructures(dbcon, ids, fout)
