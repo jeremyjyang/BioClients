@@ -9,7 +9,7 @@ from ..util import yaml as util_yaml
 
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility", epilog="Search via --ids as regular expressions, e.g.  \"^Alzheimer\"")
+  parser = argparse.ArgumentParser(description="DrugCentral PostgreSql client utility", epilog="Example struct_id: 2561 (Tamoxifen); search via --ids as regular expressions, e.g.  \"^Alzheimer\"")
   ops = [
 	"list_tables",
 	"list_columns",
