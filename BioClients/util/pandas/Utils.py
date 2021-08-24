@@ -4,7 +4,7 @@ Pandas CSV/TSV utilities.
 """
 ###
 import sys,os,argparse,re,pickle,logging
-import pandas
+import pandas as pd
 
 #############################################################################
 def SearchRows(df, cols, coltags, qrys, rels, typs, fout):
@@ -16,7 +16,7 @@ def SearchRows(df, cols, coltags, qrys, rels, typs, fout):
     elif coltags:
       if tag not in coltags: continue
       else: jj = coltags.index(tag)
-    logging.debug("tag={}; j={}; jj={}".format(tag,j,jj))
+    logging.debug(f"tag={tag}; j={j}; jj={jj}")
     if qrys[jj].upper() in ('NA','NAN'):
       df = df[df[tag].isna()]
     elif typs[jj]=='int':
@@ -26,7 +26,7 @@ def SearchRows(df, cols, coltags, qrys, rels, typs, fout):
     else:
       df = df[df[tag].astype('str').str.match('^'+qrys[jj]+'$')]
   df.to_csv(fout, '\t', index=False)
-  logging.info("Rows found: {} / {}".format(df.shape[0],n))
+  logging.info(f"Rows found: {df.shape[0]} / {n}")
 
 #############################################################################
 def SampleRows(df, sample_frac, sample_n, fout):
@@ -36,7 +36,7 @@ def SampleRows(df, sample_frac, sample_n, fout):
   else:
     df = df.sample(frac=sample_frac)
   df.to_csv(fout, '\t', index=False)
-  logging.info("Rows sampled: {} / {}".format(df.shape[0], n))
+  logging.info(f"Rows sampled: {df.shape[0]} / {n}")
 
 #############################################################################
 def RemoveHeader(df, delim, fout):
@@ -47,15 +47,16 @@ def SetHeader(df, coltags, delim, fout):
   if not coltags:
     logging.error("Coltags required.")
   elif len(coltags)!=df.shape[1]:
-    logging.error("len(coltags) != ncol ({0} != {1}).".format(len(coltags), df.shape[1]))
+    logging.error(f"len(coltags) != ncol ({len(coltags)} != {df.shape[1]}).")
   else:
     df.to_csv(fout, delim, index=False, header=coltags)
 
 #############################################################################
 if __name__=='__main__':
-  verstr = ('Python: {}; pandas: {}'.format(sys.version.split()[0], pandas.__version__))
+  verstr = (f'Python: {sys.version.split()[0]}; pandas: {pd.__version__}')
   parser = argparse.ArgumentParser(prog="BioClients.util.pandas.Utils", description='Pandas utilities for simple datafile transformations.', epilog=verstr)
-  ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'selectcols', 'selectcols_deduplicate', 'uvalcounts',
+  ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'to_html',
+	'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
 	'pickle', 'sample', 'set_header', 'remove_header']
   compressions=['gzip', 'zip', 'bz2']
@@ -82,7 +83,7 @@ if __name__=='__main__':
 
   if args.op in ('selectcols', 'uvalcounts', 'colvalcounts', 'sortbycols'):
     if not (args.cols or args.coltags): 
-      parser.error('{} requires --cols or --coltags.'.format(args.op))
+      parser.error(f'{args.op} requires --cols or --coltags.')
 
   logging.info(verstr)
 
@@ -110,61 +111,68 @@ if __name__=='__main__':
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
-  df = pandas.read_csv(args.ifile, sep=delim, compression=compression, error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op=='showcols' else args.nrows), skiprows=args.skiprows)
+  df = pd.read_csv(args.ifile, sep=delim, compression=compression, error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op=='showcols' else args.nrows), skiprows=args.skiprows)
 
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
-      fout.write('{}. "{}"\n'.format(j+1, tag))
+      fout.write(f'{j+1}. "{tag}"\n')
 
   elif args.op == 'shape':
-    fout.write("rows: {} ; cols: {}\n".format(df.shape[0], df.shape[1]))
+    fout.write(f"rows: {df.shape[0]}; cols: {df.shape[1]}\n")
 
   elif args.op == 'summary':
-    fout.write("rows: {} ; cols: {}\n".format(df.shape[0], df.shape[1]))
-    fout.write("coltags: {}\n".format(', '.join(['"{}"'.format(tag) for tag in df.columns])))
+    fout.write(f"rows: {df.shape[0]}; cols: {df.shape[1]}\n")
+    fout.write("coltags: {}\n".format(', '.join([f'"{tag}"' for tag in df.columns])))
 
   elif args.op=='csv2tsv':
     df.to_csv(fout, '\t', index=False)
 
+  elif args.op=='to_html':
+    df.to_html(fout, index=False, header=True,
+	formatters=None, float_format=None, sparsify=None,
+	bold_rows=True, border=None, justify=None,
+	classes=None, render_links=True,
+	show_dimensions=False)
+
   elif args.op == 'selectcols':
-    logging.info("Input: rows: {} ; cols: {}".format(df.shape[0], df.shape[1]))
+    logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df = df[coltags] if coltags else df.iloc[:, cols]
-    logging.info("Output: rows: {} ; cols: {}".format(df.shape[0], df.shape[1]))
+    logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df.to_csv(fout, '\t', index=False)
 
   elif args.op == 'selectcols_deduplicate':
-    logging.info("Input: rows: {} ; cols: {}".format(df.shape[0], df.shape[1]))
+    logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df = df[coltags] if coltags else df.iloc[:, cols]
     df.drop_duplicates(inplace=True)
-    logging.info("Output: rows: {} ; cols: {}".format(df.shape[0], df.shape[1]))
+    logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df.to_csv(fout, '\t', index=False)
 
   elif args.op == 'uvalcounts':
     for j,tag in enumerate(df.columns):
       if cols and j not in cols: continue
       if coltags and tag not in coltags: continue
-      logging.info('{}. {}: {}'.format(j+1, tag, df[tag].nunique()))
+      logging.info(f'{j+1}. {tag}: {df[tag].nunique()}')
 
   elif args.op == 'colvalcounts':
     for j,tag in enumerate(df.columns):
       if cols and j not in cols: continue
       if coltags and tag not in coltags: continue
-      logging.info('{}. {}:'.format(j+1, tag))
+      logging.info(f'{j+1}. {tag}:')
       for key,val in df[tag].value_counts().iteritems():
-        logging.info('\t{}: {:6d}: {}'.format(tag, val, key))
+        logging.info(f'\t{tag}: {val:6d}: {key}')
 
   elif args.op == 'colstats':
     for j,tag in enumerate(df.columns):
       if cols and j not in cols: continue
       if coltags and tag not in coltags: continue
-      fout.write('{}. {}:\n'.format(j+1, tag))
-      fout.write('\tN: {}\n'.format(df[tag].size))
-      fout.write('\tN_isna: {}\n'.format(df[tag].isna().sum()))
-      fout.write('\tmin: {:.2f}\n'.format(df[tag].min()))
-      fout.write('\tmax: {:.2f}\n'.format(df[tag].max()))
-      fout.write('\tmean: {:.2f}\n'.format(df[tag].mean()))
-      fout.write('\tmedian: {:.2f}\n'.format(df[tag].median()))
-      fout.write('\tstd: {:.2f}\n'.format(df[tag].std()))
+      fout.write(f'{j+1}. {tag}:\n')
+      fout.write(f'\tN: {df[tag].size}\n')
+      fout.write(f'\tN_isna: {df[tag].isna().sum()}\n')
+      fout.write(f'\tmin: {df[tag].min():.2f}\n')
+      fout.write(f'\tmax: {df[tag].max():.2f}\n')
+      fout.write(f'\tmean: {df[tag].mean():.2f}\n')
+      fout.write(f'\tmedian: {df[tag].median():.2f}\n')
+      fout.write(f'\tstd: {df[tag].std():.2f}\n')
 
   elif args.op == 'deduplicate':
     df.drop_duplicates(inplace=True)
@@ -172,10 +180,10 @@ if __name__=='__main__':
 
   elif args.op == 'searchrows':
     if args.search_qrys is None: 
-      parser.error('{} requires --search_qrys.'.format(args.op))
-    logging.debug("search_qrys={}".format(str(search_qrys)))
-    logging.debug("search_rels={}".format(str(search_rels)))
-    logging.debug("search_typs={}".format(str(search_typs)))
+      parser.error(f'{args.op} requires --search_qrys.')
+    logging.debug(f"search_qrys={search_qrys}")
+    logging.debug(f"search_rels={search_rels}")
+    logging.debug(f"search_typs={search_typs}")
     SearchRows(df, cols, coltags, search_qrys, search_rels, search_typs, fout)
 
   elif args.op == 'sample':
@@ -189,10 +197,10 @@ if __name__=='__main__':
 
   elif args.op == 'pickle':
     if not args.ofile:
-      parser.error('{} requires --o.'.format(args.op))
+      parser.error(f'{args.op} requires --o.')
     fout.close()
     with open(args.ofile, 'wb') as fout:
       pickle.dump(df, fout, pickle.HIGHEST_PROTOCOL)
 
   else:
-    parser.error('Unknown operation: {}'.format(args.op))
+    parser.error(f'Unknown operation: {args.op}')
