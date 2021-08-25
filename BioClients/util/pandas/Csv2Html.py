@@ -39,6 +39,7 @@ def CSS():
 }
 """
 
+# default=lambda(x: f"{x:.3f}"),
 #############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(description='Pandas CSV2HTML.')
@@ -46,11 +47,18 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (HTML)")
   parser.add_argument("--csv", action="store_true", help="delimiter is comma")
   parser.add_argument("--tsv", action="store_true", help="delimiter is tab")
+  parser.add_argument("--title", help="HTML title")
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--justify", choices=["center","right","left"], default="center")
   parser.add_argument("--classes", default="mystyle", help="CSS classes")
-  parser.add_argument("--title", help="HTML title")
+  parser.add_argument("--columns", help="Subset of columns to write (comma delimited)")
+  parser.add_argument("--index_columns", help="Index columns for hierarchical (comma delimited)")
+  parser.add_argument("--na_rep", default="", help="String representation of NaN")
+  parser.add_argument("--float_format", help="Function(float) -> string.")
+  parser.add_argument("--border", type=int, default=1, help="Border size.")
+  parser.add_argument("--table_id", help="CSS ID.")
+  parser.add_argument("--sparsify", action="store_true", help="Set to False for a DataFrame with a hierarchical index to print every multiindex key at each row.")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -67,15 +75,23 @@ if __name__=='__main__':
 
   df = pd.read_csv(args.ifile, sep=delim, nrows=args.nrows, skiprows=args.skiprows)
 
-  table_html = df.to_html(index=False, header=True,
-	formatters=None, float_format=None, sparsify=None,
-	bold_rows=True, border=None, justify=args.justify,
-	classes=args.classes, render_links=True,
+  columns = re.split(r',', args.columns) if args.columns else None
+  index_columns = re.split(r',', args.index_columns) if args.index_columns else None
+
+  df.set_index(index_columns, drop=True, append=False, inplace=True)
+
+  table_html = df.to_html(header=True,
+	index=(index_columns is not None), 
+	formatters=None, float_format=args.float_format, na_rep=args.na_rep,
+	columns=columns, sparsify=args.sparsify,
+	bold_rows=True, border=args.border, justify=args.justify,
+	classes=args.classes, table_id=args.table_id, render_links=True,
 	show_dimensions=False)
 
   pd.set_option('colheader_justify', 'center')   # FOR TABLE <th>
 
   html = f"""
+<!DOCTYPE html>
 <html>
   <head><title>{title}</title></head>
   <style type="text/css">{CSS()}</style>
