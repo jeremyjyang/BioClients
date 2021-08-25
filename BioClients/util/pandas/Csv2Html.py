@@ -76,12 +76,11 @@ if __name__=='__main__':
   df = pd.read_csv(args.ifile, sep=delim, nrows=args.nrows, skiprows=args.skiprows)
 
   columns = re.split(r',', args.columns) if args.columns else None
-  index_columns = re.split(r',', args.index_columns) if args.index_columns else None
-
-  df.set_index(index_columns, drop=True, append=False, inplace=True)
+  if args.index_columns is not None:
+    df.set_index(re.split(r',', args.index_columns), drop=True, append=False, inplace=True)
 
   table_html = df.to_html(header=True,
-	index=(index_columns is not None), 
+	index=(args.index_columns is not None), 
 	formatters=None, float_format=args.float_format, na_rep=args.na_rep,
 	columns=columns, sparsify=args.sparsify,
 	bold_rows=True, border=args.border, justify=args.justify,
