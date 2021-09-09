@@ -354,6 +354,7 @@ def GetStructure(dbcon, ids, fout=None):
 def GetDrugPage(dbcon, struct_id, fout):
   """Structure, with IDs, names, xrefs, and ATCs, plus associated products."""
   df_struct = GetStructure(dbcon, [struct_id], None) # Should return one row.
+  if df_struct.empty: return None
   drug = df_struct.to_dict(orient='records')[0]
 
   #Add xrefs
@@ -366,15 +367,18 @@ def GetDrugPage(dbcon, struct_id, fout):
 
   #Add ATCs 
   df_atcs = GetStructureAtcs(dbcon, [struct_id], None)
-  drug["atcs"] = df_atcs[["atc_code","atc_l1_code","atc_l1_name","atc_l2_code","atc_l2_name","atc_l3_code","atc_l3_name","atc_l4_code","atc_l4_name","atc_substance"]].to_dict(orient='records')
+  if not df_atcs.empty:
+    drug["atcs"] = df_atcs[["atc_code","atc_l1_code","atc_l1_name","atc_l2_code","atc_l2_name","atc_l3_code","atc_l3_name","atc_l4_code","atc_l4_name","atc_substance"]].to_dict(orient='records')
 
   #Add products 
   df_products = GetStructureProducts(dbcon, [struct_id], None)
-  drug["products"] = df_products[["product_id","ndc_product_code","product_form","product_generic_name","product_name","product_route","product_marketing_status","product_active_ingredient_count"]].to_dict(orient='records')
+  if not df_products.empty:
+    drug["products"] = df_products[["product_id","ndc_product_code","product_form","product_generic_name","product_name","product_route","product_marketing_status","product_active_ingredient_count"]].to_dict(orient='records')
 
   #Add targets 
   df_targets = GetStructureTargets(dbcon, [struct_id], None)
-  drug["targets"] = df_targets[["target_id","target_name","gene","action_type","act_source","act_type","act_comment","relation","moa","moa_source","moa_source_url","ref_pmid","ref_doi","ref_title","ref_year"]].to_dict(orient='records')
+  if not df_targets.empty:
+    drug["targets"] = df_targets[["target_id","target_name","gene","action_type","act_source","act_type","act_comment","relation","moa","moa_source","moa_source_url","ref_pmid","ref_doi","ref_title","ref_year"]].to_dict(orient='records')
 
   fout.write(json.dumps(drug, indent=2))
 

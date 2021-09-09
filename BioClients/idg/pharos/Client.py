@@ -15,7 +15,7 @@ if __name__=='__main__':
 	'get_targets',
 	'get_diseases',
 	'test' ]
-  parser.add_argument("op", choices=ops, help='operation')
+  parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", help="input file, target IDs")
   parser.add_argument("--ids", dest="ids", help="IDs, target, comma-separated")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")

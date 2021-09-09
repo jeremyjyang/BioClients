@@ -2,22 +2,29 @@
 
 ## IDG - Illuminating the Druggable Genome
 
-Tools for access to the Pharos REST API, and TCRD MySql db.
-
 * <https://pharos.nih.gov/api>
 * <https://druggablegenome.net/>
 
-```
-$ python3 -m BioClients.idg.Client -h
-usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE]
-                 [--idtype {IDG_TARGET_ID,UNIPROT,ENSP,GSYMB}] [--nmax NMAX]
-                 [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]
-                 {list_targets,list_ligands,list_diseases,get_targets,get_targetProperties,search_targets}
+# `BioClients.idg.pharos`
 
-Pharos REST API client
+Access the Pharos GraphQL API.
+
+## Dependencies
+
+  * Python package `python-graphql-client`
+
+```
+python3 -m BioClients.idg.pharos.Client -h
+usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE]
+                 [--idtype_target {tcrdid,uniprot,sym}]
+                 [--idtype_disease {cui,doid,name}] [--nmax NMAX]
+                 [--api_endpoint API_ENDPOINT] [-v]
+                 {get_targets,get_diseases,test}
+
+Pharos GraphQL API client
 
 positional arguments:
-  {list_targets,list_ligands,list_diseases,get_targets,get_targetProperties,search_targets}
+  {get_targets,get_diseases,test}
                         operation
 
 optional arguments:
@@ -25,11 +32,12 @@ optional arguments:
   --i IFILE             input file, target IDs
   --ids IDS             IDs, target, comma-separated
   --o OFILE             output (TSV)
-  --idtype {IDG_TARGET_ID,UNIPROT,ENSP,GSYMB}
+  --idtype_target {tcrdid,uniprot,sym}
                         target ID type
+  --idtype_disease {cui,doid,name}
+                        disease ID type
   --nmax NMAX           max to return
-  --api_host API_HOST
-  --api_base_path API_BASE_PATH
+  --api_endpoint API_ENDPOINT
   -v, --verbose
 ```
 

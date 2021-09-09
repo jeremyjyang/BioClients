@@ -49,7 +49,7 @@ query targetDetails($id: {IDTYPES_TARGET[idtype]['type']}) {{
 """
 
   for id_this in ids:
-    logging.debug(f"id_this: \"{id_this}\"")
+    logging.debug(f"id_this: {id_this}")
     variables = { "id": int(id_this) if IDTYPES_TARGET[idtype]['type']=='Int' else id_this }
     try:
       data = client.execute(query=query, variables=variables, headers=API_HEADERS)
@@ -85,7 +85,7 @@ query diseaseDetails($id: String) {{
 """
 
   for id_this in ids:
-    logging.debug(f"id_this: \"{id_this}\"")
+    logging.debug(f"id_this: {id_this}")
     variables = { "id": id_this }
     try:
       data = client.execute(query=query, variables=variables, headers=API_HEADERS)
@@ -100,16 +100,14 @@ query diseaseDetails($id: String) {{
 def Test(ep=API_ENDPOINT, fout=None):
   client = GraphqlClient(endpoint=ep, verify=True)
   query = """\
-query targetDetails {
-  target(q: { sym: "ACE2" }) {
+query diseaseDetails {{
+  disease {{
     name
-    tdl
-    fam
-    sym
-    description
-    novelty
-  }
-}
+    dids {{
+      id(id:"DOID:2841"), doName
+    }}
+    doDescription
+    uniprotDescription
 """
   try:
     data = client.execute(query=query, headers=API_HEADERS)
