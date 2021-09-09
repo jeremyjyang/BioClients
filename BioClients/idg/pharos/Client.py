@@ -12,18 +12,15 @@ from ... import idg
 if __name__=='__main__':
   parser = argparse.ArgumentParser(description='Pharos GraphQL API client')
   ops = [
-	'list_targets',
-	'list_ligands',
-	'list_diseases',
 	'get_targets',
-	'get_targetProperties',
-	'search_targets',
+	'get_diseases',
 	'test' ]
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--i", dest="ifile", help="input file, target IDs")
   parser.add_argument("--ids", dest="ids", help="IDs, target, comma-separated")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--idtype", choices=idg.pharos.Utils.IDTYPES, default='SYM', help="target ID type")
+  parser.add_argument("--idtype_target", choices=list(idg.pharos.Utils.IDTYPES_TARGET.keys()), default='sym', help="target ID type")
+  parser.add_argument("--idtype_disease", choices=list(idg.pharos.Utils.IDTYPES_DISEASE.keys()), default='name', help="disease ID type")
   parser.add_argument("--nmax", type=int, help="max to return")
   parser.add_argument("--api_endpoint", default=idg.pharos.Utils.API_ENDPOINT)
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -51,7 +48,10 @@ if __name__=='__main__':
     parser.error(f"{args.op} requires IDs.")
 
   if args.op=='get_targets':
-    idg.pharos.Utils.GetTargets(ids, args.idtype, args.api_endpoint, fout)
+    idg.pharos.Utils.GetTargets(ids, args.idtype_target, args.api_endpoint, fout)
+
+  elif args.op=='get_diseases':
+    idg.pharos.Utils.GetDiseases(ids, args.idtype_disease, args.api_endpoint, fout)
 
   elif args.op=='test':
     idg.pharos.Utils.Test(args.api_endpoint, fout)
