@@ -2,6 +2,8 @@
 """
 Pharos  REST API client
 https://pharos.nih.gov/idg/api/v1/targets(589)
+
+THIS PROBABLY OBSOLETED BY GRAPHQL API/CLIENT; SEE pharos/Utils.py.
 """
 ###
 import sys,os,json,re,time,logging
