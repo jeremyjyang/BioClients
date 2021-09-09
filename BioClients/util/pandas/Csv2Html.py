@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pandas CSV2HTML.
+Pandas Csv2Html.
 """
 ###
 import sys,os,argparse,re,logging
@@ -71,11 +71,11 @@ if __name__=='__main__':
   elif re.search('\.csv', args.ifile, re.I): delim=','
   else: delim='\t'
 
-  title = args.title if args.title else f"CSV2HTML: {os.path.basename(args.ifile)}"
+  title = args.title if args.title else f"Csv2Html: {os.path.basename(args.ifile)}"
+  columns = re.split(r',', args.columns) if args.columns else None
 
   df = pd.read_csv(args.ifile, sep=delim, nrows=args.nrows, skiprows=args.skiprows)
 
-  columns = re.split(r',', args.columns) if args.columns else None
   if args.index_columns is not None:
     df.set_index(re.split(r',', args.index_columns), drop=True, append=False, inplace=True)
 

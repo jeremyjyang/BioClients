@@ -17,6 +17,8 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (HTML)")
   parser.add_argument("--csv", action="store_true", help="delimiter is comma")
   parser.add_argument("--tsv", action="store_true", help="delimiter is tab")
+  parser.add_argument("--title", help="Markdown heading")
+  parser.add_argument("--columns", help="Subset of columns to write (comma delimited)")
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--numalign", choices=["center","right","left","decimal"], default="center")
@@ -36,13 +38,25 @@ if __name__=='__main__':
   elif re.search('\.csv', args.ifile, re.I): delim=','
   else: delim='\t'
 
+  title = args.title if args.title else f"Csv2Markdown: {os.path.basename(args.ifile)}"
+  columns = re.split(r',', args.columns) if args.columns else None
+
   df = pd.read_csv(args.ifile, sep=delim, nrows=args.nrows, skiprows=args.skiprows)
+
+  if columns is not None:
+    df = df[columns]
 
   if args.na_rep is not None:
     df = df.fillna(args.na_rep)
 
   table_md = df.to_markdown(index=True, tablefmt=args.format)
 
-  fout.write(table_md)
+  md = f"""
+# {title}
+
+{table_md}
+"""
+
+  fout.write(md)
   fout.close()
 
