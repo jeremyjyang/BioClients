@@ -49,7 +49,7 @@ if __name__=='__main__':
   if args.na_rep is not None:
     df = df.fillna(args.na_rep)
 
-  table_md = df.to_markdown(index=True, tablefmt=args.format)
+  table_md = df.to_markdown(tablefmt=args.format)
 
   md = f"""
 # {title}
