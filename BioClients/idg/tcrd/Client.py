@@ -11,16 +11,16 @@ from ...util import yaml as util_yaml
 if __name__=='__main__':
   PARAM_FILE = os.environ['HOME']+"/.tcrd.yaml"
   idtypes=['TID', 'GENEID', 'UNIPROT', 'GENESYMB', 'ENSP']
-  epilog = "default param_file: {}".format(PARAM_FILE)
+  epilog = f"default param_file: {PARAM_FILE}"
   parser = argparse.ArgumentParser(description='TCRD MySql client utility', epilog=epilog)
   ops = ['info', 'listTables', 'listColumns', 'tableRowCounts', 'tdlCounts', 
 	'listTargets', 'listXrefTypes', 'listXrefs', 'listDatasets',
 	'listTargetsByDTO', 'listTargetFamilies',
-	'listDiseases', 'listDiseaseTypes',
 	'listPhenotypes', 'listPhenotypeTypes',
 	'listPublications',
-	'getTargets', 'getTargetsByXref',
-	'getTargetPage',
+	'getTargets', 'getTargetsByXref', 'getTargetPage',
+	'listDiseases', 'listDiseaseTypes',
+	'getDiseaseAssociations', 'getDiseaseAssociationsPage',
 	'getTargetpathways']
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
@@ -126,7 +126,7 @@ if __name__=='__main__':
       xreftypes_all = tcrd.Utils.ListXrefTypes(dbcon).iloc[:,0]
       for xreftype in xreftypes:
         if xreftype not in list(xreftypes_all):
-          parser.error('xreftype "{}" invalid.  Available xreftypes: {}'.format(xreftype, str(list(xreftypes_all))))
+          parser.error(f"xreftype '{xreftype}' invalid.  Available xreftypes: {str(list(xreftypes_all))}")
     else:
       xreftypes = []
     tcrd.Utils.ListXrefs(dbcon, xreftypes, fout)
@@ -142,6 +142,16 @@ if __name__=='__main__':
 
   elif args.op=='listDiseaseTypes':
     tcrd.Utils.ListDiseaseTypes(dbcon, fout)
+
+  elif args.op=='getDiseaseAssociations':
+    if not ids:
+      parser.error(f'IDs required for operation: {args.op}')
+    tcrd.Utils.GetDiseaseAssociations(dbcon, ids, fout)
+
+  elif args.op=='getDiseaseAssociationsPage':
+    if not ids:
+      parser.error(f'ID required for operation: {args.op}')
+    tcrd.Utils.GetDiseaseAssociationsPage(dbcon, ids[0], fout)
 
   elif args.op=='listPhenotypes':
     tcrd.Utils.ListPhenotypes(dbcon, fout)

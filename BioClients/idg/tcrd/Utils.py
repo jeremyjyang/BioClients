@@ -50,7 +50,7 @@ def ListColumns(dbcon, fout=None):
   return df
 
 #############################################################################
-def TableRowCounts(dbcon, fout):
+def TableRowCounts(dbcon, fout=None):
   n_table=0; df=pd.DataFrame();
   for table in ListTables(dbcon).iloc[:,0]:
     n_table+=1
@@ -94,7 +94,7 @@ def ListXrefTypes(dbcon, fout=None):
   return df
 
 #############################################################################
-def ListXrefs(dbcon, xreftypes, fout):
+def ListXrefs(dbcon, xreftypes, fout=None):
   if xreftypes and type(xreftypes) not in (list, tuple):
     xreftypes = [xreftypes]
   cols=['target_id', 'protein_id', 'xtype', 'value'] 
@@ -119,7 +119,7 @@ def ListTargetFamilies(dbcon, fout=None):
   return df
 
 #############################################################################
-def ListTargets(dbcon, tdls, tfams, fout):
+def ListTargets(dbcon, tdls, tfams, fout=None):
   sql = """
 SELECT
 	target.id tcrdTargetId,
@@ -129,10 +129,10 @@ SELECT
 	target.ttype tcrdTargetType,
 	target.idg idgList,
 	protein.id tcrdProteinId,
+	protein.uniprot uniprotId,
 	protein.sym tcrdGeneSymbol,
 	protein.family tcrdProteinFamily,
 	protein.geneid ncbiGeneId,
-	protein.uniprot uniprotId,
 	protein.up_version uniprotVersion,
 	protein.chr,
 	protein.description tcrdProteinDescription,
@@ -169,7 +169,7 @@ LEFT OUTER JOIN
   return df
 
 #############################################################################
-def ListTargetsByDTO(dbcon, fout):
+def ListTargetsByDTO(dbcon, fout=None):
   sql = """
 SELECT DISTINCT
 	target.id tcrdTargetId,
@@ -203,13 +203,13 @@ ORDER BY
   return df
 
 #############################################################################
-def GetTargetPage(dbcon, tid, fout):
+def GetTargetPage(dbcon, tid, fout=None):
   df = GetTargets(dbcon, [tid], "TID", None)
   target = df.to_dict(orient='records')
   fout.write(json.dumps(target, indent=2))
 
 #############################################################################
-def GetTargets(dbcon, ids, idtype, fout):
+def GetTargets(dbcon, ids, idtype, fout=None):
   cols=[
 	'target.id',
 	'target.name',
@@ -264,7 +264,7 @@ LEFT OUTER JOIN
   return df
 
 #############################################################################
-def GetTargetsByXref(dbcon, ids, xreftypes, fout):
+def GetTargetsByXref(dbcon, ids, xreftypes, fout=None):
   if xreftypes and type(xreftypes) not in (list, tuple):
     xreftypes = [xreftypes]
   cols=[ 'target.description',
@@ -313,7 +313,7 @@ JOIN
   return df
 
 #############################################################################
-def GetPathways(dbcon, ids, fout):
+def GetPathways(dbcon, ids, fout=None):
   n_id=0; n_hit=0; df=pd.DataFrame(); pids_all=set();
   cols=[ 't2p.target_id',
 	't2p.id',
@@ -335,55 +335,91 @@ def GetPathways(dbcon, ids, fout):
   return df
 
 #############################################################################
-def ListDiseases(dbcon, fout):
+def ListDiseases(dbcon, fout=None):
+  "Ontologies: DOID, UMLS, MESH, AmyCo, OrphaNet, NCBIGene"
   sql="""
 SELECT
-	d.dtype,
-	dt.description dtype_description,
-	d.name diseaseName,
-	d.ncats_name ncatsDiseaseName,
-	d.did diseaseId,
-	d.description diseaseDescription,
-	d.reference,
-	d.drug_name,
-	d.source,
-	COUNT(d.protein_id) n_target_associations
+	disease.name diseaseName,
+	disease.did diseaseId,
+	IF((disease.did REGEXP '^C[0-9]+$'), 'UMLS', SUBSTR(disease.did, 1, LOCATE(':', disease.did)-1)) diseaseOntology,
+	disease.description diseaseDescription,
+	disease.dtype associationType,
+	disease_type.description associationDescription,
+	disease.source associationSource,
+	COUNT(disease.protein_id) nTargetAssociations
 FROM
-	disease d
-	LEFT OUTER JOIN disease_type dt ON dt.name = d.dtype
+	disease
+	LEFT OUTER JOIN disease_type ON disease_type.name = disease.dtype
 GROUP BY
-	d.dtype,
-	dt.description,
-	d.name,
-	d.ncats_name,
-	d.did,
-	d.description,
-	d.reference,
-	d.drug_name,
-	d.source
+	disease.dtype,
+	disease_type.description,
+	disease.name,
+	disease.did,
+	disease.description,
+	disease.source
 """
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, "\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   logging.info(f"diseaseIDs: {df.diseaseId.nunique()}")
   logging.info(f"diseaseNames: {df.diseaseName.nunique()}")
-  logging.info(f"ncatsDiseaseNames: {df.ncatsDiseaseName.nunique()}")
-  for dtype in df.dtype.unique().tolist():
-    logging.info(f"[{dtype}] diseaseIDs: {df[df.dtype==dtype].diseaseId.nunique()}")
+  for ontology in sorted(df.diseaseOntology.unique().astype(str).tolist()):
+    if df[df.diseaseOntology==ontology].diseaseId.nunique()>0:
+      logging.info(f"[{ontology}] diseaseIDs: {df[df.diseaseOntology==ontology].diseaseId.nunique()}")
   return df
 
 #############################################################################
-def ListDiseaseTypes(dbcon, fout):
+def ListDiseaseTypes(dbcon, fout=None):
   df = ListDiseases(dbcon, None)
-  df = df[["dtype", "dtype_description", "n_target_associations"]]
-  df = df.groupby(["dtype", "dtype_description"]).sum()
+  df = df[["associationType", "associationDescription", "nTargetAssociations"]]
+  df = df.groupby(["associationType", "associationDescription"]).sum()
   df.reset_index(drop=False, inplace=True)
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   return df
 
 #############################################################################
-def ListPhenotypes(dbcon, fout):
+def GetDiseaseAssociations(dbcon, ids, fout=None):
+  n_id=0; n_hit=0; df=pd.DataFrame();
+  sql = """\
+SELECT
+	disease.name diseaseName,
+	disease.did diseaseId,
+	IF((disease.did REGEXP '^C[0-9]+$'), 'UMLS', SUBSTR(disease.did, 1, LOCATE(':', disease.did)-1)) diseaseOntology,
+	disease.description diseaseDescription,
+	disease.dtype associationType,
+	disease_type.description associationDescription,
+	disease.source associationSource,
+	protein.id tcrdProteinId,
+	protein.uniprot uniprotId,
+	protein.sym tcrdGeneSymbol
+FROM
+	disease
+	LEFT OUTER JOIN disease_type ON disease_type.name = disease.dtype
+	JOIN protein ON protein.id = disease.protein_id
+WHERE
+	disease.did = '{0}'
+"""
+  for id_this in ids:
+    n_id+=1
+    sql_this = sql.format(id_this)
+    df_this = pd.read_sql(sql_this, dbcon)
+    if df_this.shape[0]>0: n_hit+=1
+    if fout is not None: df_this.to_csv(fout, "\t", index=False)
+    else: df = pd.concat([df, df_this])
+  logging.info(f"n_id: {n_id}; n_hit: {n_hit}")
+  if fout is None: return df
+
+#############################################################################
+def GetDiseaseAssociationsPage(dbcon, did, fout=None):
+  df = GetDiseaseAssociations(dbcon, [did], None)
+  disease = df[["diseaseName", "diseaseId", "diseaseOntology", "diseaseDescription"]].drop_duplicates().to_dict(orient='records')[0]
+  associations = df[["associationType", "associationDescription", "associationSource", "tcrdProteinId", "uniprotId", "tcrdGeneSymbol"]].to_dict(orient='records')
+  disease["associations"] = associations
+  fout.write(json.dumps(disease, indent=2))
+
+#############################################################################
+def ListPhenotypes(dbcon, fout=None):
   sql="""
 SELECT
 	p.ptype,
@@ -413,7 +449,7 @@ GROUP BY
   return df
 
 #############################################################################
-def ListPhenotypeTypes(dbcon, fout):
+def ListPhenotypeTypes(dbcon, fout=None):
   df = ListPhenotypes(dbcon, None)
   df = df[["ptype", "ptype_ontology", "n_target_associations"]]
   df = df.groupby(["ptype", "ptype_ontology"]).sum()
@@ -423,7 +459,7 @@ def ListPhenotypeTypes(dbcon, fout):
   return df
 
 #############################################################################
-def ListPublications(dbcon, fout):
+def ListPublications(dbcon, fout=None):
   df=None; n_out=0; tq=None; NCHUNK=1000;
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   N_row = pd.read_sql("SELECT COUNT(*) FROM pubmed", dbcon).iloc[0,0]

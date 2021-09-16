@@ -62,28 +62,29 @@ DBPW: ""
 ```
 python3 -m BioClients.idg.tcrd.Client -h
 usage: Client.py [-h] [--o OFILE] [--i IFILE] [--ids IDS]
-                 [--qtype {TID,GENEID,UNIPROT,GENESYMB,NCBI_GI,ENSP}]
-                 [--tdl {Tdark,Tbio,Tchem,Tclin}] [--fam FAM] [--param_file PARAM_FILE]
+                 [--idtype {TID,GENEID,UNIPROT,GENESYMB,ENSP}] [--xreftypes XREFTYPES]
+                 [--tdls TDLS] [--tfams TFAMS] [--param_file PARAM_FILE]
                  [--dbhost DBHOST] [--dbport DBPORT] [--dbusr DBUSR] [--dbpw DBPW]
-                 [--dbname DBNAME] [-v]
-                 {info,listTables,describeTables,tableRowCounts,tdlCounts,listTargets,listXreftypes,listXrefs,getTargets,getTargetpathways}
+                 [--dbname DBNAME] [-v] [-q]
+                 {info,listTables,listColumns,tableRowCounts,tdlCounts,listTargets,listXrefTypes,listXrefs,listDatasets,listTargetsByDTO,listTargetFamilies,listPhenotypes,listPhenotypeTypes,listPublications,getTargets,getTargetsByXref,getTargetPage,listDiseases,listDiseaseTypes,getDiseaseAssociations,getDiseaseAssociationsPage,getTargetpathways}
 
 TCRD MySql client utility
 
 positional arguments:
-  {info,listTables,describeTables,tableRowCounts,tdlCounts,listTargets,listXreftypes,listXrefs,getTargets,getTargetpathways}
+  {info,listTables,listColumns,tableRowCounts,tdlCounts,listTargets,listXrefTypes,listXrefs,listDatasets,listTargetsByDTO,listTargetFamilies,listPhenotypes,listPhenotypeTypes,listPublications,getTargets,getTargetsByXref,getTargetPage,listDiseases,listDiseaseTypes,getDiseaseAssociations,getDiseaseAssociationsPage,getTargetpathways}
                         OPERATION
 
 optional arguments:
   -h, --help            show this help message and exit
   --o OFILE             output (TSV)
-  --i IFILE             input ID or query file
-  --ids IDS             IDs or queries
-  --qtype {TID,GENEID,UNIPROT,GENESYMB,NCBI_GI,ENSP}
-                        ID or query type
-  --tdl {Tdark,Tbio,Tchem,Tclin}
-                        Target Development Level (TDL) Tdark|Tbio|Tchem|Tclin
-  --fam FAM             target family GPCR|Kinase|IC|NR|...|Unknown
+  --i IFILE             input target ID file
+  --ids IDS             input IDs
+  --idtype {TID,GENEID,UNIPROT,GENESYMB,ENSP}
+                        target ID type
+  --xreftypes XREFTYPES
+                        Xref types, comma-separated
+  --tdls TDLS           TDLs, comma-separated (Tdark|Tbio|Tchem|Tclin)
+  --tfams TFAMS         target families, comma-separated
   --param_file PARAM_FILE
   --dbhost DBHOST
   --dbport DBPORT
@@ -91,6 +92,7 @@ optional arguments:
   --dbpw DBPW
   --dbname DBNAME
   -v, --verbose
+  -q, --quiet           Suppress progress notification.
 ```
 
 # `BioClients.idg.tinx`
