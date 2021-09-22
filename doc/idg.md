@@ -99,6 +99,11 @@ optional arguments:
 
 TIN-X (Target Importance and Novelty Explorer)
 
-* <http://www.newdrugtargets.org>
-* <http://api.newdrugtargets.org/docs>
+* <https://www.newdrugtargets.org>
+* <https://api.newdrugtargets.org/docs>
 
+# `BioClients.idg.tiga`
+
+TIGA (Target Illumination GWAS Analytics)
+
+* <https://unmtid-shinyapps.net/shiny/tiga/>
