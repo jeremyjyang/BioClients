@@ -102,8 +102,73 @@ TIN-X (Target Importance and Novelty Explorer)
 * <https://www.newdrugtargets.org>
 * <https://api.newdrugtargets.org/docs>
 
+```
+$ python3 -m BioClients.idg.tinx.Client -h
+usage: Client.py [-h] [--i IFILE] [--ids IDS] [--disease_ids DISEASE_IDS] [--o OFILE]
+                 [--query QUERY] [--api_host API_HOST] [--api_base_path API_BASE_PATH]
+                 [-v]
+                 {list_diseases,list_targets,list_articles,list_dto,get_disease,get_disease_by_doid,get_disease_targets,get_disease_target_articles,get_target,get_target_by_uniprot,get_target_diseases,get_dto,search_diseases,search_targets,search_articles,search_dtos}
+
+TIN-X (Target Importance and Novelty Explorer) REST API client)
+
+positional arguments:
+  {list_diseases,list_targets,list_articles,list_dto,get_disease,get_disease_by_doid,get_disease_targets,get_disease_target_articles,get_target,get_target_by_uniprot,get_target_diseases,get_dto,search_diseases,search_targets,search_articles,search_dtos}
+                        operation
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --i IFILE             input IDs or search terms
+  --ids IDS             IDs (comma-separated)
+  --disease_ids DISEASE_IDS
+                        disease IDs (comma-separated), needed ONLY if BOTH target and
+                        disease IDs specified
+  --o OFILE             output (TSV)
+  --query QUERY         search query
+  --api_host API_HOST
+  --api_base_path API_BASE_PATH
+  -v, --verbose
+
+Example IDs: 5391 (disease); DOID:9297 (DOID); 12203 (target); Q9H4B4 (UniProt);
+--disease_ids needed ONLY if BOTH target and disease IDs specified, such as for
+get_disease_target_articles.
+```
+
 # `BioClients.idg.tiga`
 
 TIGA (Target Illumination GWAS Analytics)
 
 * <https://unmtid-shinyapps.net/shiny/tiga/>
+
+```
+$ python3 -m BioClients.idg.tiga.Client -h
+usage: Client.py [-h] [--o OFILE] [--igene IFILEGENE] [--itrait IFILETRAIT]
+                 [--geneIds GENEIDS] [--traitIds TRAITIDS] [--param_file PARAM_FILE]
+                 [--dbhost DBHOST] [--dbport DBPORT] [--dbusr DBUSR] [--dbpw DBPW]
+                 [--dbname DBNAME] [-v] [-q]
+                 {info,listGenes,listTraits,getTraitAssociations,getGeneAssociations,getGeneTraitAssociations,getGeneTraitProvenance}
+
+TIGA/TCRD MySql client utility
+
+positional arguments:
+  {info,listGenes,listTraits,getTraitAssociations,getGeneAssociations,getGeneTraitAssociations,getGeneTraitProvenance}
+                        OPERATION
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --o OFILE             output (TSV)
+  --igene IFILEGENE     input gene ID file
+  --itrait IFILETRAIT   input trait ID file
+  --geneIds GENEIDS     input IDs, genes (ENSG)
+  --traitIds TRAITIDS   input IDs, traits (EFO)
+  --param_file PARAM_FILE
+                        default param_file: /home/jjyang/.tcrd.yaml
+  --dbhost DBHOST
+  --dbport DBPORT
+  --dbusr DBUSR
+  --dbpw DBPW
+  --dbname DBNAME
+  -v, --verbose
+  -q, --quiet           Suppress progress notification.
+
+Example IDs: EFO_0004541, ENSG00000160785, ENSG00000215021
+```

@@ -10,17 +10,23 @@ from ...util import yaml as util_yaml
 #############################################################################
 if __name__=='__main__':
   PARAM_FILE = os.environ['HOME']+"/.tcrd.yaml"
-  epilog = f"default param_file: {PARAM_FILE}"
+  epilog = "Example IDs: EFO_0004541, ENSG00000160785, ENSG00000215021"
   parser = argparse.ArgumentParser(description='TIGA/TCRD MySql client utility', epilog=epilog)
   ops = ['info',
 	'listGenes',
 	'listTraits',
+	'getTraitAssociations',
+	'getGeneAssociations',
+	'getGeneTraitAssociations',
+	'getGeneTraitProvenance',
 	]
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--i", dest="ifile", help="input target ID file")
-  parser.add_argument("--ids", help="input IDs")
-  parser.add_argument("--param_file", default=PARAM_FILE)
+  parser.add_argument("--igene", dest="ifilegene", help="input gene ID file")
+  parser.add_argument("--itrait", dest="ifiletrait", help="input trait ID file")
+  parser.add_argument("--geneIds", help="input IDs, genes (ENSG)")
+  parser.add_argument("--traitIds", help="input IDs, traits (EFO)")
+  parser.add_argument("--param_file", default=PARAM_FILE, help=f"default param_file: {PARAM_FILE}")
   parser.add_argument("--dbhost")
   parser.add_argument("--dbport")
   parser.add_argument("--dbusr")
@@ -42,17 +48,30 @@ if __name__=='__main__':
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
-  ids=[]
-  if args.ifile:
-    fin = open(args.ifile)
+  geneIds=None; traitIds=None;
+  if args.ifilegene:
+    fin = open(args.ifilegene)
+    geneIds=[]
     while True:
       line = fin.readline()
       if not line: break
-      ids.append(line.rstrip())
-    logging.info('Input IDs: %d'%(len(ids)))
+      geneIds.append(line.rstrip())
+    logging.info(f"Input gene IDs: {len(geneIds)}")
     fin.close()
-  elif args.ids:
-    ids = re.split(r'[,\s]+', args.ids)
+  elif args.geneIds:
+    geneIds = re.split(r'[,\s]+', args.geneIds)
+
+  if args.ifiletrait:
+    fin = open(args.ifiletrait)
+    traitIds=[]
+    while True:
+      line = fin.readline()
+      if not line: break
+      traitIds.append(line.rstrip())
+    logging.info(f"Input trait IDs: {len(traitIds)}")
+    fin.close()
+  elif args.traitIds:
+    traitIds = re.split(r'[,\s]+', args.traitIds)
 
   try:
     import mysql.connector as mysql
@@ -74,6 +93,18 @@ if __name__=='__main__':
 
   elif args.op=='listTraits':
     tiga.Utils.ListTraits(dbcon, fout)
+
+  elif args.op=='getTraitAssociations':
+    tiga.Utils.GetGeneTraitAssociations(None, traitIds, dbcon, fout)
+
+  elif args.op=='getGeneAssociations':
+    tiga.Utils.GetGeneTraitAssociations(geneIds, None, dbcon, fout)
+
+  elif args.op=='getGeneTraitAssociations':
+    tiga.Utils.GetGeneTraitAssociations(geneIds, traitIds, dbcon, fout)
+
+  elif args.op=='getGeneTraitProvenance':
+    tiga.Utils.GetGeneTraitProvenance(geneIds, traitIds, dbcon, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
