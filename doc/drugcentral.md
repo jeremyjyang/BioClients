@@ -35,7 +35,7 @@ Operations include:
 * __get_structure_atcs__ - Get all ATC classes for structures.
 * __get_product__ - Get product by product_id.
 * __get_product_structures__ - Get structures for product.
-* __get_indication_structures__ - Get all structures for indication.
+* __get_indication_structures__ - Get all structures for indication (OMOP ID).
 * __get_drugpage__ - Get drug (structure), with products, xrefs, etc. as JSON.
 * __search_indications__ - Search indications by regular expression.
 * __search_products__ - Search products by regular expression.
@@ -89,3 +89,4 @@ DBNAME: "====Replace_with_NAME===="
 DBUSR:  "====Replace_with_USERNAME===="
 DBPW:   "====Replace_with_PASSWORD===="
 ```
+

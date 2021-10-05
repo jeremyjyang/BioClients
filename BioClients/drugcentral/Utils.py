@@ -309,7 +309,7 @@ WHERE
 
 #############################################################################
 def GetIndicationStructures(dbcon, ids, fout=None):
-  """Input OMOP conceptIds."""
+  """Input OMOP conceptIds (INTEGER)."""
   df=None;
   sql="""\
 SELECT DISTINCT
@@ -328,7 +328,7 @@ JOIN
 	structures s ON omop.struct_id = s.id
 WHERE
 	omop.relationship_name = 'indication'
-	AND omop.concept_id = '{}'
+	AND omop.concept_id = {}
 """
   for id_this in ids:
     logging.debug(sql.format(id_this))
