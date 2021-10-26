@@ -20,7 +20,9 @@ if __name__=='__main__':
         "get_cid2properties", "get_cid2inchi",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
-        "get_assayname", "get_assaydescriptions", "get_assayresults" ]
+        "get_assayname", "get_assaydescriptions",
+	"get_assaysubstances",
+	"get_assaysubstanceresults",]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
   parser.add_argument("op",choices=ops,help='operation')
   parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID|SMILES|name)")
@@ -123,7 +125,10 @@ if __name__=='__main__':
   elif args.op == 'get_assaydescriptions':
     pubchem.Utils.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
 
-  elif args.op == 'get_assayresults':
+  elif args.op == 'get_assaysubstances':
+    pubchem.Utils.GetAssaySIDs(BASE_URL, aids, args.skip, args.nmax, fout)
+
+  elif args.op == 'get_assaysubstanceresults':
     if not (aids and ids): parser.error('Input AIDs and SIDs required.')
     pubchem.Utils.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
 

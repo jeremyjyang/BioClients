@@ -23,8 +23,11 @@ Utility functions for the PubChem PUG REST API.
   (name, smiles; inchi by POST only)
 """
 ###
-import sys,os,io,re,csv,json,pandas,math,time,logging
+import sys,os,io,re,csv,json,pandas,math,time,logging,tempfile
+from xml.etree import ElementTree
+import requests
 import urllib.request,urllib.parse
+import pandas as pd
 #
 from ..util import rest
 #
@@ -253,20 +256,19 @@ def Inchi2CID(base_url, inchis, fout):
 #############################################################################
 def GetAssayName(base_url, aids, fout):
   for aid in aids:
-    xmlstr = rest.Utils.GetURL(base_url+'/assay/aid/%d/description/XML'%id_query)
+    xmlstr = rest.Utils.GetURL(base_url+f"/assay/aid/{aid}/description/XML")
     name, source = AssayXML2NameAndSource(xmlstr)
-    fout.write('%d\t%s\t%s'%(aid, name, source))
+    fout.write(f"{aid}\t{name}\t{source}\n")
 
 #############################################################################
-def GetAssayDescriptions(base_url, ids, skip, nmax, fout):
-  """Example AIDs: 159014"""
-  n_in=0; n_out=0;
-  fout.write("aid\tname\tsource\trevision\tassay_group\tproject_category\tactivity_outcome_method\tdescription\tcomment\n")
+def GetAssayDescriptions(base_url, ids, skip, nmax, fout=None):
+  """Example AIDs: 527,159014"""
+  n_in=0; n_out=0; df=None;
   for aid in ids:
     n_in+=1
     if skip and n_in<skip: continue
     if nmax and n_out==nmax: break
-    url = (base_url+'/assay/aid/%s/description/JSON'%aid)
+    url = (base_url+f"/assay/aid/{aid}/description/JSON")
     rval = rest.Utils.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     assays = rval['PC_AssayContainer'] if 'PC_AssayContainer' in rval else []
@@ -279,19 +281,68 @@ def GetAssayDescriptions(base_url, ids, skip, nmax, fout):
       revision = str(descr['revision'])
       project_category = str(descr['project_category'])
       activity_outcome_method = str(descr['activity_outcome_method'])
-      assay_group = descr['assay_group'] #list of PMIDs
+      assay_group = descr['assay_group'] if 'assay_group' in descr else '' #list of PMIDs
       description_lines = descr['description'] #list of lines
       comment_lines = descr['comment'] #list of lines
-      description = (r'\\n').join(description_lines)
-      comment = (r'\\n').join(comment_lines)
-      vals = [aid, name, source, revision, (';'.join(assay_group)), project_category, activity_outcome_method, description, comment]
-      fout.write('\t'.join(vals)+'\n')
+      description = (' ').join(description_lines)
+      comment = (' ').join(comment_lines)
+      df_this = pd.DataFrame({
+	"aid":[aid],
+	"name":[name],
+	"source":[source],
+	"revision":[revision],
+	"assay_group":[(';'.join(assay_group))],
+	"project_category":[project_category],
+	"activity_outcome_method":[activity_outcome_method],
+	"description":[description],
+	"comment":[comment]
+	})
+      if fout is not None:
+        df_this.to_csv(fout, "\t", index=False)
+      else:
+        df = pd.concat([df, df_this])
       n_out+=1
-  logging.info("n_out: %d"%n_out)
+  logging.info(f"n_out: {n_out}")
+  if fout is None: return df
 
 #############################################################################
 def OutcomeCode(txt):
   return OUTCOME_CODES[txt.lower()] if txt.lower() in OUTCOME_CODES else OUTCOME_CODES['unspecified']
+
+#############################################################################
+def GetAssaySIDs(base_url, aids, skip, nmax, fout=None):
+  if skip: logging.info(f"SKIP: [1-{skip}]")
+  if nmax: logging.info(f"NMAX: {nmax}")
+  n_aid_in=0; n_aid_done=0; n_out=0; nchunk_sid=100; df=None; tags=None;
+  for aid in aids:
+    n_aid_in+=1
+    if skip and n_aid_in<skip: continue
+    if nmax and n_aid_done>=nmax: break
+    n_aid_done+=1
+    logging.debug(f"Request: ({n_aid_done}) [AID={aid}]")
+    url = base_url+f"/assay/aid/{aid}/concise/JSON"
+    rval = requests.get(url).json()
+    logging.debug(json.dumps(rval, indent=2))
+    tags_this = rval["Table"]["Columns"]["Column"]
+    logging.debug(f"tags_this = {str(tags_this)}")
+    j_sid=None; j_cid=None; 
+    if not tags:
+      tags = tags_this
+      j_sid = tags.index("SID") if "SID" in tags else None
+      j_cid = tags.index("CID") if "CID" in tags else None
+    rows = rval["Table"]["Row"]
+    logging.info(f"[AID={aid}] results/activities: {len(rows)}")
+    for row in rows:
+      cells = row["Cell"]
+      sid = cells[j_sid]
+      cid = cells[j_cid]
+      df_this = pd.DataFrame({"AID":[aid], "SID":[sid], "CID":[cid]})
+      df = pd.concat([df, df_this])
+  logging.info(f"AIDs: {df.AID.nunique()}; SIDs: {df.SID.nunique()}; CIDs: {df.CID.nunique()}")
+  df.drop_duplicates(inplace=True)
+  df.sort_values(by=["AID", "SID"], inplace=True)
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 #############################################################################
 def GetAssaySIDResults(base_url, aids, sids, skip, nmax, fout):
@@ -299,11 +350,10 @@ def GetAssaySIDResults(base_url, aids, sids, skip, nmax, fout):
 In this version of the function, use the "concise" mode to download full data
 for each AID, then iterate through SIDs and use local hash.
 '''
-  if skip: logging.info('skip: [1-%d]'%skip)
-  if nmax: logging.info('NMAX: %d'%nmax)
-  n_aid_in=0; n_aid_done=0; n_out=0;
-  nchunk_sid=100;
-  #fout.write('aid,sid,outcome,version,rank,year\n')
+  if skip: logging.info(f"skip: [1-{skip}]")
+  if nmax: logging.info(f"NMAX: {nmax}")
+  n_aid_in=0; n_aid_done=0; n_out=0; df=None;
+  j_tag={};
   tags = None
   for aid in aids:
     n_aid_in+=1
@@ -311,123 +361,37 @@ for each AID, then iterate through SIDs and use local hash.
     if skip and n_aid_in<skip: continue
     if nmax and n_aid_done>=nmax: break
     n_aid_done+=1
-    logging.debug('Request: (%d) [AID=%d] SID count: %d'%(n_aid_done,aid,len(sids)))
-    try:
-      url = base_url+'/assay/aid/%d/concise/JSON'%(aid)
-      logging.debug('%s'%(url))
-      rval = rest.Utils.GetURL(url,parse_json=True)
-    except Exception as e:
-      logging.info('Error: %s'%(e))
-      break
-
-    if not type(rval) is dict:
-      #logging.info('Error: %s'%(str(rval)))
-      f = open("z.z", "w")
-      f.write(str(rval))
-      f.close()
-      logging.debug('rval not DictType.  See z.z')
-      break
-    adata = {} # data this assay
-    tags_this = rval["Table"]["Columns"]["Column"]
-    logging.debug('tags_this = %s'%(str(tags_this)))
-    j_sid = None;
-    j_res = None;
+    logging.debug(f"Request: ({n_aid_done}) [AID={aid}] SID count: {len(sids)}")
+    url = base_url+f"/assay/aid/{aid}/concise/JSON"
+    rval = requests.get(url).json()
     if not tags:
-      tags = tags_this
-      for j,tag in enumerate(tags):
-        if tag == 'SID': j_sid = j
-        if tag == 'Bioactivity Outcome': j_res = j
-      fout.write(','.join(tags)+'\n')
-
+      tags = rval["Table"]["Columns"]["Column"]
+      logging.debug(f"tags= {str(tags)}")
+      for tag in tags:
+        j_tag[tag] = tags.index(tag)
     rows = rval["Table"]["Row"]
-
     for row in rows:
       cells = row["Cell"]
-      if len(cells) != len(tags):
-        logging.info('Error: n_cells != n_tags (%d != %d)'%(len(cells), len(tags)))
-        continue
-
-      sid = cells[j_sid]
-      res = cells[j_res]
-      adata[sid] = res
-
-      #break #DEBUG
-
-#############################################################################
-def GetAssaySIDResults_OLD(base_url, aids, sids, skip, nmax, fout):
-  '''One CSV line for each activity.  skip and nmax applied to AIDs.
-Must chunk the SIDs, since requests limited to 10k SIDs.
-'''
-  if skip: logging.info('skip: [1-%d]'%skip)
-  if nmax: logging.info('NMAX: %d'%nmax)
-  n_aid_in=0; n_aid_done=0; n_out=0;
-  nchunk_sid=100;
-  fout.write('aid,sid,outcome,version,rank,year\n')
-  for aid in aids:
-    n_aid_in+=1
-    n_out_this=0;
-    if skip and n_aid_in<skip: continue
-    if nmax and n_aid_done>=nmax: break
-    n_aid_done+=1
-    logging.debug('Request: (%d) [AID=%d] SID count: %d'%(n_aid_done,aid,len(sids)))
-    nskip_sid=0;
-    while True:
-      if nskip_sid>=len(sids): break
-      logging.debug('(%d) [AID=%s] ; SIDs [%d-%d of %d] ; measures: %d'%(n_aid_done,aid,nskip_sid+1,min(nskip_sid+nchunk_sid,len(sids)),len(sids),n_out_this))
-      sidstr=(','.join(map(lambda x:str(x),sids[nskip_sid:nskip_sid+nchunk_sid])))
-      try:
-        rval = rest.Utils.GetURL(base_url+'/assay/aid/%d/JSON?sid=%s'%(aid,sidstr),parse_json=True)
-      except Exception as e:
-        logging.info('Error: %s'%(e))
-        break
-      if not type(rval) is dict:
-        logging.info('Error: %s'%(str(rval)))
-        break
-      pcac = rval['PC_AssayContainer'] if 'PC_AssayContainer' in rval else None
-      if len(pcac)<1:
-        logging.info('Error: [%s] empty PC_AssayContainer.'%aid)
-        break
-      if len(pcac)>1:
-        logging.info('NOTE: [%s] multiple assays in PC_AssayContainer.'%aid)
-      for assay in pcac:
-        if not assay: continue
-        logging.debug(json.dumps(assay,indent=2))
-        ameta = assay['assay'] if 'assay' in assay else None
-        adata = assay['data'] if 'data' in assay else None
-        if not ameta: logging.info('Error: [%s] no metadata.'%aid)
-        if not adata: logging.info('Error: [%s] no data.'%aid)
-        for datum in adata:
-          sid = datum['sid'] if 'sid' in datum else ''
-          outcome = datum['outcome'] if 'outcome' in datum else ''
-          version = datum['version'] if 'version' in datum else ''
-          rank = datum['rank'] if 'rank' in datum else ''
-          date = datum['date'] if 'date' in datum else {}
-          year = date['std']['year'] if 'std' in date and 'year' in date['std'] else ''
-          fout.write('%d,%s,%d,%s,%s,%s\n'%(aid,sid,OutcomeCode(outcome),version,rank,year))
-          fout.flush()
-          n_out_this+=1
-      nskip_sid+=nchunk_sid
-    logging.debug('Result: [AID=%d] total measures: %d'%(aid,n_out_this))
-
-  return n_aid_in,n_out
+      logging.debug(json.dumps(cells, indent=2))
+      df_this = pd.DataFrame({tag:[cells[j_tag[tag]]] for tag in tags})
+      df = pd.concat([df, df_this])
+  logging.info(f"AIDs: {df.AID.nunique()}; SIDs: {df.SID.nunique()}; CIDs: {df.CID.nunique()}; Activity results: {df.shape[0]}")
+  for key,val in df['Bioactivity Outcome'].value_counts().iteritems():
+    logging.info(f'Bioactivity_Outcome = {key:>12}: {val:6d}')
+  df.drop_duplicates(inplace=True)
+  df.sort_values(by=["AID", "SID"], inplace=True)
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  else: return df
 
 #############################################################################
 def AssayXML2NameAndSource(xmlstr):
   '''Required: xpath - XPath Queries For DOM Trees, http://py-dom-xpath.googlecode.com/'''
-  tag_name='PC-AssayDescription_name'
-  tag_source='PC-DBTracking_name'
-
-  #import xpath #old
-  #dom=xml.dom.minidom.parseString(xmlstr)
-  #name=xpath.findvalue('//%s'%tag_name,dom)  ##1st
-  #source=xpath.findvalue('//%s'%tag_source,dom)  ##1st
-
-  from xml.etree import ElementTree #newer
-
+  logging.debug(xmlstr)
   root = ElementTree.fromstring(xmlstr)
-  name=root.find('//%s'%tag_name).text  ##1st
-  source=root.find('//%s'%tag_sourcedom).text  ##1st
-
+  ns = { "pc":"http://www.ncbi.nlm.nih.gov" }
+  name = root.find("pc:PC-AssaySubmit/pc:PC-AssaySubmit_assay/pc:PC-AssaySubmit_assay_descr/pc:PC-AssayDescription/pc:PC-AssayDescription_name", ns).text  ##1st
+  source = root.find("pc:PC-AssaySubmit/pc:PC-AssaySubmit_assay/pc:PC-AssaySubmit_assay_descr/pc:PC-AssayDescription/pc:PC-AssayDescription_aid-source/pc:PC-Source/pc:PC-Source_db/pc:PC-DBTracking/pc:PC-DBTracking_name",
+ns).text
   return name,source
 
 #############################################################################
