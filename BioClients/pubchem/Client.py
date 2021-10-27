@@ -16,7 +16,7 @@ if __name__=='__main__':
         "list_sources_substance", "list_sources_assay",
         "get_name2sid", "get_name2cid", "get_name2synonyms",
         "get_smi2cid",
-        "get_cid2smi", "get_cid2smiles", "get_cid2sdf",
+        "get_cid2smiles", "get_cid2sdf",
         "get_cid2properties", "get_cid2inchi",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",

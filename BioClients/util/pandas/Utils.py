@@ -55,7 +55,7 @@ def SetHeader(df, coltags, delim, fout):
 if __name__=='__main__':
   verstr = (f'Python: {sys.version.split()[0]}; pandas: {pd.__version__}')
   parser = argparse.ArgumentParser(prog="BioClients.util.pandas.Utils", description='Pandas utilities for simple datafile transformations.', epilog=verstr)
-  ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'to_html',
+  ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'list_columns', 'to_html',
 	'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
 	'pickle', 'sample', 'set_header', 'remove_header']
@@ -111,11 +111,15 @@ if __name__=='__main__':
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
-  df = pd.read_csv(args.ifile, sep=delim, compression=compression, error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op=='showcols' else args.nrows), skiprows=args.skiprows)
+  df = pd.read_csv(args.ifile, sep=delim, compression=compression,
+error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
       fout.write(f'{j+1}. "{tag}"\n')
+
+  elif args.op == 'list_columns':
+    fout.write("\n".join(df.columns)+"\n")
 
   elif args.op == 'shape':
     fout.write(f"rows: {df.shape[0]}; cols: {df.shape[1]}\n")
