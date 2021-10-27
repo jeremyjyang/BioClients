@@ -16,11 +16,13 @@ if __name__=='__main__':
         "list_sources_substance", "list_sources_assay",
         "get_name2sid", "get_name2cid", "get_name2synonyms",
         "get_smi2cid",
-        "get_cid2smi", "get_cid2smiles", "get_cid2sdf",
+        "get_cid2smiles", "get_cid2sdf",
         "get_cid2properties", "get_cid2inchi",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
-        "get_assayname", "get_assaydescriptions", "get_assayresults" ]
+        "get_assayname", "get_assaydescriptions",
+	"get_assaysubstances",
+	"get_assaysubstanceresults",]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
   parser.add_argument("op",choices=ops,help='operation')
   parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID|SMILES|name)")
@@ -28,7 +30,6 @@ if __name__=='__main__':
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
   parser.add_argument("--iaid", dest="ifile_aid", help="input AIDs file")
   parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
-  parser.add_argument("--isomeric", action="store_true", help="return Isomeric SMILES")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
   parser.add_argument("--skip", type=int, default=0)
@@ -88,7 +89,7 @@ if __name__=='__main__':
     pubchem.GetCID2SID(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2smiles':
-    pubchem.GetCID2Smiles(BASE_URL, ids, args.isomeric, fout)
+    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2sdf':
     pubchem.GetCID2SDF(BASE_URL, ids, fout)
@@ -123,7 +124,10 @@ if __name__=='__main__':
   elif args.op == 'get_assaydescriptions':
     pubchem.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
 
-  elif args.op == 'get_assayresults':
+  elif args.op == 'get_assaysubstances':
+    pubchem.Utils.GetAssaySIDs(BASE_URL, aids, args.skip, args.nmax, fout)
+
+  elif args.op == 'get_assaysubstanceresults':
     if not (aids and ids): parser.error('Input AIDs and SIDs required.')
     pubchem.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
 
