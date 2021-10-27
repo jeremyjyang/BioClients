@@ -30,7 +30,6 @@ if __name__=='__main__':
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
   parser.add_argument("--iaid", dest="ifile_aid", help="input AIDs file")
   parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
-  parser.add_argument("--isomeric", action="store_true", help="return Isomeric SMILES")
   parser.add_argument("--api_host", default=API_HOST)
   parser.add_argument("--api_base_path", default=API_BASE_PATH)
   parser.add_argument("--skip", type=int, default=0)
@@ -90,7 +89,7 @@ if __name__=='__main__':
     pubchem.Utils.GetCID2SID(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2smiles':
-    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, args.isomeric, fout)
+    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2sdf':
     pubchem.Utils.GetCID2SDF(BASE_URL, ids, fout)

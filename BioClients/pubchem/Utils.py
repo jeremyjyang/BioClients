@@ -29,7 +29,7 @@ import requests
 import urllib.request,urllib.parse
 import pandas as pd
 #
-from ..util import rest #replace PostURL with requests.post()
+#from ..util import rest
 #
 OUTCOME_CODES = {
         'inactive':1,
@@ -38,6 +38,10 @@ OUTCOME_CODES = {
         'unspecified':4,
         'probe':5}
 #
+#############################################################################
+def OutcomeCode(txt):
+  return OUTCOME_CODES[txt.lower()] if txt.lower() in OUTCOME_CODES else OUTCOME_CODES['unspecified']
+
 #############################################################################
 def ListSources(base_url, src_type, fout):
   rval = requests.get(base_url+f"/sources/{src_type}/JSON").json()
@@ -136,22 +140,23 @@ def GetCID2Inchi(base_url, ids, fout):
   PROPTAGS = [ "InChIKey", "InChI" ]
   ids_dict = {'cid':(','.join(map(lambda x:str(x), ids)))}
   url = (base_url+f"/compound/cid/property/{','.join(PROPTAGS)}/CSV")
-  rval = rest.Utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
-  df = pandas.read_csv(io.StringIO(rval), sep=',')
+  #rval = rest.Utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
+  response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
+  df = pandas.read_csv(io.StringIO(response.text), sep=',')
   df.to_csv(fout, sep='\t', index=False)
   logging.info(f"Input IDs: {len(ids)}; Output InChIs: {df.shape[0]}")
 
 ##############################################################################
 def GetCID2SDF(base_url, ids, fout):
-  """Faster via POST(?). Request in chunks.  Works for 50, and not
-  for 200 (seems to be a limit)."""
+  """Request in chunks.  Works for 50, and not for 200 (seems to be a limit)."""
   nchunk=50; nskip_this=0; n_out=0;
   while True:
     if nskip_this>=len(ids): break
     idstr = (','.join(map(lambda x:str(x), ids[nskip_this:nskip_this+nchunk])))
-    rval = rest.Utils.PostURL(base_url+'/compound/cid/SDF', data={'cid':idstr})
-    fout.write(rval)
-    n_out += len(re.findall(r'^\$\$\$\$$', rval, re.M))
+    #rval = rest.Utils.PostURL(base_url+'/compound/cid/SDF', data={'cid':idstr})
+    response = requests.post(base_url+'/compound/cid/SDF', data={'cid':idstr})
+    fout.write(response.text)
+    n_out += len(re.findall(r'^\$\$\$\$$', response.text, re.M))
     nskip_this+=nchunk
   logging.info(f"SDFs out: {n_out}")
 
@@ -167,10 +172,10 @@ def GetSID2SDF(base_url, sids, skip, nmax, fout):
     nchunk = min(nchunk, nmax-(nskip_this-skip))
     n_sid_in+=nchunk
     idstr = (','.join(map(lambda x:str(x), sids[nskip_this:nskip_this+nchunk])))
-    rval = rest.Utils.PostURL(base_url+'/substance/sid/SDF', data={'sid':idstr})
-    if rval:
-      fout.write(rval)
-      n_out += len(re.findall(r'^\$\$\$\$$', rval, re.M))
+    #rval = rest.Utils.PostURL(base_url+'/substance/sid/SDF', data={'sid':idstr})
+    response = requests.post(base_url+'/substance/sid/SDF', data={'sid':idstr})
+    fout.write(response.text)
+    n_out += len(re.findall(r'^\$\$\$\$$', response.text, re.M))
     nskip_this+=nchunk
     if nmax and (nskip_this-skip)>=nmax:
       logging.info(f"NMAX limit reached: {nmax}")
@@ -178,8 +183,10 @@ def GetSID2SDF(base_url, sids, skip, nmax, fout):
   logging.info(f"SIDs: {len(sids)}; SDFs out: {n_out}")
 
 #############################################################################
-def GetCID2Smiles(base_url, ids, isomeric, fout=None):
-  """Returns Canonical or Isomeric SMILES."""
+def GetCID2Smiles(base_url, ids, fout=None):
+  """Returns Canonical and Isomeric SMILES."""
+  PROPTAGS = ['CanonicalSMILES', 'IsomericSMILES']
+  url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
   nchunk=50; nskip_this=0; tq=None;
   n_in=0; n_out=0; n_err=0; results=[];
   while True:
@@ -188,23 +195,18 @@ def GetCID2Smiles(base_url, ids, isomeric, fout=None):
     ids_this = ids[nskip_this:nskip_this+nchunk]
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
-    prop = 'IsomericSMILES' if isomeric else 'CanonicalSMILES'
-    txt = rest.Utils.PostURL(base_url+f"/compound/cid/property/{prop}/CSV", data={'cid':idstr})
-    lines = txt.splitlines()
-    for line in lines:
-      cid,smi = re.split(',', line)
-      if cid.upper()=='CID': continue #header
-      smi = smi.replace('"', '')
-      results.append([smi, cid])
-      n_out+=1
+    response = requests.post(url, data={'cid':idstr})
+    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    if fout is not None:
+      df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
+    else:
+      df = pd.concat([df, df_this])
     nskip_this+=nchunk
+    n_out+=len(ids_this)
     tq.update(n=len(ids_this))
   tq.close()
-  df = pd.DataFrame(results, columns=["SMILES", "CID"])
-  logging.info(f"CIDs in: {n_in}; SMILES (isomeric={bool(isomeric)}) out: {n_out}; errors: {n_err}")
-  if fout is not None:
-    df.to_csv(fout, "\t", index=False)
-  else:
+  logging.info(f"Input IDs: {len(ids)}; Output records: {n_out}")
+  if fout is None:
     return df
 
 #############################################################################
@@ -219,8 +221,8 @@ def GetCID2Properties(base_url, ids, fout=None):
     ids_this = ids[nskip_this:nskip_this+nchunk]
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
-    rval = rest.Utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data={'cid':idstr})
-    df_this = pandas.read_csv(io.StringIO(rval), sep=',')
+    response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data={'cid':idstr})
+    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
     if fout is not None:
       df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else:
@@ -244,11 +246,12 @@ def Inchi2CID(base_url, inchis, fout):
   fout.write("InChI\tCID\n")
   for inchi in inchis:
     url = "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchi/cids/TXT"
-    logging.info('inchi="%s"'%(inchi))
+    logging.info(f"inchi='{inchi}'")
     body_dict={'inchi':urllib.parse.quote(inchi)}
-    rval = rest.Utils.PostURL(url=url, headers={'Content-Type':'application/x-www-form-urlencoded','Accept':'text/plain'}, data=body_dict)
+    #rval = rest.Utils.PostURL(url=url, headers={'Content-Type':'application/x-www-form-urlencoded','Accept':'text/plain'}, data=body_dict)
+    response = requests.post(url=url, headers={'Content-Type':'application/x-www-form-urlencoded','Accept':'text/plain'}, data=body_dict)
     cids_this = set()
-    lines = rval.splitlines()
+    lines = response.text.splitlines()
     for line in lines:
       if re.match(r'[\d]+$', line.strip()):
         cid = line.strip()
@@ -308,10 +311,6 @@ def GetAssayDescriptions(base_url, ids, skip, nmax, fout=None):
       n_out+=1
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
-
-#############################################################################
-def OutcomeCode(txt):
-  return OUTCOME_CODES[txt.lower()] if txt.lower() in OUTCOME_CODES else OUTCOME_CODES['unspecified']
 
 #############################################################################
 def GetAssaySIDs(base_url, aids, skip, nmax, fout=None):
