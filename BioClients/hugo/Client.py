@@ -31,8 +31,8 @@ if __name__=='__main__':
   parser.add_argument("--rawquery", action="store_true")
   parser.add_argument("--nmax", type=int, default=None, help="max records")
   parser.add_argument("--skip", type=int, default=0, help="skip 1st SKIP queries")
-  parser.add_argument("--api_host", default=hugo.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=hugo.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=hugo.API_HOST)
+  parser.add_argument("--api_base_path", default=hugo.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -55,7 +55,7 @@ if __name__=='__main__':
     qrys = [args.query]
 
   if args.ftypes_all:
-    ftypes = list(hugo.Utils.ListSearchableFields(BASE_URL).iloc[:,0])
+    ftypes = list(hugo.ListSearchableFields(BASE_URL).iloc[:,0])
   else:
     ftypes = re.split('[, ]+', args.ftypes.strip())
     ftypes = [s.upper() for s in ftypes]
@@ -63,16 +63,16 @@ if __name__=='__main__':
       parser.error("Invalid field type[s]: {0}".format(set(ftypes) - set(FTYPES)))
 
   if args.op == "info":
-    hugo.Utils.Info(BASE_URL, fout)
+    hugo.Info(BASE_URL, fout)
 
   elif args.op == "list_searchable":
-    hugo.Utils.ListSearchableFields(BASE_URL, fout)
+    hugo.ListSearchableFields(BASE_URL, fout)
 
   elif args.op == "get":
-    hugo.Utils.GetGenes(qrys, ftypes, args.skip, BASE_URL, fout)
+    hugo.GetGenes(qrys, ftypes, args.skip, BASE_URL, fout)
 
   elif args.op == "search":
-    hugo.Utils.SearchGenes(qrys, ftypes, BASE_URL, fout)
+    hugo.SearchGenes(qrys, ftypes, BASE_URL, fout)
 
   else:
     parser.error("Invalid operation: {}".format(args.op))

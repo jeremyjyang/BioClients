@@ -102,7 +102,7 @@ Example Organisms:
   API_BASE_URL='http://'+args.api_host+args.api_base_path
   #API_BASE_URL='https://'+args.api_host+args.api_base_path
 
-  CLIENT = brenda.Utils.SoapAPIClient(args.api_wsdl_url)
+  CLIENT = brenda.SoapAPIClient(args.api_wsdl_url)
   if not CLIENT:
     logging.error("SOAP Client instantiation failed.")
 
@@ -134,76 +134,76 @@ Example Organisms:
   if args.op[:4]=="get_" and not ecns: parser.error("Operation %s requires --ecns or --ifile."%args.op)
 
   if args.op=="get":
-    brenda.Utils.GetECN(CLIENT, API_PARAMS, ecns, fout)
+    brenda.GetECN(CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_inhibitordata":
-    brenda.Utils.GetInhibitorData(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetInhibitorData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_sequencedata":
-    brenda.Utils.GetSequenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetSequenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_liganddata":
-    brenda.Utils.GetLigandData(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetLigandData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_referencedata":
-    brenda.Utils.GetReferenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetReferenceData(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_names":
-    brenda.Utils.GetNames(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetNames(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_systematicname":
-    brenda.Utils.GetSystematicName(CLIENT, API_PARAMS, ecns, fout)
+    brenda.GetSystematicName(CLIENT, API_PARAMS, ecns, fout)
 
   elif args.op=="get_organism":
-    brenda.Utils.GetOrganism(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetOrganism(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_sequence":
-    brenda.Utils.GetSequence(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetSequence(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_pdb":
-    brenda.Utils.GetPdb(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetPdb(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kivalues":
-    brenda.Utils.GetKiValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetKiValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_kmvalues":
-    brenda.Utils.GetKmValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetKmValues(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_inhibitors":
-    brenda.Utils.GetInhibitors(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetInhibitors(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_activators":
-    brenda.Utils.GetActivators(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetActivators(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_ligands":
-    brenda.Utils.GetLigands(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetLigands(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="get_references":
-    brenda.Utils.GetReferences(CLIENT, API_PARAMS, ecns, args.organism, fout)
+    brenda.GetReferences(CLIENT, API_PARAMS, ecns, args.organism, fout)
 
   elif args.op=="list_all":
-    brenda.Utils.ListECNumbers(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbers(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromsynonyms":
-    brenda.Utils.ListECNumbersFromSynonyms(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbersFromSynonyms(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_frominhibitors":
-    brenda.Utils.ListECNumbersFromInhibitors(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbersFromInhibitors(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromactivators":
-    brenda.Utils.ListECNumbersFromActivators(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbersFromActivators(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkivalues":
-    brenda.Utils.ListECNumbersFromKiValue(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbersFromKiValue(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_fromkmvalues":
-    brenda.Utils.ListECNumbersFromKmValue(CLIENT, API_PARAMS, fout)
+    brenda.ListECNumbersFromKmValue(CLIENT, API_PARAMS, fout)
 
   elif args.op=="list_organisms":
-    brenda.Utils.ListOrganisms(CLIENT, API_PARAMS, fout)
+    brenda.ListOrganisms(CLIENT, API_PARAMS, fout)
 
   elif args.op=="test":
-    brenda.Utils.Test(CLIENT, API_PARAMS)
+    brenda.Test(CLIENT, API_PARAMS)
 
   else:
     parser.error("Invalid operation: %s"%args.op)

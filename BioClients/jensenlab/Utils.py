@@ -19,7 +19,7 @@ BASE_URL='https://'+API_HOST+API_BASE_PATH
 def GetDiseaseGenes(channel, ids, nmax, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+f'/{channel}?type1=-26&id1={id_this}&type2=9606&limit={nmax}&format=json', parse_json=True)
+    rval = rest.GetURL(base_url+f'/{channel}?type1=-26&id1={id_this}&type2=9606&limit={nmax}&format=json', parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?
@@ -37,7 +37,7 @@ def GetPubmedComentionGenes(ids, base_url=BASE_URL, fout=None):
   """Search by co-mentioned terms."""
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+f'/Textmining?query={id_this}[tiab]&type2=9606&limit=10&format=json', parse_json=True)
+    rval = rest.GetURL(base_url+f'/Textmining?query={id_this}[tiab]&type2=9606&limit=10&format=json', parse_json=True)
     genes = rval[0] #dict
     ensgs = list(genes.keys())
     flag = rval[1] #?

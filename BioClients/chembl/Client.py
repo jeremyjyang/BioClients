@@ -83,8 +83,8 @@ if __name__=='__main__':
   parser.add_argument("--assay_type", help="{0}".format(str(assay_types)))
   parser.add_argument("--pmin", type=float, help="min pChEMBL activity value (9 ~ 1nM *C50)")
   parser.add_argument("--include_phenotypic", action="store_true", help="else pChembl required")
-  parser.add_argument("--api_host", default=chembl.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=chembl.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=chembl.API_HOST)
+  parser.add_argument("--api_base_path", default=chembl.API_BASE_PATH)
   parser.add_argument("-v","--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -110,85 +110,85 @@ if __name__=='__main__':
     parser.error(f"--i or --ids required for operation {args.op}.")
 
   if args.op == "status":
-    api_ver,db_ver,status = chembl.Utils.Status(base_url, fout)
+    api_ver,db_ver,status = chembl.Status(base_url, fout)
 
   elif args.op == "list_sources":
-    chembl.Utils.ListSources(args.api_host, args.api_base_path, fout)
+    chembl.ListSources(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_mechanisms":
-    chembl.Utils.ListMechanisms(args.api_host, args.api_base_path, fout)
+    chembl.ListMechanisms(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_organisms":
-    chembl.Utils.ListOrganisms(args.api_host, args.api_base_path, fout)
+    chembl.ListOrganisms(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_protein_classes":
-    chembl.Utils.ListProteinClasses(args.api_host, args.api_base_path, fout)
+    chembl.ListProteinClasses(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_targets":
-    chembl.Utils.ListTargets(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListTargets(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_mols":
-    chembl.Utils.ListMolecules(args.dev_phase, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListMolecules(args.dev_phase, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_drugs":
-    chembl.Utils.ListDrugs(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListDrugs(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_drug_indications":
-    chembl.Utils.ListDrugIndications(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListDrugIndications(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_docs":
-    chembl.Utils.ListDocuments(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListDocuments(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_cells":
-    chembl.Utils.ListCellLines(args.api_host, args.api_base_path, fout)
+    chembl.ListCellLines(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_tissues":
-    chembl.Utils.ListTissues(args.api_host, args.api_base_path, fout)
+    chembl.ListTissues(args.api_host, args.api_base_path, fout)
 
   elif args.op == "list_assays":
-    chembl.Utils.ListAssays(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.ListAssays(args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_assay":
-    chembl.Utils.GetAssay(ids, base_url, fout)
+    chembl.GetAssay(ids, base_url, fout)
 
   elif args.op == "get_mol":
-    chembl.Utils.GetMolecule(ids, base_url, fout)
+    chembl.GetMolecule(ids, base_url, fout)
 
   elif args.op == "get_mol_by_inchikey":
-    chembl.Utils.GetMoleculeByInchikey(ids, base_url, fout)
+    chembl.GetMoleculeByInchikey(ids, base_url, fout)
 
   elif args.op == "get_activity_by_mol":
-    chembl.Utils.GetActivity(ids, 'molecule', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.GetActivity(ids, 'molecule', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_by_assay":
-    chembl.Utils.GetActivity(ids, 'assay', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.GetActivity(ids, 'assay', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_by_target":
-    chembl.Utils.GetActivity(ids, 'target', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.GetActivity(ids, 'target', args.pmin, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   elif args.op == "get_activity_properties":
-    chembl.Utils.GetActivityProperties(ids, args.skip, args.nmax, base_url, fout)
+    chembl.GetActivityProperties(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "get_target":
-    chembl.Utils.GetTarget(ids, base_url, fout)
+    chembl.GetTarget(ids, base_url, fout)
 
   elif args.op == "get_target_components":
-    chembl.Utils.GetTargetComponents(ids, args.skip, args.nmax, base_url, fout)
+    chembl.GetTargetComponents(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "get_target_by_uniprot":
-    chembl.Utils.GetTargetByUniprot(ids, base_url, fout)
+    chembl.GetTargetByUniprot(ids, base_url, fout)
 
   elif args.op == "get_document":
-    chembl.Utils.GetDocument(ids, args.skip, args.nmax, base_url, fout)
+    chembl.GetDocument(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "search_mols_by_name":
-    chembl.Utils.SearchMoleculeByName(ids, base_url, fout)
+    chembl.SearchMoleculeByName(ids, base_url, fout)
 
   elif args.op == "search_assays":
     if not (args.assay_source or args.assay_type): parser.error('--assay_source and/or --assay_type required.')
     if args.assay_type and args.assay_type[0].upper() not in ('B', 'F', 'P', 'A', 'U'):
       parser.error(f"Invalid assay type: {args.assay_type}")
-    chembl.Utils.SearchAssays(args.assay_source, args.assay_type, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
+    chembl.SearchAssays(args.assay_source, args.assay_type, args.skip, args.nmax, args.api_host, args.api_base_path, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

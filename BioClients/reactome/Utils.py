@@ -23,8 +23,8 @@ HEADERS={'Content-type':'text/plain', 'Accept':'application/json'}
 #
 ##############################################################################
 def DBInfo(base_url=BASE_URL, fout=None):
-  name = rest.Utils.GetURL(base_url+'/data/database/name')
-  version = rest.Utils.GetURL(base_url+'/data/database/version')
+  name = rest.GetURL(base_url+'/data/database/name')
+  version = rest.GetURL(base_url+'/data/database/version')
   df = pd.DataFrame({'param':['name', 'version'], 'value':[name, version]});
   if fout: df.to_csv(fout, "\t", index=False)
   return df
@@ -32,7 +32,7 @@ def DBInfo(base_url=BASE_URL, fout=None):
 ##############################################################################
 def ListToplevelPathways(base_url=BASE_URL, fout=None):
   tags=None; species="9606"; df=pd.DataFrame();
-  pathways = rest.Utils.GetURL(base_url+f'/data/pathways/top/{species}', parse_json=True)
+  pathways = rest.GetURL(base_url+f'/data/pathways/top/{species}', parse_json=True)
   for pathway in pathways:
     if not tags: tags = list(pathway.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[pathway[tags[j]]] if tags[j] in pathway else [''] for j in range(len(tags))})])
@@ -43,7 +43,7 @@ def ListToplevelPathways(base_url=BASE_URL, fout=None):
 ##############################################################################
 def ListDiseases(base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
-  rval = rest.Utils.GetURL(base_url+'/data/diseases', parse_json=True)
+  rval = rest.GetURL(base_url+'/data/diseases', parse_json=True)
   diseases = rval
   for disease in diseases:
     if not tags: tags = list(disease.keys())
@@ -57,7 +57,7 @@ def QueryEntry(ids, base_url=BASE_URL, fout=None):
   """Stable or database IDs required, such as for disease, or pathway."""
   tags=None; df=pd.DataFrame(); classNames=set();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+f'/data/query/{id_this}', parse_json=True)
+    rval = rest.GetURL(base_url+f'/data/query/{id_this}', parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2)+'\n')
     ent = rval
     if not tags: tags = list(ent.keys())
@@ -72,7 +72,7 @@ def GetInteractors(ids, base_url=BASE_URL, fout=None):
   """IDs may be UniProt accessions."""
   tags=None; df=pd.DataFrame(); classNames=set();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+f'/interactors/static/molecule/{id_this}/details', parse_json=True)
+    rval = rest.GetURL(base_url+f'/interactors/static/molecule/{id_this}/details', parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2)+'\n')
     ents = rval["entities"] if "entities" in rval else []
     for ent in ents:
@@ -89,7 +89,7 @@ def GetInteractors(ids, base_url=BASE_URL, fout=None):
 def ListCompounds(base_url=BASE_URL, fout=None):
   """NOT WORKING."""
   tags=[]; df=pd.DataFrame();
-  rval = rest.Utils.GetURL(base_url+'/getReferenceMolecules', parse_json=True)
+  rval = rest.GetURL(base_url+'/getReferenceMolecules', parse_json=True)
   mols = rval
   for mol in mols:
     if not tags: tags = list(mol.keys())
@@ -103,7 +103,7 @@ def GetPathwaysForEntities(ids, base_url=BASE_URL, fout=None):
   """NOT WORKING."""
   tags=[]; df=pd.DataFrame();
   d=('ID='+(','.join(ids))) ##plain text POST body, e.g. "ID=170075,176374,68557"
-  rval = rest.Utils.PostURL(base_url+'/pathwaysForEntities', data=d, headers=HEADERS, parse_json=True)
+  rval = rest.PostURL(base_url+'/pathwaysForEntities', data=d, headers=HEADERS, parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2)+'\n')
   pathways = rval
   for pathway in pathways:
@@ -118,7 +118,7 @@ def GetPathwaysForGenes(ids, base_url=BASE_URL, fout=None):
   """NOT WORKING."""
   tags=[]; df=pd.DataFrame();
   d=(','.join(ids)) ##plain text POST body
-  rval = rest.Utils.PostURL(base_url+'/queryHitPathways', data=d, headers=HEADERS, parse_json=True)
+  rval = rest.PostURL(base_url+'/queryHitPathways', data=d, headers=HEADERS, parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2)+'\n')
   pathways = rval
   for pathway in pathways:
@@ -132,7 +132,7 @@ def GetPathwaysForGenes(ids, base_url=BASE_URL, fout=None):
 def GetPathwayParticipants(id_query, base_url=BASE_URL, fout=None):
   """NOT WORKING."""
   tags=[]; df=pd.DataFrame();
-  rval = rest.Utils.GetURL(base_url+'/pathwayParticipants/'+id_query, parse_json=True)
+  rval = rest.GetURL(base_url+'/pathwayParticipants/'+id_query, parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2)+'\n')
   parts = rval
   for part in parts:

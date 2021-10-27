@@ -23,7 +23,7 @@ cited_by) reported as counts."""
     pmids_this = pmids[n_in:n_in+NCHUNK]
     n_in += (NCHUNK if n_in+NCHUNK < len(pmids) else len(pmids)-n_in)
     url_this = (f"""{base_url}?pmids={(','.join(pmids_this))}""")
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    rval = rest.GetURL(url_this, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, indent=2))
     url_self = rval['links']['self']
@@ -47,7 +47,7 @@ def GetStats_single(pmids, base_url=BASE_URL, fout=None):
     if tq is None: tq = tqdm.tqdm(total=len(pmids), unit="pmids")
     tq.update()
     url = base_url+'/'+pmid
-    pub = rest.Utils.GetURL(url, parse_json=True)
+    pub = rest.GetURL(url, parse_json=True)
     if not pub:
       logging.info(f"Not found: {pmid}")
       continue

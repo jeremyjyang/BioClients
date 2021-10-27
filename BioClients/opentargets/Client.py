@@ -56,12 +56,12 @@ Search terms: prostate, alzheimer, lymphoma
 
   if args.op=='searchAssociations':
     if not ids: parser.error('--i or --ids required.')
-    opentargets.Utils.SearchAssociations(otclient, ids, args.idtype, args.minscore, args.skip, args.nmax, fout)
+    opentargets.SearchAssociations(otclient, ids, args.idtype, args.minscore, args.skip, args.nmax, fout)
 
   elif args.op=='getEvidence':
     parser.error('Unimplemented operation: {}'.format(args.op))
     if not ids: parser.error('--i or --ids required.')
-    #opentargets.Utils.Target2Disease_Evidence(otclient, tid, args.did, fout)
+    #opentargets.Target2Disease_Evidence(otclient, tid, args.did, fout)
 
   else:
     parser.error('Invalid operation: {}'.format(args.op))

@@ -22,7 +22,7 @@ def GetGene(ids, base_url=BASE_URL, fout=None):
   tags=None; df=pd.DataFrame();
   for id_this in ids:
     url = base_url+'/GeneInfos/'+id_this
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     if not tags:
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
@@ -37,7 +37,7 @@ def GetDataset(ids, base_url=BASE_URL, fout=None):
   tags=None; df=pd.DataFrame();
   for id_this in ids:
     url = base_url+'/PublicDatasets/'+id_this
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     if not tags:
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
@@ -52,7 +52,7 @@ def GetCompound(ids, base_url=BASE_URL, fout=None):
   tags=None; df=pd.DataFrame();
   for id_this in ids:
     url = base_url+'/Compounds/%s'%id_this
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     if not tags:
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
@@ -70,7 +70,7 @@ def ListCompounds(base_url=BASE_URL, fout=None):
     filter_arg = """%7B"skip"%3A"""+str(skip)+"""%2C"limit"%3A"""+str(nchunk)+"""%7D"""
     #url = f"{base_url}/Compounds?filter={urllib.parse.quote(filter_arg)}"
     url = f"{base_url}/Compounds?filter={filter_arg}"
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     if not rval: break
     compounds = rval
     for compound in compounds:
@@ -93,7 +93,7 @@ def SearchDataset(searchTerm, lincs, base_url=BASE_URL, fout=None):
   url = base_url+'/PublicDatasets/findTermMeta'
   d = {'term':searchTerm}
   if lincs: d['lincs'] = True
-  rval = rest.Utils.PostURL(url, data=d, parse_json=True)
+  rval = rest.PostURL(url, data=d, parse_json=True)
   logging.debug(json.dumps(rval, indent=2))
   dsets = rval['data'] if 'data' in rval else []
   for dset in dsets:
@@ -111,7 +111,7 @@ def SearchSignature(ids, lincs, base_url=BASE_URL, fout=None):
   tags=None; df=pd.DataFrame();
   for id_this in ids:
     url = base_url+'/SignatureMeta?filter={"where":{"lincspertid":"'+id_this+'"}}'
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     logging.debug(json.dumps(rval, indent=2))
     sigs = rval
     for sig in sigs:
@@ -128,7 +128,7 @@ def GetSignature(ids, ngene, base_url=BASE_URL, fout=None):
   tags=None; df=pd.DataFrame();
   url = base_url+'/ilincsR/downloadSignature'
   d = {'sigID':(','.join(ids)), 'display':True, 'noOfTopGenes':ngene}
-  rval = rest.Utils.PostURL(url, data=d, parse_json=True)
+  rval = rest.PostURL(url, data=d, parse_json=True)
   logging.debug(json.dumps(rval, indent=2))
   genes = rval['data']['signature'] if 'data' in rval and 'signature' in rval['data'] else []
   for gene in genes:

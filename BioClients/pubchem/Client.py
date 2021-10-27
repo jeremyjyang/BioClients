@@ -70,62 +70,62 @@ if __name__=='__main__':
   t0=time.time()
 
   if args.op == 'list_sources_assay':
-    pubchem.Utils.ListSources(BASE_URL, "assay", fout)
+    pubchem.ListSources(BASE_URL, "assay", fout)
 
   elif args.op == 'list_sources_substance':
-    pubchem.Utils.ListSources(BASE_URL, "substance", fout)
+    pubchem.ListSources(BASE_URL, "substance", fout)
 
   elif args.op == 'get_cid2synonyms':
-    pubchem.Utils.GetCID2Synonyms(BASE_URL, ids, args.skip, args.nmax, args.nmax_per_cid, fout)
+    pubchem.GetCID2Synonyms(BASE_URL, ids, args.skip, args.nmax, args.nmax_per_cid, fout)
 
   elif args.op == 'get_cid2properties':
-    pubchem.Utils.GetCID2Properties(BASE_URL, ids, fout)
+    pubchem.GetCID2Properties(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2inchi':
-    pubchem.Utils.GetCID2Inchi(BASE_URL, ids, fout)
+    pubchem.GetCID2Inchi(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2sid':
-    pubchem.Utils.GetCID2SID(BASE_URL, ids, fout)
+    pubchem.GetCID2SID(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2smiles':
-    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, args.isomeric, fout)
+    pubchem.GetCID2Smiles(BASE_URL, ids, args.isomeric, fout)
 
   elif args.op == 'get_cid2sdf':
-    pubchem.Utils.GetCID2SDF(BASE_URL, ids, fout)
+    pubchem.GetCID2SDF(BASE_URL, ids, fout)
 
   elif args.op == 'get_cid2assaysummary':
-    pubchem.Utils.GetCID2AssaySummary(BASE_URL, ids, fout)
+    pubchem.GetCID2AssaySummary(BASE_URL, ids, fout)
 
   elif args.op == 'get_sid2cid':
-    pubchem.Utils.GetSID2CID(BASE_URL, ids, fout)
+    pubchem.GetSID2CID(BASE_URL, ids, fout)
 
   elif args.op == 'get_sid2assaysummary':
-    pubchem.Utils.GetSID2AssaySummary(BASE_URL, ids, fout)
+    pubchem.GetSID2AssaySummary(BASE_URL, ids, fout)
 
   elif args.op == 'get_sid2sdf':
-    pubchem.Utils.GetSID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
+    pubchem.GetSID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
 
   elif args.op == 'get_smi2cid':
-    pubchem.Utils.GetSmiles2CID(BASE_URL, ids, fout)
+    pubchem.GetSmiles2CID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2sid':
-    pubchem.Utils.GetName2SID(BASE_URL, ids, fout)
+    pubchem.GetName2SID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2cid':
-    pubchem.Utils.GetName2CID(BASE_URL, ids, fout)
+    pubchem.GetName2CID(BASE_URL, ids, fout)
 
   elif args.op == 'get_name2synonyms':
-    pubchem.Utils.GetName2Synonyms(BASE_URL, ids, fout)
+    pubchem.GetName2Synonyms(BASE_URL, ids, fout)
 
   elif args.op == 'get_assayname':
-    pubchem.Utils.GetAssayName(BASE_URL, aids, fout)
+    pubchem.GetAssayName(BASE_URL, aids, fout)
 
   elif args.op == 'get_assaydescriptions':
-    pubchem.Utils.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
+    pubchem.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
 
   elif args.op == 'get_assayresults':
     if not (aids and ids): parser.error('Input AIDs and SIDs required.')
-    pubchem.Utils.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
+    pubchem.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
 
   else:
     parser.error('Invalid operation: %s'%args.op)

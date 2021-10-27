@@ -85,100 +85,100 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    dbcon = drugcentral.Utils.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
+    dbcon = drugcentral.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
   except Exception as e:
     logging.error("Connect failed.")
     parser.error(f"{e}")
 
   if args.op=='list_tables':
-    drugcentral.Utils.ListTables(dbcon, args.dbschema, fout)
+    drugcentral.ListTables(dbcon, args.dbschema, fout)
 
   elif args.op=='list_tables_rowCounts':
-    drugcentral.Utils.ListTablesRowCounts(dbcon, args.dbschema, fout)
+    drugcentral.ListTablesRowCounts(dbcon, args.dbschema, fout)
 
   elif args.op=='list_columns':
-    drugcentral.Utils.ListColumns(dbcon, args.dbschema, fout)
+    drugcentral.ListColumns(dbcon, args.dbschema, fout)
 
   elif args.op=='version':
-    drugcentral.Utils.Version(dbcon, args.dbschema, fout)
+    drugcentral.Version(dbcon, args.dbschema, fout)
 
   elif args.op=='list_structures':
-    drugcentral.Utils.ListStructures(dbcon, args.dbschema, fout)
+    drugcentral.ListStructures(dbcon, args.dbschema, fout)
 
   elif args.op=='list_structures2smiles':
-    drugcentral.Utils.ListStructures2Smiles(dbcon, args.dbschema, fout)
+    drugcentral.ListStructures2Smiles(dbcon, args.dbschema, fout)
 
   elif args.op=='list_structures2molfile':
-    drugcentral.Utils.ListStructures2Molfile(dbcon, args.dbschema, fout)
+    drugcentral.ListStructures2Molfile(dbcon, args.dbschema, fout)
 
   elif args.op=='list_products':
-    drugcentral.Utils.ListProducts(dbcon, args.dbschema, fout)
+    drugcentral.ListProducts(dbcon, args.dbschema, fout)
 
   elif args.op=='list_active_ingredients':
-    drugcentral.Utils.ListActiveIngredients(dbcon, args.dbschema, fout)
+    drugcentral.ListActiveIngredients(dbcon, args.dbschema, fout)
 
   elif args.op=='list_indications':
-    drugcentral.Utils.ListIndications(dbcon, fout)
+    drugcentral.ListIndications(dbcon, fout)
 
   elif args.op=='list_indication_targets':
-    drugcentral.Utils.ListIndicationTargets(dbcon, fout)
+    drugcentral.ListIndicationTargets(dbcon, fout)
 
   elif args.op=='list_ddis':
-    drugcentral.Utils.ListDrugdruginteractions(dbcon, fout)
+    drugcentral.ListDrugdruginteractions(dbcon, fout)
 
   elif args.op=='list_atcs':
-    drugcentral.Utils.ListAtcs(dbcon, fout)
+    drugcentral.ListAtcs(dbcon, fout)
 
   elif args.op=='list_xref_types':
-    drugcentral.Utils.ListXrefTypes(dbcon, fout)
+    drugcentral.ListXrefTypes(dbcon, fout)
 
   elif args.op=='list_xrefs':
-    drugcentral.Utils.ListXrefs(dbcon, args.xref_type, fout)
+    drugcentral.ListXrefs(dbcon, args.xref_type, fout)
 
   elif args.op=='get_structure':
-    drugcentral.Utils.GetStructure(dbcon, ids, fout)
+    drugcentral.GetStructure(dbcon, ids, fout)
 
   elif args.op=='get_structure_by_synonym':
-    drugcentral.Utils.GetStructureBySynonym(dbcon, ids, fout)
+    drugcentral.GetStructureBySynonym(dbcon, ids, fout)
 
   elif args.op=="get_structure_by_xref":
-    drugcentral.Utils.GetStructureByXref(dbcon, args.xref_type, ids, fout)
+    drugcentral.GetStructureByXref(dbcon, args.xref_type, ids, fout)
 
   elif args.op=='get_structure_xrefs':
-    drugcentral.Utils.GetStructureXrefs(dbcon, ids, fout)
+    drugcentral.GetStructureXrefs(dbcon, ids, fout)
 
   elif args.op=='get_structure_products':
-    drugcentral.Utils.GetStructureProducts(dbcon, ids, fout)
+    drugcentral.GetStructureProducts(dbcon, ids, fout)
 
   elif args.op=='get_structure_orangebook_products':
-    drugcentral.Utils.GetStructureOBProducts(dbcon, ids, fout)
+    drugcentral.GetStructureOBProducts(dbcon, ids, fout)
 
   elif args.op=='get_structure_atcs':
-    drugcentral.Utils.GetStructureAtcs(dbcon, ids, fout)
+    drugcentral.GetStructureAtcs(dbcon, ids, fout)
 
   elif args.op=='get_structure_synonyms':
-    drugcentral.Utils.GetStructureSynonyms(dbcon, ids, fout)
+    drugcentral.GetStructureSynonyms(dbcon, ids, fout)
 
   elif args.op=='get_structure_targets':
-    drugcentral.Utils.GetStructureTargets(dbcon, ids, fout)
+    drugcentral.GetStructureTargets(dbcon, ids, fout)
 
   elif args.op=='get_product_structures':
-    drugcentral.Utils.GetProductStructures(dbcon, ids, fout)
+    drugcentral.GetProductStructures(dbcon, ids, fout)
 
   elif args.op=='search_products':
-    drugcentral.Utils.SearchProducts(dbcon, ids, fout)
+    drugcentral.SearchProducts(dbcon, ids, fout)
 
   elif args.op=='search_indications':
-    drugcentral.Utils.SearchIndications(dbcon, ids, fout)
+    drugcentral.SearchIndications(dbcon, ids, fout)
 
   elif args.op=='get_indication_structures':
-    drugcentral.Utils.GetIndicationStructures(dbcon, ids, fout)
+    drugcentral.GetIndicationStructures(dbcon, ids, fout)
 
   elif args.op=='meta_listdbs':
-    drugcentral.Utils.MetaListdbs(dbcon, fout)
+    drugcentral.MetaListdbs(dbcon, fout)
 
   elif args.op=='get_drugpage':
-    drugcentral.Utils.GetDrugPage(dbcon, ids[0], fout)
+    drugcentral.GetDrugPage(dbcon, ids[0], fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

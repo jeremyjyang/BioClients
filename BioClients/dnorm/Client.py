@@ -23,7 +23,7 @@ def GetLinks(pmids, bioconcept, base_url, fout):
   fout.write('pmid\tsourcedb\tbioconcept\ttext\tcount\n')
   for pmid in pmids:
     try:
-      rval=rest.Utils.GetURL(base_url+'/%s/%d/JSON'%(bioconcept, pmid), headers=HEADERS, parse_json=True)
+      rval=rest.GetURL(base_url+'/%s/%d/JSON'%(bioconcept, pmid), headers=HEADERS, parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue

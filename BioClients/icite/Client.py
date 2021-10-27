@@ -45,7 +45,7 @@ if __name__=='__main__':
 
   if args.op == 'get_stats':
     if not ids: parser.error(f'Operation requires PMID[s]: {args.op}')
-    icite.Utils.GetStats(ids, base_url, fout)
+    icite.GetStats(ids, base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

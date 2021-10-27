@@ -17,7 +17,7 @@ Homo sapiens	HUMAN	9606
   """
   n_species=0;
   url = base_url+'?type=organism'
-  rval = rest.Utils.GetURL(url)
+  rval = rest.GetURL(url)
   if not rval:
     return
   for line in rval.splitlines():
@@ -49,7 +49,7 @@ Homo sapiens	HUMAN	9606
 # where KEYWORD is the search term and LISTTYPE = (gene|family|pathway|category)
 def SearchFamilies(base_url, term, fout):
   url = base_url+'?type=getList&listType=family&keyword=%s'%(urllib.parse.quote(term))
-  rval = rest.Utils.GetURL(url)
+  rval = rest.GetURL(url)
   if not rval:
     return
   logging.debug(rval)

@@ -75,8 +75,8 @@ NCBIGene:26564 (mouse gene)
   parser.add_argument("--idAs", help="input IDs (comma-separated)")
   parser.add_argument("--idBs", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--api_host", default=monarch.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=monarch.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=monarch.API_HOST)
+  parser.add_argument("--api_base_path", default=monarch.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -104,20 +104,20 @@ NCBIGene:26564 (mouse gene)
   logging.info("Input idBs: {len(idBs)}")
 
   if args.op=="get_disease":
-    monarch.Utils.GetDisease(idAs, base_url, fout)
+    monarch.GetDisease(idAs, base_url, fout)
 
   elif args.op=="get_disease_relationships":
-    monarch.Utils.GetDiseaseRelationships(idAs, base_url, fout)
+    monarch.GetDiseaseRelationships(idAs, base_url, fout)
 
   elif args.op=="get_phenotype":
     parser.error(f"Unimplemented operation: {args.op}")
-    #monarch.Utils.GetPhenotype(idAs, base_url, fout)
+    #monarch.GetPhenotype(idAs, base_url, fout)
 
   elif args.op=="get_gene":
-    monarch.Utils.GetGene(idAs, base_url, fout)
+    monarch.GetGene(idAs, base_url, fout)
 
   elif args.op=="compare_phenotypes":
-    monarch.Utils.ComparePhenotypes(idAs, idBs, base_url, fout)
+    monarch.ComparePhenotypes(idAs, idBs, base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

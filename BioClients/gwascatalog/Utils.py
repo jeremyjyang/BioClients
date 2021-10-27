@@ -26,7 +26,7 @@ def ListStudies(base_url=BASE_URL, fout=None):
       elif url_this == rval['_links']['last']['href']: break
       else: url_this = rval['_links']['next']['href']
     logging.debug(url_this)
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    rval = rest.GetURL(url_this, parse_json=True)
     if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: break
     studies = rval['_embedded']['studies']
     if not studies: break
@@ -61,7 +61,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
     if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="studies")
     if tq is not None: tq.update()
     url_this = url+f'/{id_this}/associations?projection=associationByStudy'
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    rval = rest.GetURL(url_this, parse_json=True)
     if not rval: continue
     if '_embedded' in rval and 'associations' in rval['_embedded']:
       assns = rval['_embedded']['associations']
@@ -126,7 +126,7 @@ gc = genomicContext
     if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="snps")
     if tq is not None: tq.update()
     url_this = url+'/'+id_this
-    snp = rest.Utils.GetURL(url_this, parse_json=True)
+    snp = rest.GetURL(url_this, parse_json=True)
     if not snp: continue
     if 'genomicContexts' not in snp: continue
     if len(snp['genomicContexts'])==0: continue
@@ -183,7 +183,7 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
     return
   for id_this in ids:
     url_this = url.format(urllib.parse.quote(id_this))
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    rval = rest.GetURL(url_this, parse_json=True)
     if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: continue
     studies = rval['_embedded']['studies']
     if not studies: continue

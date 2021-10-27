@@ -70,10 +70,10 @@ to chemical compounds.
   parser.add_argument("--class_types", help="drug class (e.g. 'MESHPA', 'MESHPA,ATC1-4')")
   parser.add_argument("--atc", help="ATC drug classes")
   parser.add_argument("--meshpa", help="MeSH pharmacologic actions (classtype 'MESHPA'")
-  parser.add_argument("--ndfrt_type", choices=rxnorm.Utils.NDFRT_TYPES, help="NDFRT drug class types")
+  parser.add_argument("--ndfrt_type", choices=rxnorm.NDFRT_TYPES, help="NDFRT drug class types")
   parser.add_argument("--tty", help="term type")
-  parser.add_argument("--api_host", default=rxnorm.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=rxnorm.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=rxnorm.API_HOST)
+  parser.add_argument("--api_base_path", default=rxnorm.API_BASE_PATH)
   parser.add_argument("--api_key")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
@@ -104,70 +104,70 @@ to chemical compounds.
     parser.error(f'{args.op} requires --i or --ids')
 
   if args.op == 'version':
-    rval = rest.Utils.GetURL(BASE_URL+'/version.json', parse_json=True)
+    rval = rest.GetURL(BASE_URL+'/version.json', parse_json=True)
     print(rval['version'])
 
   elif args.op == 'list_idtypes':
-    rxnorm.Utils.List_IDTypes(BASE_URL, fout)
+    rxnorm.List_IDTypes(BASE_URL, fout)
 
   elif args.op == 'list_sourcetypes':
-    rxnorm.Utils.List_SourceTypes(BASE_URL, fout)
+    rxnorm.List_SourceTypes(BASE_URL, fout)
 
   elif args.op == 'list_relationtypes':
-    rxnorm.Utils.List_RelationTypes(BASE_URL, fout)
+    rxnorm.List_RelationTypes(BASE_URL, fout)
 
   elif args.op == 'list_termtypes':
-    rxnorm.Utils.List_TermTypes(BASE_URL, fout)
+    rxnorm.List_TermTypes(BASE_URL, fout)
 
   elif args.op == 'list_propnames':
-    rxnorm.Utils.List_PropNames(BASE_URL, fout)
+    rxnorm.List_PropNames(BASE_URL, fout)
 
   elif args.op == 'list_propcategories':
-    rxnorm.Utils.List_PropCategories(BASE_URL, fout)
+    rxnorm.List_PropCategories(BASE_URL, fout)
 
   elif args.op == 'list_class_types':
-    rxnorm.Utils.List_ClassTypes(BASE_URL, fout)
+    rxnorm.List_ClassTypes(BASE_URL, fout)
 
   elif args.op == 'list_classes':
     class_types = re.split(r'[,\s]+', args.class_types.strip()) if args.class_types else None
-    rxnorm.Utils.List_Classes(class_types, BASE_URL, fout)
+    rxnorm.List_Classes(class_types, BASE_URL, fout)
 
   elif args.op == 'get_id2rxcui':
     if not args.idtype: parser.error(f'{args.op} requires --idtype')
-    rxnorm.Utils.Get_ID2RxCUI(ids, args.idtype, BASE_URL, fout)
+    rxnorm.Get_ID2RxCUI(ids, args.idtype, BASE_URL, fout)
 
   elif args.op == 'get_name':
-    rxnorm.Utils.Get_Name(ids, BASE_URL, fout)
+    rxnorm.Get_Name(ids, BASE_URL, fout)
 
   elif args.op == 'get_name2rxcui':
-    rxnorm.Utils.Get_Name2RxCUI(ids, BASE_URL, fout)
+    rxnorm.Get_Name2RxCUI(ids, BASE_URL, fout)
 
   elif args.op == 'get_rxcui_status':
-    rxnorm.Utils.Get_RxCUI_Status(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_Status(ids, BASE_URL, fout)
 
   elif args.op == 'get_rxcui_properties':
-    rxnorm.Utils.Get_RxCUI_Properties(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_Properties(ids, BASE_URL, fout)
 
   elif args.op == 'get_rxcui_allproperties':
-    rxnorm.Utils.Get_RxCUI_AllProperties(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_AllProperties(ids, BASE_URL, fout)
 
   elif args.op == 'get_rxcui_ndcs':
-    rxnorm.Utils.Get_RxCUI_NDCs(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_NDCs(ids, BASE_URL, fout)
 
   elif args.op == 'get_rxcui_allrelated':
-    rxnorm.Utils.Get_RxCUI_AllRelated(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_AllRelated(ids, BASE_URL, fout)
 
   elif args.op == "get_rxcui_classes":
-    rxnorm.Utils.Get_RxCUI_Classes(ids, BASE_URL, fout)
+    rxnorm.Get_RxCUI_Classes(ids, BASE_URL, fout)
 
   elif args.op == 'get_class_members':
-    rxnorm.Utils.Get_Class_Members(ids, BASE_URL, fout)
+    rxnorm.Get_Class_Members(ids, BASE_URL, fout)
 
   elif args.op == 'get_spellingsuggestions':
-    rxnorm.Utils.Get_SpellingSuggestions(ids, BASE_URL, fout)
+    rxnorm.Get_SpellingSuggestions(ids, BASE_URL, fout)
 
   elif args.op == 'rawquery':
-    rxnorm.Utils.RawQuery(args.rawquery, BASE_URL, fout)
+    rxnorm.RawQuery(args.rawquery, BASE_URL, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

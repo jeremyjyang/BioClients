@@ -59,48 +59,48 @@ def GetECN(client, api_params, ecns, fout):
 def ListECNumbers(client, api_params, fout):
   '''We think this gets all EC numbers.  But maybe not. 6549 on Jan 7 2015.'''
   rstr = client.getEcNumbersFromEcNumber(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to synonyms.  (5000+ hits but not all.)
 def ListECNumbersFromSynonyms(client, api_params, fout):
   rstr = client.getEcNumbersFromSynonyms(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to inhibitors.
 def ListECNumbersFromInhibitors(client, api_params, fout):
   rstr = client.getEcNumbersFromInhibitors(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to activators.
 def ListECNumbersFromActivators(client, api_params, fout):
   rstr = client.getEcNumbersFromActivatingCompound(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to Ki value.
 def ListECNumbersFromKiValue(client, api_params, fout):
   rstr = client.getEcNumbersFromKiValue(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 ### List all enzymes linked to Km value.
 def ListECNumbersFromKmValue(client, api_params, fout):
   rstr = client.getEcNumbersFromKmValue(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################
 def ListOrganisms(client, api_params, fout):
   rstr = client.getOrganismsFromOrganism(api_params)
-  results = brenda.Utils.ParseResultListString(rstr)
+  results = brenda.ParseResultListString(rstr)
   OutputResultsList(results, fout)
 
 #############################################################################

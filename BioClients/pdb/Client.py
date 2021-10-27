@@ -58,33 +58,33 @@ get_uniprots functionality may be discontinued by PDB.
 
   if args.op == "get_proteins":
     if not ids: parser.error('ID[s] required.')
-    pdb.Utils.GetProteins(BASE_URL, ids, fout)
+    pdb.GetProteins(BASE_URL, ids, fout)
 
   elif args.op == "get_uniprots":
     if not ids: parser.error('ID[s] required.')
-    pdb.Utils.GetUniprots(BASE_URL, ids, fout)
+    pdb.GetUniprots(BASE_URL, ids, fout)
 
   elif args.op == "get_ligands":
     if not ids: parser.error('ID[s] required.')
-    pdb.Utils.GetLigands(BASE_URL, ids, args.druglike, fout)
+    pdb.GetLigands(BASE_URL, ids, args.druglike, fout)
 
   elif args.op == "get_ligands_LID2SDF":
     if not ids: parser.error('ID[s] required.')
-    pdb.Utils.GetLigands_LID2SDF(BASE_URL, ids, fout)
+    pdb.GetLigands_LID2SDF(BASE_URL, ids, fout)
 
   elif args.op == "list_proteins":
-    pdb.Utils.ListProteins(BASE_URL, fout)
+    pdb.ListProteins(BASE_URL, fout)
 
   elif args.op == "list_ligands":
-    pdb.Utils.ListLigands(BASE_URL, args.druglike, fout)
+    pdb.ListLigands(BASE_URL, args.druglike, fout)
 
   elif args.op == "show_counts":
-    pdb.Utils.ShowCounts(BASE_URL)
+    pdb.ShowCounts(BASE_URL)
 
   elif args.op == "search":
-    ids = pdb.Utils.SearchByKeywords(BASE_URL, args.qstr)
+    ids = pdb.SearchByKeywords(BASE_URL, args.qstr)
     logging.info('protein count: %d'%(len(ids)))
-    pdb.Utils.GetProteins(BASE_URL, ids, fout)
+    pdb.GetProteins(BASE_URL, ids, fout)
 
   else:
     parser.error('Invalid operation: %s'%args.op)

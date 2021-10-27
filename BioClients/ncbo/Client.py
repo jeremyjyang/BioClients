@@ -53,7 +53,7 @@ if __name__=='__main__':
   t0 = time.time()
 
   if args.op == "recommendOntologies":
-    ncbo.Utils.RecommendOntologies(base_url, params["API_KEY"], texts, fout)
+    ncbo.RecommendOntologies(base_url, params["API_KEY"], texts, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

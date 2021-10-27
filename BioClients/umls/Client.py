@@ -70,12 +70,12 @@ Example CUIs: C34488, C0018787, C0016644
   parser.add_argument("--searchQuery", help='string or code')
   parser.add_argument("--skip", default=0, type=int)
   parser.add_argument("--nmax", default=0, type=int)
-  parser.add_argument("--api_version", default=f"{umls.Utils.API_VERSION}", help=f"API version {umls.Utils.API_VERSION}")
-  parser.add_argument("--api_host", default=umls.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=umls.Utils.API_BASE_PATH)
-  parser.add_argument("--api_auth_host", default=umls.Utils.API_AUTH_HOST)
-  parser.add_argument("--api_auth_endpoint", default=umls.Utils.API_AUTH_ENDPOINT)
-  parser.add_argument("--api_auth_service", default=umls.Utils.API_AUTH_SERVICE)
+  parser.add_argument("--api_version", default=f"{umls.API_VERSION}", help=f"API version {umls.API_VERSION}")
+  parser.add_argument("--api_host", default=umls.API_HOST)
+  parser.add_argument("--api_base_path", default=umls.API_BASE_PATH)
+  parser.add_argument("--api_auth_host", default=umls.API_AUTH_HOST)
+  parser.add_argument("--api_auth_endpoint", default=umls.API_AUTH_ENDPOINT)
+  parser.add_argument("--api_auth_service", default=umls.API_AUTH_SERVICE)
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.umls.yaml")
   parser.add_argument("--api_key", help="API key")
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -97,8 +97,8 @@ Example CUIs: C34488, C0018787, C0016644
     parser.error('Please specify valid API_KEY via --api_key or --param_file') 
 
   api_auth_url = 'https://'+args.api_auth_host+args.api_auth_endpoint
-  auth = umls.Utils.Authentication(params['API_KEY'],
-args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
+  auth = umls.Authentication(params['API_KEY'],
+args.api_auth_service, api_auth_url, umls.API_HEADERS)
   auth.setVerbosity(args.verbose)
 
   ids=[];
@@ -115,7 +115,7 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
 
   t0 = time.time()
 
-  srclist = umls.Utils.SourceList()
+  srclist = umls.SourceList()
   srclist.initFromApi(base_url, args.api_version, auth)
 
   if args.srcs:
@@ -131,21 +131,21 @@ args.api_auth_service, api_auth_url, umls.Utils.API_HEADERS)
     logging.info(f'n_src: {len(srclist.sources)}')
 
   elif args.op == 'xrefConcept':
-    umls.Utils.XrefConcept(args.idsrc, ids, args.skip, args.nmax, auth, args.api_version, base_url, fout)
+    umls.XrefConcept(args.idsrc, ids, args.skip, args.nmax, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getRelations':
-    umls.Utils.GetRelations(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
+    umls.GetRelations(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getAtoms':
-    umls.Utils.GetAtoms(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
+    umls.GetAtoms(ids, args.skip, args.nmax, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'getCodes':
-    umls.Utils.GetCodes(ids, args.srcs, auth, args.api_version, base_url, fout)
+    umls.GetCodes(ids, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'search':
     if not args.searchQuery:
       parser.error('search requires --searchQuery')
-    umls.Utils.Search(args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, auth, args.api_version, base_url, fout)
+    umls.Search(args.searchQuery, args.searchType, args.inputType, args.returnIdType, args.srcs, auth, args.api_version, base_url, fout)
 
   elif args.op == 'searchByTUI':
     parser.error(f'{args.op} NOT IMPLEMENTED YET.')

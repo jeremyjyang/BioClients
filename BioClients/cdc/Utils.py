@@ -15,7 +15,7 @@ def ListResources(base_url, resource, fout):
   url=base_url+'/%s'%resource
   while True:
     url_this='%s?offset=%d&max=%d'%(url, offset, nchunk)
-    rval=rest.Utils.GetURL(url_this, parse_json=True)
+    rval=rest.GetURL(url_this, parse_json=True)
     try:
       rscs = rval['results']
       pag = rval['meta']['pagination']

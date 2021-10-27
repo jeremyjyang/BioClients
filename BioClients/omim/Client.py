@@ -84,27 +84,27 @@ example searches: {
 
   if args.op == 'entry':
     url=API_BASE_URL+'/entry?mimNumber=%s'%(','.join(map(lambda n:str(n), mim_vals)))+url_params
-    rval=rest.Utils.GetURL(url, parse_json=True, verbose=args.verbose)
+    rval=rest.GetURL(url, parse_json=True, verbose=args.verbose)
     fout.write(json.dumps(rval, sort_keys=True, indent=2))
 
   elif args.op == 'genemap':
     url=API_BASE_URL+'/geneMap?mimNumber=%s'%(','.join(map(lambda n:str(n), mim_vals)))+url_params
-    rval=rest.Utils.GetURL(url, parse_json=True, verbose=args.verbose)
+    rval=rest.GetURL(url, parse_json=True, verbose=args.verbose)
     fout.write(json.dumps(rval, sort_keys=True, indent=2))
 
   elif args.op == 'clinical':
     url=API_BASE_URL+'/clinicalSynopsis?mimNumber=%s'%(','.join(map(lambda n:str(n), mim_vals)))+url_params
-    rval=rest.Utils.GetURL(url, parse_json=True, verbose=args.verbose)
+    rval=rest.GetURL(url, parse_json=True, verbose=args.verbose)
     fout.write(json.dumps(rval, sort_keys=True, indent=2))
 
   elif args.op == 'search':
     url=API_BASE_URL+'/entry/search?search=%s'%(urllib.parse.quote(query))+url_params
-    rval=rest.Utils.GetURL(url, parse_json=True)
+    rval=rest.GetURL(url, parse_json=True)
     fout.write(json.dumps(rval, sort_keys=True, indent=2))
 
   elif args.op == 'rawquery':
     url=API_BASE_URL+rawquery
-    rval=rest.Utils.GetURL(url, parse_json=True)
+    rval=rest.GetURL(url, parse_json=True)
     fout.write(json.dumps(rval, sort_keys=True, indent=2))
 
   else:

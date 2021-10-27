@@ -18,8 +18,8 @@ if __name__=='__main__':
   parser.add_argument("--ids", help="input IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--nmax", type=int, default=100, help="max hits")
-  parser.add_argument("--api_host", default=jensenlab.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=jensenlab.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=jensenlab.API_HOST)
+  parser.add_argument("--api_base_path", default=jensenlab.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -43,10 +43,10 @@ if __name__=='__main__':
   logging.info('Input queries: %d'%(len(ids)))
 
   if args.op == "get_disease_genes":
-    jensenlab.Utils.GetDiseaseGenes(args.channel, ids, args.nmax, base_url, fout)
+    jensenlab.GetDiseaseGenes(args.channel, ids, args.nmax, base_url, fout)
 
   elif args.op == "get_comention_genes":
-    jensenlab.Utils.GetPubmedComentionGenes(ids, base_url, fout)
+    jensenlab.GetPubmedComentionGenes(ids, base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

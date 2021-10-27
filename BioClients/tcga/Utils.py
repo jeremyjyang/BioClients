@@ -12,7 +12,7 @@ def ListProjects(base_url, skip, nmax, fout):
   from_next=skip; size=100;
   while True:
     url_next = (base_url+'/projects?from={0}&size={1}'.format(from_next, size))
-    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    rval = rest.GetURL(url_next, parse_json=True)
     projects = rval["data"]["hits"] if "data" in rval and "hits" in rval["data"] else []
     for project in projects:
       logging.debug(json.dumps(project, indent=2))
@@ -36,7 +36,7 @@ def ListCases(base_url, skip, nmax, fout):
   from_next=skip; size=100;
   while True:
     url_next = (base_url+'/cases?from={0}&size={1}'.format(from_next, size))
-    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    rval = rest.GetURL(url_next, parse_json=True)
     cases = rval["data"]["hits"] if "data" in rval and "hits" in rval["data"] else []
     for case in cases:
       logging.debug(json.dumps(case, indent=2))
@@ -60,7 +60,7 @@ def ListFiles(base_url, skip, nmax, fout):
   from_next=skip; size=100;
   while True:
     url_next = (base_url+'/files?from={0}&size={1}'.format(from_next, size))
-    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    rval = rest.GetURL(url_next, parse_json=True)
     files = rval["data"]["hits"] if "data" in rval and "hits" in rval["data"] else []
     for file_this in files:
       logging.debug(json.dumps(file_this, indent=2))
@@ -84,7 +84,7 @@ def ListAnnotations(base_url, skip, nmax, fout):
   from_next=skip; size=100;
   while True:
     url_next = (base_url+'/annotations?from={0}&size={1}'.format(from_next, size))
-    rval = rest.Utils.GetURL(url_next, parse_json=True)
+    rval = rest.GetURL(url_next, parse_json=True)
     annos = rval["data"]["hits"] if "data" in rval and "hits" in rval["data"] else []
     for anno in annos:
       logging.debug(json.dumps(anno, indent=2))

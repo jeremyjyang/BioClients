@@ -48,10 +48,10 @@ if __name__=='__main__':
   if len(ids)>0: logging.info('Input IDs: %d'%(len(ids)))
 
   if args.op=="get_ligands_by_uniprot":
-    bindingdb.Utils.GetLigandsByUniprot(api_base_url, ids, args.ic50_max, fout)
+    bindingdb.GetLigandsByUniprot(api_base_url, ids, args.ic50_max, fout)
 
   elif args.op=="get_targets_by_compound":
-    bindingdb.Utils.GetTargetsByCompound(api_base_url, args.smiles, args.sim_min, fout)
+    bindingdb.GetTargetsByCompound(api_base_url, args.smiles, args.sim_min, fout)
 
   else:
     parser.error('Operation invalid: {}'.format(args.op))

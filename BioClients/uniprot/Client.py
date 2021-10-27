@@ -52,7 +52,7 @@ if __name__=='__main__':
     parser.error('--i or --uids required.')
 
   if args.op == 'getData':
-    uniprot.Utils.GetData(BASE_URI, uids, args.ofmt, fout)
+    uniprot.GetData(BASE_URI, uids, args.ofmt, fout)
 
   else:
     parser.error('Unknown operation: %s'%args.op)

@@ -46,16 +46,16 @@ if __name__=='__main__':
   logging.info('Input queries: %d'%(len(ids)))
 
   if args.op == "list_projects":
-    tcga.Utils.ListProjects(base_url, args.skip, args.nmax, fout)
+    tcga.ListProjects(base_url, args.skip, args.nmax, fout)
 
   elif args.op == "list_cases":
-    tcga.Utils.ListCases(base_url, args.skip, args.nmax, fout)
+    tcga.ListCases(base_url, args.skip, args.nmax, fout)
 
   elif args.op == "list_files":
-    tcga.Utils.ListFiles(base_url, args.skip, args.nmax, fout)
+    tcga.ListFiles(base_url, args.skip, args.nmax, fout)
 
   elif args.op == "list_annotations":
-    tcga.Utils.ListAnnotations(base_url, args.skip, args.nmax, fout)
+    tcga.ListAnnotations(base_url, args.skip, args.nmax, fout)
 
   else:
     parser.error("Invalid operation: %s"%args.op)

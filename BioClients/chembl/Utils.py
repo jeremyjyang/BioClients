@@ -18,7 +18,7 @@ BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
 ##############################################################################
 def Status(base_url=BASE_URL, fout=None):
-  rval = rest.Utils.GetURL(f"{base_url}/status.json", parse_json=True)
+  rval = rest.GetURL(f"{base_url}/status.json", parse_json=True)
   logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   df = pd.DataFrame({tag:(rval[tag] if tag in rval else "") for tag in rval.keys()})
   if fout is not None: df.to_csv(fout, "\t", index=False)
@@ -31,7 +31,7 @@ def GetTargetByUniprot(ids, base_url=BASE_URL, fout=None):
   fout.write("UniprotId\ttarget_chembl_id\n")
   for uniprot in ids:
     id_chembl=None
-    rval = rest.Utils.GetURL(f"{base_url}/target.json?target_components__accession={uniprot}", parse_json=True)
+    rval = rest.GetURL(f"{base_url}/target.json?target_components__accession={uniprot}", parse_json=True)
     targets = rval["targets"] if "targets" in rval else []
     for target in targets:
       id_chembl = target["target_chembl_id"]
@@ -54,7 +54,7 @@ def GetActivity(ids, resource, pmin, skip=0, nmax=None, api_host=API_HOST, api_b
     tq.update()
     url_next = (f"{api_base_path}/activity.json?{resource}_chembl_id={id_this}&limit={NCHUNK}")
     while True:
-      rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+      rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
       if rval is None: break
       acts = rval["activities"] if "activities" in rval else []
       for act in acts:
@@ -98,7 +98,7 @@ def GetActivityProperties(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; tags=None;
   for i,id_this in enumerate(ids):
     if i<skip: continue
-    act = rest.Utils.GetURL((f"{base_url}/activity/{id_this}.json"), parse_json=True)
+    act = rest.GetURL((f"{base_url}/activity/{id_this}.json"), parse_json=True)
     assay_chembl_id = act["assay_chembl_id"] if "assay_chembl_id" in act else ""
     molecule_chembl_id = act["molecule_chembl_id"] if "molecule_chembl_id" in act else ""
     props = act["activity_properties"] if "activity_properties" in act else []
@@ -119,7 +119,7 @@ def ListTargets(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout
   n_tgt=0; n_cmt=0; n_out=0; tags=None; tq=None;
   url_next = (f"{api_base_path}/target.json?limit={NCHUNK}&offset={skip}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     tgts = rval["targets"] if rval and "targets" in rval else []
     for tgt in tgts:
       logging.debug(json.dumps(tgt, indent=2))
@@ -158,7 +158,7 @@ def GetTarget(ids, base_url=BASE_URL, fout=None):
   '''One row per target.  Ignore synonyms. If one-component, single protein, include UniProt accession.'''
   n_tgt=0; n_cmt=0; n_out=0; tags=None; tq=None;
   for id_this in ids:
-    tgt = rest.Utils.GetURL(f"{base_url}/target/{id_this}.json", parse_json=True)
+    tgt = rest.GetURL(f"{base_url}/target/{id_this}.json", parse_json=True)
     if not tgt:
       logging.error(f'Not found: "{id_this}"')
       continue
@@ -195,7 +195,7 @@ def GetTargetComponents(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     if i<skip: continue
     if not tq: tq = tqdm.tqdm(total=len(ids)-skip, unit="tgts")
     tq.update()
-    tgt = rest.Utils.GetURL(f"{base_url}/target/{id_this}.json", parse_json=True)
+    tgt = rest.GetURL(f"{base_url}/target/{id_this}.json", parse_json=True)
     if not tgt: continue
     n_tgt+=1
     vals = [str(tgt[tag]) if tag in tgt else "" for tag in tags]
@@ -231,7 +231,7 @@ def GetDocument(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     if i<skip: continue
     if not tq: tq = tqdm.tqdm(total=len(ids)-skip, unit="docs")
     tq.update()
-    doc = rest.Utils.GetURL(f"{base_url}/document/{id_this}.json", parse_json=True)
+    doc = rest.GetURL(f"{base_url}/document/{id_this}.json", parse_json=True)
     if not doc:
       logging.error(f'Not found: "{id_this}"')
       continue
@@ -252,7 +252,7 @@ def ListSources(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None;
   url_next = (api_base_path+"/source.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     sources = rval["sources"] if "sources" in rval else []
     for source in sources:
@@ -272,7 +272,7 @@ def ListCellLines(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_clo=0; n_efo=0; n_out=0; tags=None;
   url_next = (api_base_path+"/cell_line.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     cells = rval["cell_lines"] if "cell_lines" in rval else []
@@ -295,7 +295,7 @@ def ListOrganisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None;
   url_next = (api_base_path+"/organism.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     orgs = rval["organisms"] if "organisms" in rval else []
@@ -316,7 +316,7 @@ def ListProteinClasses(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None
   n_out=0; tags=None;
   url_next = (api_base_path+"/protein_class.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     pcls = rval["protein_classes"] if "protein_classes" in rval else []
@@ -337,7 +337,7 @@ def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PA
   n_efo=0; n_out=0; tags=None; tq=None;
   url_next = (f"{api_base_path}/drug_indication.json?limit={NCHUNK}&offset={skip}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     dins = rval["drug_indications"] if "drug_indications" in rval else []
@@ -369,7 +369,7 @@ def ListTissues(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_bto=0; n_efo=0; n_caloha=0; n_uberon=0; n_out=0; tags=None; tq=None;
   url_next = (api_base_path+"/tissue.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     tissues = rval["tissues"] if "tissues" in rval else []
@@ -398,7 +398,7 @@ def ListMechanisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
   n_out=0; tags=None; tq=None;
   url_next = (api_base_path+"/mechanism.json")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     mechs = rval["mechanisms"] if "mechanisms" in rval else []
@@ -423,7 +423,7 @@ def ListDocuments(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fo
   n_pmid=0; n_doi=0; n_out=0; n_err=0; tags=None; tq=None;
   url_next = (f"{api_base_path}/document.json?limit={NCHUNK}&offset={skip}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     docs = rval["documents"] if "documents" in rval else []
     for doc in docs:
@@ -451,7 +451,7 @@ def ListDocuments(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fo
 def GetAssay(ids, base_url=BASE_URL, fout=None):
   n_out=0; tags=None;
   for id_this in ids:
-    assay = rest.Utils.GetURL(f"{base_url}/assay/{id_this}.json", parse_json=True)
+    assay = rest.GetURL(f"{base_url}/assay/{id_this}.json", parse_json=True)
     if not assay:
       continue
     if not tags:
@@ -472,7 +472,7 @@ def ListAssays(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=
   url_next = (f"{api_base_path}/assay.json?offset={skip}&limit={NCHUNK}")
   t0 = time.time()
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     assays = rval["assays"] if "assays" in rval else []
     for assay in assays:
@@ -506,7 +506,7 @@ def SearchAssays(asrc, atype, skip, nmax, api_host=API_HOST, api_base_path=API_B
   if asrc: url_next+=(f"&src_id={asrc}")
   if atype: url_next+=(f"&assay_type={atype}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     assays = rval["assays"] if "assays" in rval else []
     for assay in assays:
@@ -536,7 +536,7 @@ def GetMolecule(ids, base_url=BASE_URL, fout=None):
   '''Ignore molecule_synonyms.'''
   n_out=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
   for id_this in ids:
-    mol = rest.Utils.GetURL(f"{base_url}/molecule/{id_this}.json", parse_json=True)
+    mol = rest.GetURL(f"{base_url}/molecule/{id_this}.json", parse_json=True)
     if not mol: continue
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
     tq.update()
@@ -568,7 +568,7 @@ def ListMolecules(dev_phase, skip, nmax, api_host=API_HOST, api_base_path=API_BA
   if skip: url_next+=(f"&offset={skip}")
   if dev_phase: url_next+=(f"&max_phase={dev_phase}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     mols = rval["molecules"] if "molecules" in rval else []
     for mol in mols:
@@ -604,7 +604,7 @@ def ListDrugs(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=N
   n_mol=0; n_out=0; n_err=0; tags=None; struct_tags=None; prop_tags=None; tq=None;
   url_next = (f"{api_base_path}/drug.json?limit={NCHUNK}&offset={skip}")
   while True:
-    rval = rest.Utils.GetURL("https://"+api_host+url_next, parse_json=True)
+    rval = rest.GetURL("https://"+api_host+url_next, parse_json=True)
     if not rval: break
     mols = rval["drugs"] if "drugs" in rval else []
     for mol in mols:
@@ -642,7 +642,7 @@ def SearchMoleculeByName(ids, base_url=BASE_URL, fout=None):
   n_out=0; n_notfound=0; synonym_tags=None;
   tags = ["molecule_chembl_id"]
   for id_this in ids:
-    rval = rest.Utils.GetURL(f"{base_url}/molecule/search?q={urllib.parse.quote(id_this)}", headers={"Accept":"application/json"}, parse_json=True)
+    rval = rest.GetURL(f"{base_url}/molecule/search?q={urllib.parse.quote(id_this)}", headers={"Accept":"application/json"}, parse_json=True)
     if not rval:
       logging.info(f'Not found: "{id_this}"')
       n_notfound+=1
@@ -674,7 +674,7 @@ def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
   for id_this in ids:
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
     tq.update()
-    mol = rest.Utils.GetURL(f"{base_url}/molecule/{id_this}.json", parse_json=True)
+    mol = rest.GetURL(f"{base_url}/molecule/{id_this}.json", parse_json=True)
     if not mol:
       continue
     struct = mol["molecule_structures"] if "molecule_structures" in mol else None

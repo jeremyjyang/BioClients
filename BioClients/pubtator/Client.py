@@ -62,7 +62,7 @@ if __name__=='__main__':
 
   if args.op == 'get_annotations':
     if not ids: logging.error('Input PMIDs required.')
-    pubtator.Utils.GetAnnotations(BASE_URL, args.mode, ids, fout)
+    pubtator.GetAnnotations(BASE_URL, args.mode, ids, fout)
 
   else:
     logging.error('Invalid operation: {0}'.format(args.op))

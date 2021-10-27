@@ -51,19 +51,19 @@ if __name__=='__main__':
     parser.error('{0} requires IDs.'.format(args.op))
 
   if args.op=='get_targets':
-    idg.Utils.GetTargets(BASE_URL, ids, args.idtype, fout)
+    idg.GetTargets(BASE_URL, ids, args.idtype, fout)
 
   elif args.op=='get_targetProperties':
-    idg.Utils.GetTargetProperties(BASE_URL, ids, args.idtype, fout)
+    idg.GetTargetProperties(BASE_URL, ids, args.idtype, fout)
 
   elif args.op=='list_targets':
-    idg.Utils.ListItems('targets', BASE_URL, fout)
+    idg.ListItems('targets', BASE_URL, fout)
 
   elif args.op=='list_diseases':
-    idg.Utils.ListItems('diseases', BASE_URL, fout)
+    idg.ListItems('diseases', BASE_URL, fout)
 
   elif args.op=='list_ligands':
-    idg.Utils.ListItems('ligands', BASE_URL, fout)
+    idg.ListItems('ligands', BASE_URL, fout)
 
   elif args.op=='search_targets':
     logging.error('Not implemented yet.')

@@ -68,10 +68,10 @@ Branches:
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.op == "desc2csv":
-    mesh.Utils.Desc2Csv(args.branch, fin, fout)
+    mesh.Desc2Csv(args.branch, fin, fout)
 
   elif args.op == "supp2csv":
-    mesh.Utils.Supp2Csv(args.branch, fin, fout)
+    mesh.Supp2Csv(args.branch, fin, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

@@ -10,7 +10,7 @@ def GetAnnotations(base_url, mode, pmids, fout):
   fout.write('sourcedb\tsourceid\tbegin\tend\tobj_type\tobj\n')
   for pmid in pmids:
     url = base_url+'/%s/%s/JSON'%(mode, pmid)
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     if not rval:
       logging.info('not found: %s'%(pmid))
       continue

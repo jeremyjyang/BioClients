@@ -76,57 +76,57 @@ operations:
   t0=time.time()
 
   if args.op == "list_targets":
-    iuphar.Utils.ListTargets(BASE_URL, args.tgt_type, args.db, ids, fout)
+    iuphar.ListTargets(BASE_URL, args.tgt_type, args.db, ids, fout)
 
   elif args.op == "list_target_families":
-    iuphar.Utils.ListTargetFamilies(BASE_URL, args.tgt_type, fout)
+    iuphar.ListTargetFamilies(BASE_URL, args.tgt_type, fout)
 
   elif args.op == "get_target":
-    iuphar.Utils.GetTarget(BASE_URL, ids, fout)
+    iuphar.GetTarget(BASE_URL, ids, fout)
 
   elif args.op == "get_target_interactions":
-    iuphar.Utils.GetInteractions(BASE_URL, 'targets', ids, args.species, args.itr_type, args.aff_type, args.aff, fout)
+    iuphar.GetInteractions(BASE_URL, 'targets', ids, args.species, args.itr_type, args.aff_type, args.aff, fout)
 
   elif args.op == "get_target_dblinks":
-    iuphar.Utils.GetDblinks(BASE_URL, 'targets', ids, args.species, args.db, fout)
+    iuphar.GetDblinks(BASE_URL, 'targets', ids, args.species, args.db, fout)
 
   elif args.op == "get_target_substrates":
-    iuphar.Utils.GetTargetSubstrates(BASE_URL, ids, args.species, fout)
+    iuphar.GetTargetSubstrates(BASE_URL, ids, args.species, fout)
 
   elif args.op == "get_target_products":
-    iuphar.Utils.GetTargetProducts(BASE_URL, ids, args.species, fout)
+    iuphar.GetTargetProducts(BASE_URL, ids, args.species, fout)
 
   elif args.op == "get_target_function":
-    iuphar.Utils.GetTargetFunction(BASE_URL, ids, args.species, fout)
+    iuphar.GetTargetFunction(BASE_URL, ids, args.species, fout)
 
   elif args.op == "get_target_gpinfo":
-    iuphar.Utils.GetTargetGeneProteinInfo(BASE_URL, ids, fout)
+    iuphar.GetTargetGeneProteinInfo(BASE_URL, ids, fout)
 
   elif args.op == "get_target_synonyms":
-    iuphar.Utils.GetSynonyms(BASE_URL, 'targets', ids, fout)
+    iuphar.GetSynonyms(BASE_URL, 'targets', ids, fout)
 
   elif args.op == "list_ligands":
-    iuphar.Utils.ListLigands(BASE_URL, args.lig_type, args.db, ids, fout)
+    iuphar.ListLigands(BASE_URL, args.lig_type, args.db, ids, fout)
 
   elif args.op == "get_ligand":
-    iuphar.Utils.GetLigand(BASE_URL, ids, fout)
+    iuphar.GetLigand(BASE_URL, ids, fout)
 
   elif args.op == "get_ligand_interactions":
-    iuphar.Utils.GetInteractions(BASE_URL, 'ligands', ids, args.species, args.itr_type, args.aff_type, args.aff, fout)
+    iuphar.GetInteractions(BASE_URL, 'ligands', ids, args.species, args.itr_type, args.aff_type, args.aff, fout)
 
   elif args.op == "get_ligand_dblinks":
-    iuphar.Utils.GetDblinks(BASE_URL, 'ligands', ids, fout)
+    iuphar.GetDblinks(BASE_URL, 'ligands', ids, fout)
 
   elif args.op == "get_ligand_structure":
-    iuphar.Utils.GetLigandStructure(BASE_URL, ids, fout)
+    iuphar.GetLigandStructure(BASE_URL, ids, fout)
 
   elif args.op == "get_ligand_synonyms":
-    iuphar.Utils.GetSynonyms(BASE_URL, 'ligands', ids, fout)
+    iuphar.GetSynonyms(BASE_URL, 'ligands', ids, fout)
 
   elif args.op == "search_ligand":
     if not (args.smiles and args.search_type):
       parser.error('--smiles and --search_type required.'+usage)
-    iuphar.Utils.SearchLigand(BASE_URL, args.smiles, args.search_type, fout)
+    iuphar.SearchLigand(BASE_URL, args.smiles, args.search_type, fout)
 
   else:
     parser.error('Invalid operation: %s'%args.op)

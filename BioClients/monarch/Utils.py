@@ -58,7 +58,7 @@ BASE_URL = "https://"+API_HOST+API_BASE_PATH
 def GetDisease(ids, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    disease = rest.Utils.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
+    disease = rest.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags:
       tags = list(disease.keys())
@@ -73,7 +73,7 @@ def GetDisease(ids, base_url=BASE_URL, fout=None):
 def GetDiseaseRelationships(ids, base_url=BASE_URL, fout=None):
   tags_dis=[]; tags_rel=[]; df=pd.DataFrame();
   for id_this in ids:
-    disease = rest.Utils.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
+    disease = rest.GetURL(f"{base_url}/disease/{id_this}.json", parse_json=True)
     logging.debug((json.dumps(disease, indent=2, sort_keys=False)))
     if not tags_dis:
       for tag in disease.keys():
@@ -98,7 +98,7 @@ def GetPhenotype(ids, base_url=BASE_URL, fout=None):
 def GetGene(ids, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for gid in ids:
-    gene = rest.Utils.GetURL(f"{base_url}/gene/{gid}.json", parse_json=True)
+    gene = rest.GetURL(f"{base_url}/gene/{gid}.json", parse_json=True)
     logging.debug((json.dumps(gene, indent=2, sort_keys=False)))
     if not tags: tags = list(gene.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
@@ -118,7 +118,7 @@ def ComparePhenotypes(idAs, idBs, base_url=BASE_URL, fout=None):
   #fout.write("idA,typeA,labelA,taxonA,idB,typeB,labelB,taxonB,url,matchidA,matchlabelA,matchidB,matchlabelB,matchidLCS,matchlabelLCS,matchicA,matchicB,matchicLCS\n")
   for idA in idAs:
     url_this = f"{base_url}/compare/{idA}/{(','.join(idBs))}.json"
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
+    rval = rest.GetURL(url_this, parse_json=True)
     logging.debug(json.dumps(rval, indent=2, sort_keys=False))
     cmpr = rval
     if not tags: tags = list(cmpr.keys())

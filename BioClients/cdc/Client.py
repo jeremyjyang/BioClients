@@ -30,16 +30,16 @@ if __name__=='__main__':
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
   if args.op=="list_sources":
-    cdc.Utils.ListResources(api_base_url, 'sources', fout)
+    cdc.ListResources(api_base_url, 'sources', fout)
 
   elif args.op=="list_topics":
-    cdc.Utils.ListResources(api_base_url, 'topics', fout)
+    cdc.ListResources(api_base_url, 'topics', fout)
 
   elif args.op=="list_organizations":
-    cdc.Utils.ListResources(api_base_url, 'organizations', fout)
+    cdc.ListResources(api_base_url, 'organizations', fout)
 
   elif args.op=="list_audiences":
-    cdc.Utils.ListResources(api_base_url, 'audiences', fout)
+    cdc.ListResources(api_base_url, 'audiences', fout)
 
   else:
     parser.error('Operation invalid: {}'.format(args.op))

@@ -40,13 +40,13 @@ if __name__=="__main__":
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.op == "test":
-    wikidata.Utils.Test(fout)
+    wikidata.Test(fout)
 
   elif args.op == "list_drugTargetPairs":
-    wikidata.Utils.ListDrugTargetPairs(fout)
+    wikidata.ListDrugTargetPairs(fout)
 
   elif args.op == "list_geneDiseasePairs":
-    wikidata.Utils.ListGeneDiseasePairs(fout)
+    wikidata.ListGeneDiseasePairs(fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")

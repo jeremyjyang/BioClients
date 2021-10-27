@@ -39,10 +39,10 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("--species", help="taxon code, ex: 9606 (human)")
   parser.add_argument("--minscore", type=int, default=500, help="signifcance threshold 0-1000")
-  parser.add_argument("--netflavor", choices=stringdb.Utils.NETWORK_FLAVORS, default='evidence', help="network flavor")
-  parser.add_argument("--imgfmt", choices=stringdb.Utils.IMG_FMTS, default='image', help="image format")
-  parser.add_argument("--api_host", default=stringdb.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=stringdb.Utils.API_BASE_PATH)
+  parser.add_argument("--netflavor", choices=stringdb.NETWORK_FLAVORS, default='evidence', help="network flavor")
+  parser.add_argument("--imgfmt", choices=stringdb.IMG_FMTS, default='image', help="image format")
+  parser.add_argument("--api_host", default=stringdb.API_HOST)
+  parser.add_argument("--api_base_path", default=stringdb.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -68,42 +68,42 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
 
   if args.op == 'getIds':
     if not ids: parser.error('PID[s] required.')
-    stringdb.Utils.GetIds(ids, base_url, fout)
+    stringdb.GetIds(ids, base_url, fout)
 
   elif args.op == 'getInteractors':
     if not ids: parser.error('ID[s] required.')
-    stringdb.Utils.GetInteractors(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetInteractors(ids, args.species, args.minscore, base_url, fout)
 
   elif args.op == 'getInteractionPartners':
     if not ids: parser.error('ID[s] required.')
-    stringdb.Utils.GetInteractionPartners(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetInteractionPartners(ids, args.species, args.minscore, base_url, fout)
 
   elif args.op == 'getActions':
     if not ids: parser.error('ID[s] required.')
-    stringdb.Utils.GetActions(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetActions(ids, args.species, args.minscore, base_url, fout)
 
   elif args.op == 'getEnrichment':
     if not len(ids)>1: parser.error('IDs (2+) required.')
-    stringdb.Utils.GetEnrichment(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetEnrichment(ids, args.species, args.minscore, base_url, fout)
 
   elif args.op == 'getPPIEnrichment':
     if not len(ids)>1: parser.error('IDs (2+) required.')
-    stringdb.Utils.GetPPIEnrichment(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetPPIEnrichment(ids, args.species, args.minscore, base_url, fout)
 
   elif args.op == 'getAbstracts':
     if not ids: parser.error('ID[s] required.')
-    stringdb.Utils.GetAbstracts(ids, args.species, base_url, fout)
+    stringdb.GetAbstracts(ids, args.species, base_url, fout)
 
   elif args.op == 'getNetwork':
     if not ids: parser.error('ID required.')
-    stringdb.Utils.GetNetwork(ids[0], args.species, args.minscore, args.netflavor, base_url, fout)
+    stringdb.GetNetwork(ids[0], args.species, args.minscore, args.netflavor, base_url, fout)
 
   elif args.op == 'getNetworkImage':
     if not ids: parser.error('ID required.')
     if not args.ofile: parser.error('--o OUTFILE required.')
     fout.close()
     fout = open(args.ofile, "wb+") #binary
-    img = stringdb.Utils.GetNetworkImage(ids[0], args.species, args.minscore, args.netflavor, args.imgfmt, base_url)
+    img = stringdb.GetNetworkImage(ids[0], args.species, args.minscore, args.netflavor, args.imgfmt, base_url)
     fout.write(img)
     fout.close()
 

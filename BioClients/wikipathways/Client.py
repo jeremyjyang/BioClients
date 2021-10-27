@@ -53,13 +53,13 @@ if __name__=='__main__':
   t0=time.time()
 
   if args.op=="list_organisms":
-    wikipathways.Utils.ListOrganisms(api_base_url, fout)
+    wikipathways.ListOrganisms(api_base_url, fout)
 
   elif args.op=="list_pathways":
-    wikipathways.Utils.ListPathways(api_base_url, search_params, fout)
+    wikipathways.ListPathways(api_base_url, search_params, fout)
 
   elif args.op=="get_pathway":
-    wikipathways.Utils.GetPathway(api_base_url, ids, ofmt, fout)
+    wikipathways.GetPathway(api_base_url, ids, ofmt, fout)
 
   else:
     parser.error('Invalid operation: {0}'.format(args.op))

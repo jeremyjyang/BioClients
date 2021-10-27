@@ -87,16 +87,16 @@ if __name__=='__main__':
   t0=time.time()
 
   if args.op =="list_organisms":
-    biogrid.Utils.ListOrganisms(base_url, params, fout)
+    biogrid.ListOrganisms(base_url, params, fout)
 
   elif args.op =="list_idtypes":
-    biogrid.Utils.ListIdTypes(base_url, params, fout)
+    biogrid.ListIdTypes(base_url, params, fout)
 
   elif args.op =="get_interactions":
-    biogrid.Utils.GetInteractions(base_url, params, ids, fout)
+    biogrid.GetInteractions(base_url, params, ids, fout)
 
   elif args.op =="search_interactions":
-    biogrid.Utils.SearchInteractions(base_url, params, ids, search_params, fout)
+    biogrid.SearchInteractions(base_url, params, ids, search_params, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))

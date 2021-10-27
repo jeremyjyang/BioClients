@@ -18,12 +18,12 @@ HEADERS={'Accept':OFMTS['JSON']}
 #
 ##############################################################################
 def Info(base_url=BASE_URL, fout=None):
-  rval = rest.Utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
+  rval = rest.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
   logging.info(json.dumps(rval, sort_keys=True, indent=2))
 
 ##############################################################################
 def ListSearchableFields(base_url=BASE_URL, fout=None):
-  rval = rest.Utils.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
+  rval = rest.GetURL(base_url+'/info', headers=HEADERS, parse_json=True)
   fields = rval['searchableFields'] if 'searchableFields' in rval else None
   fields.sort()
   df = pd.DataFrame({'fields':fields})
@@ -44,7 +44,7 @@ for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
     numFound=0; genes=[];
     ftype_hit=None
     for ftype in ftypes:
-      rval = rest.Utils.GetURL(base_url+'/fetch/{}/{}'.format(ftype.lower(), qry), headers=HEADERS, parse_json=True)
+      rval = rest.GetURL(base_url+'/fetch/{}/{}'.format(ftype.lower(), qry), headers=HEADERS, parse_json=True)
       if rval is None: continue
       ftype_hit=ftype
       responseHeader = rval['responseHeader']
@@ -82,7 +82,7 @@ def SearchGenes(qrys, ftypes, base_url=BASE_URL, fout=None):
     found_this=False
     for ftype in ftypes:
       url = (base_url+'/search{}/*{}*'.format((('/'+ftype.lower()) if ftype else ''), qry))
-      rval = rest.Utils.GetURL(url, headers=HEADERS, parse_json=True)
+      rval = rest.GetURL(url, headers=HEADERS, parse_json=True)
       responseHeader = rval['responseHeader']
       logging.debug('response status = {}'.format(responseHeader['status']))
       response = rval['response'] 

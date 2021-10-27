@@ -61,28 +61,28 @@ if __name__=='__main__':
 
   t0=time.time()
 
-  dbcon = c2b2r.Utils.Connect(dbhost=params["DBHOST"], dbname=params["DBNAME"], dbusr=params["DBUSR"], dbpw=params["DBPW"])
+  dbcon = c2b2r.Connect(dbhost=params["DBHOST"], dbname=params["DBNAME"], dbusr=params["DBUSR"], dbpw=params["DBPW"])
 
   if args.op=="schema":
-    c2b2r.Utils.DescribeSchema(dbcon, args.dbschema, args.schema_with)
+    c2b2r.DescribeSchema(dbcon, args.dbschema, args.schema_with)
 
   elif args.op=="tablecounts":
-    c2b2r.Utils.DescribeCounts(dbcon)
+    c2b2r.DescribeCounts(dbcon)
 
   elif args.op=="get_target":
-    c2b2r.Utils.GetTarget(dbcon, args.dbschema, tids,fout)
+    c2b2r.GetTarget(dbcon, args.dbschema, tids,fout)
 
   elif args.op=="list_targets":
-    c2b2r.Utils.ListTargets(dbcon, args.dbschema, fout)
+    c2b2r.ListTargets(dbcon, args.dbschema, fout)
 
   elif args.op=="list_genes":
-    c2b2r.Utils.ListGenes(dbcon, args.dbschema, fout)
+    c2b2r.ListGenes(dbcon, args.dbschema, fout)
 
   elif args.op=="get_compound":
     fout.write('"cid"\t"synonyms"\t"isosmi"\n')
     n_found=0
     for cid in cids:
-      ok=c2b2r.Utils.GetCompound(dbcon, args.dbschema, cid, fout)
+      ok=c2b2r.GetCompound(dbcon, args.dbschema, cid, fout)
       if ok: n_found+=1
       else: logging.info('CID %d not found'%(cid))
     fout.close()

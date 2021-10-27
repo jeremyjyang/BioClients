@@ -55,16 +55,16 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
     ids = re.split(r'\s*,\s*', args.ids.strip())
 
   if args.op == 'search_studies':
-    gwascatalog.Utils.SearchStudies(ids, args.searchtype, base_url, fout)
+    gwascatalog.SearchStudies(ids, args.searchtype, base_url, fout)
 
   elif args.op == 'list_studies':
-    gwascatalog.Utils.ListStudies(base_url, fout)
+    gwascatalog.ListStudies(base_url, fout)
 
   elif args.op == 'get_studyAssociations':
-    gwascatalog.Utils.GetStudyAssociations(ids, args.skip, args.nmax, base_url, fout)
+    gwascatalog.GetStudyAssociations(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_snps':
-    gwascatalog.Utils.GetSnps(ids, args.skip, args.nmax, base_url, fout)
+    gwascatalog.GetSnps(ids, args.skip, args.nmax, base_url, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")

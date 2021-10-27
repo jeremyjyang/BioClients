@@ -32,7 +32,7 @@ def GetIds(ids, base_url=BASE_URL, fout=None):
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
     url_this = base_url+f'/json/get_string_ids?identifier={id_this}'
-    results = rest.Utils.GetURL(url_this, parse_json=True)
+    results = rest.GetURL(url_this, parse_json=True)
     for result in results:
       logging.debug(result)
       if not tags: tags = list(result.keys())
@@ -48,7 +48,7 @@ def GetInteractionPartners(ids, species, minscore, base_url=BASE_URL, fout=None)
     url_this = base_url+f'/json/interaction_partners?identifier={id_this}'
     if species: url_this+=(f'&species={species}')
     if minscore: url_this+=(f'&required_score={minscore}')
-    results = rest.Utils.GetURL(url_this, parse_json=True)
+    results = rest.GetURL(url_this, parse_json=True)
     for result in results:
       logging.debug(result)
       if not tags: tags = list(result.keys())
@@ -63,7 +63,7 @@ def GetEnrichment(ids, species, minscore, base_url=BASE_URL, fout=None):
   url = base_url+'/json/enrichment?identifiers={}'.format(urllib.parse.quote('\n'.join(ids)))
   if species: url+=(f'&species={species}')
   if minscore: url+=(f'&required_score={minscore}')
-  results = rest.Utils.GetURL(url, parse_json=True)
+  results = rest.GetURL(url, parse_json=True)
   for result in results:
     logging.debug(result)
     if not tags: tags = list(result.keys())
@@ -78,7 +78,7 @@ def GetPPIEnrichment(ids, species, minscore, base_url=BASE_URL, fout=None):
   url = base_url+'/json/ppi_enrichment?identifiers={}'.format(urllib.parse.quote('\n'.join(ids)))
   if species: url+=(f'&species={species}')
   if minscore: url+=(f'&required_score={minscore}')
-  results = rest.Utils.GetURL(url, parse_json=True)
+  results = rest.GetURL(url, parse_json=True)
   for result in results:
     logging.debug(result)
     if not tags: tags = list(result.keys())
@@ -94,7 +94,7 @@ def GetNetwork(nid, species, minscore, netflavor, base_url=BASE_URL, fout=None):
   if species: url+=(f'&species={species}')
   if minscore: url+=(f'&required_score={minscore}')
   if netflavor: url+=(f'&network_flavor={netflavor}')
-  edges = rest.Utils.GetURL(url, parse_json=True)
+  edges = rest.GetURL(url, parse_json=True)
   logging.debug(json.dumps(edges, indent=2))
   for edge in edges:
     logging.debug(edge)
@@ -110,7 +110,7 @@ def GetNetworkImage(nid, species, minscore, netflavor, imgfmt, base_url=BASE_URL
   if species: url+=(f'&species={species}')
   if minscore: url+=(f'&required_score={minscore}')
   if netflavor: url+=(f'&network_flavor={netflavor}')
-  img = rest.Utils.GetURL(url, parse_json=False, parse_xml=False)
+  img = rest.GetURL(url, parse_json=False, parse_xml=False)
   return img
 
 ##############################################################################
@@ -124,7 +124,7 @@ def GetInteractors(pids, species, minscore, base_url=BASE_URL, fout=None):
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; interactors: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -139,7 +139,7 @@ def GetActions(pids, species, minscore, base_url=BASE_URL, fout=None):
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
   url+=('&required_score=%d'%minscore)
-  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; actions: %d'%(len(pids), len(rval.splitlines())-1))
 
@@ -153,7 +153,7 @@ def GetAbstracts(pids, species, base_url=BASE_URL, fout=None):
   else:
     url+=('?identifiers=%s'%urllib.parse.quote('\n'.join(pids)))
   url+=('&species=%s'%species if species else '')
-  rval=rest.Utils.GetURL(url, parse_xml=False, parse_json=False)
+  rval=rest.GetURL(url, parse_xml=False, parse_json=False)
   fout.write(rval)
   logging.info('queries: %d ; abstracts: %d'%(len(pids), len(rval.splitlines())-1))
 

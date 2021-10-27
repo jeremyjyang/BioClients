@@ -17,7 +17,7 @@ def GetEntities(ids, base_url=BASE_URL, fout=None):
   """For only one type of entity per call (gene, term)."""
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    ent = rest.Utils.GetURL(base_url+'/bioentity/'+urllib.parse.quote(id_this), parse_json=True)
+    ent = rest.GetURL(base_url+'/bioentity/'+urllib.parse.quote(id_this), parse_json=True)
     logging.debug(json.dumps(ent, sort_keys=True, indent=2))
     if not tags: tags = ent.keys()
     df = pd.concat([df, pd.DataFrame({tags[j]:[ent[tags[j]]] for j in range(len(tags))})])
@@ -29,7 +29,7 @@ def GetEntities(ids, base_url=BASE_URL, fout=None):
 def GetGeneTerms(ids, base_url=BASE_URL, fout=None): 
   tags=[]; df=pd.DataFrame();
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+'/bioentity/gene/{}/function'.format(urllib.parse.quote(id_this)), parse_json=True)
+    rval = rest.GetURL(base_url+'/bioentity/gene/{}/function'.format(urllib.parse.quote(id_this)), parse_json=True)
     assns = rval['associations'] if 'associations' in rval else []
     for assn in assns:
       logging.debug(json.dumps(assn, sort_keys=True, indent=2))

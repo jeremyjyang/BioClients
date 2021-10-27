@@ -23,7 +23,7 @@ Signature IDs: LINCSCP_10260,LINCSCP_10261,LINCSCP_10262;
 Dataset IDs: EDS-1013,EDS-1014;
 Search Terms: cancer, vorinostat, MCF7.
 """
-  parser = argparse.ArgumentParser(description=f'LINCS REST API client ({lincs.Utils.API_HOST})', epilog=epilog)
+  parser = argparse.ArgumentParser(description=f'LINCS REST API client ({lincs.API_HOST})', epilog=epilog)
   ops = [
 	'get_gene', 'get_compound', 'get_dataset',
 	'list_genes', 'list_compounds', 'list_datasets',
@@ -39,8 +39,8 @@ Search Terms: cancer, vorinostat, MCF7.
   parser.add_argument("--ngene", type=int, default=50, help="top genes per signature")
   parser.add_argument("--nmax", type=int, help="max results")
   parser.add_argument("--skip", type=int, help="skip results")
-  parser.add_argument("--api_host", default=lincs.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=lincs.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=lincs.API_HOST)
+  parser.add_argument("--api_base_path", default=lincs.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -61,25 +61,25 @@ Search Terms: cancer, vorinostat, MCF7.
     ids = re.split('[,\s]+', args.ids.strip())
 
   if args.op == 'get_gene':
-    lincs.Utils.GetGene(ids, base_url, fout)
+    lincs.GetGene(ids, base_url, fout)
 
   elif args.op == 'get_compound':
-    lincs.Utils.GetCompound(ids, base_url, fout)
+    lincs.GetCompound(ids, base_url, fout)
 
   elif args.op == 'list_compounds':
-    lincs.Utils.ListCompounds(base_url, fout)
+    lincs.ListCompounds(base_url, fout)
 
   elif args.op == 'get_dataset':
-    lincs.Utils.GetDataset(ids, base_url, fout)
+    lincs.GetDataset(ids, base_url, fout)
 
   elif args.op == 'search_dataset':
-    lincs.Utils.SearchDataset(args.searchTerm, args.lincs_only, base_url, fout)
+    lincs.SearchDataset(args.searchTerm, args.lincs_only, base_url, fout)
 
   elif args.op == 'search_signature':
-    lincs.Utils.SearchSignature(ids, args.lincs_only, base_url, fout)
+    lincs.SearchSignature(ids, args.lincs_only, base_url, fout)
 
   elif args.op == 'get_signature':
-    lincs.Utils.GetSignature(ids, args.ngene, base_url, fout)
+    lincs.GetSignature(ids, args.ngene, base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')

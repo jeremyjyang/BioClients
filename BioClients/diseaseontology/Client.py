@@ -19,7 +19,7 @@ def GetMetadata(ids,base_url,fout):
   fout.write('doid,name,definition,child_count,parent_count,meshid\n')
   for doid in ids:
     try:
-      rval=rest.Utils.GetURL(base_url+'/metadata/%s'%(doid),headers=HEADERS,parse_json=True)
+      rval=rest.GetURL(base_url+'/metadata/%s'%(doid),headers=HEADERS,parse_json=True)
     except Exception as e:
       logging.error('%s'%(e))
       continue
@@ -47,7 +47,7 @@ def GetMetadata(ids,base_url,fout):
 ##############################################################################
 def ListTopClasses(base_url,fout):
   n_out=0;
-  rval=rest.Utils.GetURL(base_url+'/metadata/DOID:4',headers=HEADERS,parse_json=True)
+  rval=rest.GetURL(base_url+'/metadata/DOID:4',headers=HEADERS,parse_json=True)
   children = rval['children'] if rval.has_key('children') else []
   for c in children:
     desc,doid = c

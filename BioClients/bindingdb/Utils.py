@@ -13,7 +13,7 @@ from ..util import rest
 def GetLigandsByUniprot(base_url, ids, ic50_max, fout):
   n_out=0; tags=None;
   for id_this in ids:
-    rval = rest.Utils.GetURL(base_url+'/getLigandsByUniprots?uniprot=%s&cutoff=%d&response=application/json'%(id_this, ic50_max), parse_json=True)
+    rval = rest.GetURL(base_url+'/getLigandsByUniprots?uniprot=%s&cutoff=%d&response=application/json'%(id_this, ic50_max), parse_json=True)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
     ligands = rval["getLigandsByUniprotsResponse"]["affinities"] if "getLigandsByUniprotsResponse" in rval and "affinities" in rval["getLigandsByUniprotsResponse"] else []
     for ligand in ligands:
@@ -26,7 +26,7 @@ def GetLigandsByUniprot(base_url, ids, ic50_max, fout):
 
 ##############################################################################
 def GetTargetsByCompound(base_url, smiles, sim_min, fout):
-  rval = rest.Utils.GetURL(base_url+'/getTargetByCompound?smiles=%s&cutoff=%.2f'%(urllib.parse.quote(smiles),
+  rval = rest.GetURL(base_url+'/getTargetByCompound?smiles=%s&cutoff=%.2f'%(urllib.parse.quote(smiles),
 sim_min), parse_xml=True)
   fout.write(rval.tostring())
 

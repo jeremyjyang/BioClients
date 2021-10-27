@@ -49,16 +49,16 @@ if __name__=='__main__':
     parser.error('--i or --ids required.')
 
   if args.op=='list_species':
-    ensembl.Utils.ListSpecies(base_url, fout)
+    ensembl.ListSpecies(base_url, fout)
 
   elif args.op=='get_info':
-    ensembl.Utils.GetInfo(ids, base_url, fout)
+    ensembl.GetInfo(ids, base_url, fout)
 
   elif args.op=='get_xrefs':
-    ensembl.Utils.GetXrefs(ids, base_url, fout)
+    ensembl.GetXrefs(ids, base_url, fout)
 
   elif args.op=='show_version':
-    ensembl.Utils.ShowVersion(base_url, fout)
+    ensembl.ShowVersion(base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')

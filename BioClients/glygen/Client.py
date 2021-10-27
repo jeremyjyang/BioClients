@@ -25,8 +25,8 @@ if __name__=='__main__':
   parser.add_argument("--query", help="search query (SMILES)")
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=None)
-  parser.add_argument("--api_host", default=glygen.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=glygen.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=glygen.API_HOST)
+  parser.add_argument("--api_base_path", default=glygen.API_BASE_PATH)
   parser.add_argument("-v","--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -52,11 +52,11 @@ if __name__=='__main__':
     parser.error(f"--i or --ids required for operation {args.op}.")
 
   if args.op == "get":
-    glygen.Utils.Get(ids, base_url, fout)
+    glygen.Get(ids, base_url, fout)
 
   elif args.op == "search":
     parser.error(f'Not yet implemented: {args.op}')
-    #glygen.Utils.Search(args.query, base_url, fout)
+    #glygen.Search(args.query, base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')

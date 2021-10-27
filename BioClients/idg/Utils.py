@@ -15,7 +15,7 @@ def GetTargets(base_url, ids, idtype, fout):
   tags=[]; n_out=0;
   for id_this in ids:
     url = base_url+'/targets(%s)'%id_this
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     if not rval:
       logging.debug('Not found: %s'%(id_this))
       continue
@@ -35,7 +35,7 @@ def GetTargetProperties(base_url, ids, idtype, fout):
   tags=[]; n_out=0;
   for id_this in ids:
     url = (base_url+'/targets(%s)/properties'%id_this)
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     if not rval:
       logging.debug('Not found: %s'%(id_this))
       continue
@@ -56,7 +56,7 @@ def ListItems(mode, base_url, fout):
   n_out=0; tags=[]; top=100; skip=0;
   while True:
     url = base_url+'/%s?top=%d&skip=%d'%(mode, top, skip)
-    rval = rest.Utils.GetURL(url, parse_json=True)
+    rval = rest.GetURL(url, parse_json=True)
     if not rval:
       break
     elif type(rval) is not dict:

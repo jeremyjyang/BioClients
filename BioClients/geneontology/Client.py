@@ -39,16 +39,16 @@ if __name__=='__main__':
         ids.append(line.rstrip())
 
   if args.op == 'list_terms':
-    geneontology.Utils.ListTerms(BASE_URL, fout)
+    geneontology.ListTerms(BASE_URL, fout)
 
   elif args.op == 'list_genes':
-    geneontology.Utils.ListGenes(BASE_URL, fout)
+    geneontology.ListGenes(BASE_URL, fout)
 
   elif args.op == 'get_entities':
-    geneontology.Utils.GetEntities(ids, BASE_URL, fout)
+    geneontology.GetEntities(ids, BASE_URL, fout)
 
   elif args.op == 'get_geneTerms':
-    geneontology.Utils.GetGeneTerms(ids, BASE_URL, fout)
+    geneontology.GetGeneTerms(ids, BASE_URL, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')

@@ -27,8 +27,8 @@ if __name__=='__main__':
   parser.add_argument("--query", help="search query (SMILES)")
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=None)
-  parser.add_argument("--api_host", default=chebi.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=chebi.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=chebi.API_HOST)
+  parser.add_argument("--api_base_path", default=chebi.API_BASE_PATH)
   parser.add_argument("-v","--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -54,17 +54,17 @@ if __name__=='__main__':
     parser.error(f"--i or --ids required for operation {args.op}.")
 
   if args.op == "get_entity":
-    chebi.Utils.GetEntity(ids, base_url, fout)
+    chebi.GetEntity(ids, base_url, fout)
 
   elif args.op == "get_entity_children":
-    chebi.Utils.GetEntityChildren(ids, base_url, fout)
+    chebi.GetEntityChildren(ids, base_url, fout)
 
   elif args.op == "get_entity_parents":
-    chebi.Utils.GetEntityParents(ids, base_url, fout)
+    chebi.GetEntityParents(ids, base_url, fout)
 
   elif args.op == "search":
     parser.error(f'Not yet implemented: {args.op}')
-    #chebi.Utils.Search(args.query, base_url, fout)
+    #chebi.Search(args.query, base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')

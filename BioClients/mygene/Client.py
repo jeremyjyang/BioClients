@@ -19,7 +19,7 @@ if __name__=='__main__':
   parser.add_argument("--ids", help="input gene IDs or queries, comma-separated")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--species", default="human", help="species name or taxonomy ID")
-  parser.add_argument("--fields", default=bc_mygene.Utils.FIELDS, help="requested fields")
+  parser.add_argument("--fields", default=bc_mygene.FIELDS, help="requested fields")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -41,10 +41,10 @@ if __name__=='__main__':
   fields = re.split(r'[,\s]+', args.fields)
 
   if args.op=="get":
-    bc_mygene.Utils.GetGenes(ids, fields, fout)
+    bc_mygene.GetGenes(ids, fields, fout)
 
   elif args.op=="search":
-    bc_mygene.Utils.SearchGenes(ids, args.species, fout)
+    bc_mygene.SearchGenes(ids, args.species, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

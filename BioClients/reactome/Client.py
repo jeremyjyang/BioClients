@@ -48,8 +48,8 @@ Classes:
   parser.add_argument("--ids", dest="ids", help="IDs, comma-separated")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
   parser.add_argument("--o", dest="ofile", help="output file")
-  parser.add_argument("--api_host", default=reactome.Utils.API_HOST)
-  parser.add_argument("--api_base_path", default=reactome.Utils.API_BASE_PATH)
+  parser.add_argument("--api_host", default=reactome.API_HOST)
+  parser.add_argument("--api_base_path", default=reactome.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -74,28 +74,28 @@ Classes:
     ids = re.split('[, ]+', args.ids.strip())
 
   if args.op == "dbinfo":
-    reactome.Utils.DBInfo(base_url, fout)
+    reactome.DBInfo(base_url, fout)
 
   elif args.op == "query_entry":
-    reactome.Utils.QueryEntry(ids, base_url, fout)
+    reactome.QueryEntry(ids, base_url, fout)
 
   elif args.op == "list_diseases":
-    reactome.Utils.ListDiseases(base_url, fout)
+    reactome.ListDiseases(base_url, fout)
 
   elif args.op == "list_toplevelpathways":
-    reactome.Utils.ListToplevelPathways(base_url, fout)
+    reactome.ListToplevelPathways(base_url, fout)
 
   elif args.op == "list_compounds":
-    reactome.Utils.ListCompounds(base_url, fout)
+    reactome.ListCompounds(base_url, fout)
 
   elif args.op == "get_interactors":
-    reactome.Utils.GetInteractors(ids, base_url, fout)
+    reactome.GetInteractors(ids, base_url, fout)
 
   elif args.op == "get_pathwaysforgenes":
-    reactome.Utils.GetPathwaysForGenes(ids, base_url, fout)
+    reactome.GetPathwaysForGenes(ids, base_url, fout)
 
   elif args.op == "get_pathwayparticipants":
-    reactome.Utils.GetPathwayParticipants(ids, base_url, fout)
+    reactome.GetPathwayParticipants(ids, base_url, fout)
 
   else:
     parser.error("No operation specified.")
