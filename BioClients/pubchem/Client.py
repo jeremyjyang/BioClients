@@ -7,9 +7,6 @@ import sys,os,re,argparse,time,logging
 #
 from .. import pubchem
 #
-API_HOST='pubchem.ncbi.nlm.nih.gov'
-API_BASE_PATH='/rest/pug'
-#
 ##############################################################################
 if __name__=='__main__':
   ops = [
@@ -30,8 +27,8 @@ if __name__=='__main__':
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
   parser.add_argument("--iaid", dest="ifile_aid", help="input AIDs file")
   parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=pubchem.API_HOST)
+  parser.add_argument("--api_base_path", default=pubchem.API_BASE_PATH)
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=0)
   parser.add_argument("--nmax_per_cid", type=int, default=20)
@@ -40,7 +37,7 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  BASE_URL = 'https://'+args.api_host+args.api_base_path
+  base_url = 'https://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
@@ -54,7 +51,7 @@ if __name__=='__main__':
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
-  logging.info('Input IDs: %d'%(len(ids)))
+  logging.info(f"Input IDs: {len(ids)}")
 
   aids=[]
   if args.ifile_aid:
@@ -66,73 +63,74 @@ if __name__=='__main__':
     fin.close()
   elif args.aids:
     aids = re.split(r'[,\s]+', args.aids)
-  logging.info('Input AIDs: %d'%(len(aids)))
+  if len(aids)>0: logging.info(f"Input AIDs: {len(aids)}")
 
   t0=time.time()
 
   if args.op == 'list_sources_assay':
-    pubchem.ListSources(BASE_URL, "assay", fout)
+    pubchem.ListSources("assay", base_url, fout)
 
   elif args.op == 'list_sources_substance':
-    pubchem.ListSources(BASE_URL, "substance", fout)
+    pubchem.ListSources("substance", base_url, fout)
 
   elif args.op == 'get_cid2synonyms':
-    pubchem.GetCID2Synonyms(BASE_URL, ids, args.skip, args.nmax, args.nmax_per_cid, fout)
+    pubchem.GetCID2Synonyms(ids, args.skip, args.nmax,
+args.nmax_per_cid, base_url, fout)
 
   elif args.op == 'get_cid2properties':
-    pubchem.GetCID2Properties(BASE_URL, ids, fout)
+    pubchem.GetCID2Properties(ids, base_url, fout)
 
   elif args.op == 'get_cid2inchi':
-    pubchem.GetCID2Inchi(BASE_URL, ids, fout)
+    pubchem.GetCID2Inchi(ids, base_url, fout)
 
   elif args.op == 'get_cid2sid':
-    pubchem.GetCID2SID(BASE_URL, ids, fout)
+    pubchem.GetCID2SID(ids, base_url, fout)
 
   elif args.op == 'get_cid2smiles':
-    pubchem.Utils.GetCID2Smiles(BASE_URL, ids, fout)
+    pubchem.Utils.GetCID2Smiles(ids, base_url, fout)
 
   elif args.op == 'get_cid2sdf':
-    pubchem.GetCID2SDF(BASE_URL, ids, fout)
+    pubchem.GetCID2SDF(ids, base_url, fout)
 
   elif args.op == 'get_cid2assaysummary':
-    pubchem.GetCID2AssaySummary(BASE_URL, ids, fout)
+    pubchem.GetCID2AssaySummary(ids, base_url, fout)
 
   elif args.op == 'get_sid2cid':
-    pubchem.GetSID2CID(BASE_URL, ids, fout)
+    pubchem.GetSID2CID(ids, base_url, fout)
 
   elif args.op == 'get_sid2assaysummary':
-    pubchem.GetSID2AssaySummary(BASE_URL, ids, fout)
+    pubchem.GetSID2AssaySummary(ids, base_url, fout)
 
   elif args.op == 'get_sid2sdf':
-    pubchem.GetSID2SDF(BASE_URL, ids, fout, args.skip, args.nmax)
+    pubchem.GetSID2SDF(ids, fout, args.skip, args.nmax, base_url)
 
   elif args.op == 'get_smi2cid':
-    pubchem.GetSmiles2CID(BASE_URL, ids, fout)
+    pubchem.GetSmiles2CID(ids, base_url, fout)
 
   elif args.op == 'get_name2sid':
-    pubchem.GetName2SID(BASE_URL, ids, fout)
+    pubchem.GetName2SID(ids, base_url, fout)
 
   elif args.op == 'get_name2cid':
-    pubchem.GetName2CID(BASE_URL, ids, fout)
+    pubchem.GetName2CID(ids, base_url, fout)
 
   elif args.op == 'get_name2synonyms':
-    pubchem.GetName2Synonyms(BASE_URL, ids, fout)
+    pubchem.GetName2Synonyms(ids, base_url, fout)
 
   elif args.op == 'get_assayname':
-    pubchem.GetAssayName(BASE_URL, aids, fout)
+    pubchem.GetAssayName(aids, base_url, fout)
 
   elif args.op == 'get_assaydescriptions':
-    pubchem.GetAssayDescriptions(BASE_URL, aids, args.skip, args.nmax, fout)
+    pubchem.GetAssayDescriptions(aids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_assaysubstances':
-    pubchem.Utils.GetAssaySIDs(BASE_URL, aids, args.skip, args.nmax, fout)
+    pubchem.Utils.GetAssaySIDs(aids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_assaysubstanceresults':
     if not (aids and ids): parser.error('Input AIDs and SIDs required.')
-    pubchem.GetAssaySIDResults(BASE_URL, aids, ids, args.skip, args.nmax, fout)
+    pubchem.GetAssaySIDResults(aids, ids, args.skip, args.nmax, base_url, fout)
 
   else:
-    parser.error('Invalid operation: %s'%args.op)
+    parser.error(f"Invalid operation: {args.op}")
 
   logging.info(('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0)))))
 

@@ -29,8 +29,6 @@ import requests
 import urllib.request,urllib.parse
 import pandas as pd
 #
-#from ..util import rest
-#
 OUTCOME_CODES = {
         'inactive':1,
         'active':2,
@@ -38,12 +36,16 @@ OUTCOME_CODES = {
         'unspecified':4,
         'probe':5}
 #
+API_HOST='pubchem.ncbi.nlm.nih.gov'
+API_BASE_PATH='/rest/pug'
+BASE_URL="https://"+API_HOST+API_BASE_PATH
+#
 #############################################################################
 def OutcomeCode(txt):
   return OUTCOME_CODES[txt.lower()] if txt.lower() in OUTCOME_CODES else OUTCOME_CODES['unspecified']
 
 #############################################################################
-def ListSources(base_url, src_type, fout):
+def ListSources(src_type, base_url=BASE_URL, fout=None):
   rval = requests.get(base_url+f"/sources/{src_type}/JSON").json()
   logging.debug(json.dumps(rval,indent=2))
   sources = rval['InformationList']['SourceName'] if 'InformationList' in rval and 'SourceName' in rval['InformationList'] else []
@@ -54,13 +56,13 @@ def ListSources(base_url, src_type, fout):
   logging.info(f"n_src ({src_type}): {n_src}")
 
 ##############################################################################
-def GetSID2SDF(base_url, id_query):
+def GetSID2SDF(id_query, base_url=BASE_URL):
   url = (base_url+f"/substance/sid/{id_query}/SDF")
   txt = requests.get(url).text
   return txt
 
 #############################################################################
-def GetSID2CID(base_url, sids, fout):
+def GetSID2CID(sids, base_url=BASE_URL, fout=None):
   cids = set()
   if fout: fout.write("SID\tCID\n")
   for sid in sids:
@@ -74,12 +76,12 @@ def GetSID2CID(base_url, sids, fout):
   return list(cids)
 
 #############################################################################
-def GetSID2Smiles(base_url, sids, fout):
-  cids = GetSID2CID(base_url, sids, None)
-  GetCID2Smiles(base_url, cids, fout)
+def GetSID2Smiles(sids, base_url=BASE_URL, fout=None):
+  cids = GetSID2CID(sids, base_url)
+  GetCID2Smiles(cids, base_url, fout)
 
 #############################################################################
-def GetCID2SID(base_url, cids, fout):
+def GetCID2SID(cids, base_url=BASE_URL, fout=None):
   sids = set()
   if fout: fout.write("CID\tSID\n")
   for cid in cids:
@@ -97,7 +99,7 @@ def GetCID2SID(base_url, cids, fout):
 ### specifies "safe" chars to not quote, '/' being the default, so specify
 ### '' for no safe chars.
 #############################################################################
-def GetSmiles2CID(base_url, smis, fout):
+def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
   n_out=0;
   fout.write("CID\tSMILES\tName\n")
   for smi in smis:
@@ -112,7 +114,7 @@ def GetSmiles2CID(base_url, smis, fout):
   logging.info(f"SMIs: {len(smis)}; CIDs out: {n_out}")
 
 #############################################################################
-def GetCID2AssaySummary(base_url, ids, fout):
+def GetCID2AssaySummary(ids, base_url=BASE_URL, fout=None):
   """Example CIDs: 2519 (caffeine), 3034034 (quinine)"""
   n_out=0;
   for i,id_this in enumerate(ids):
@@ -125,7 +127,7 @@ def GetCID2AssaySummary(base_url, ids, fout):
   logging.info(f"CIDs: {len(ids)}; assay summaries out: {n_out}")
 
 #############################################################################
-def GetSID2AssaySummary(base_url, ids, fout):
+def GetSID2AssaySummary(ids, base_url=BASE_URL, fout=None):
   n_out=0;
   for id_this in ids:
     rval = requests.get(base_url+f"/substance/sid/{id_this}/assaysummary/CSV").text
@@ -136,18 +138,17 @@ def GetSID2AssaySummary(base_url, ids, fout):
   logging.info(f"SIDs: {len(ids)}; assay summaries out: {n_out}")
 
 #############################################################################
-def GetCID2Inchi(base_url, ids, fout):
+def GetCID2Inchi(ids, base_url=BASE_URL, fout=None):
   PROPTAGS = [ "InChIKey", "InChI" ]
   ids_dict = {'cid':(','.join(map(lambda x:str(x), ids)))}
   url = (base_url+f"/compound/cid/property/{','.join(PROPTAGS)}/CSV")
-  #rval = rest.Utils.PostURL(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
   response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
   df = pandas.read_csv(io.StringIO(response.text), sep=',')
   df.to_csv(fout, sep='\t', index=False)
   logging.info(f"Input IDs: {len(ids)}; Output InChIs: {df.shape[0]}")
 
 ##############################################################################
-def GetCID2SDF(base_url, ids, fout):
+def GetCID2SDF(ids, base_url=BASE_URL, fout=None):
   """Request in chunks.  Works for 50, and not for 200 (seems to be a limit)."""
   nchunk=50; nskip_this=0; n_out=0;
   while True:
@@ -161,7 +162,7 @@ def GetCID2SDF(base_url, ids, fout):
   logging.info(f"SDFs out: {n_out}")
 
 #############################################################################
-def GetSID2SDF(base_url, sids, skip, nmax, fout):
+def GetSID2SDF(sids, skip, nmax, base_url=BASE_URL, fout=None):
   """Faster via POST(?). Request in chunks.  Works for 50, and not
   for 200 (seems to be a limit)."""
   n_out=0;
@@ -183,7 +184,7 @@ def GetSID2SDF(base_url, sids, skip, nmax, fout):
   logging.info(f"SIDs: {len(sids)}; SDFs out: {n_out}")
 
 #############################################################################
-def GetCID2Smiles(base_url, ids, fout=None):
+def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
   """Returns Canonical and Isomeric SMILES."""
   PROPTAGS = ['CanonicalSMILES', 'IsomericSMILES']
   url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
@@ -210,7 +211,7 @@ def GetCID2Smiles(base_url, ids, fout=None):
     return df
 
 #############################################################################
-def GetCID2Properties(base_url, ids, fout=None):
+def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
   PROPTAGS = ["CanonicalSMILES", "IsomericSMILES", "InChIKey", "InChI", "MolecularFormula", "HeavyAtomCount", "MolecularWeight", "XLogP", "TPSA"]
   url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
   nchunk=50; nskip_this=0; df=None; tq=None;
@@ -236,7 +237,7 @@ def GetCID2Properties(base_url, ids, fout=None):
     return df
 
 #############################################################################
-def Inchi2CID(base_url, inchis, fout):
+def Inchi2CID(inchis, base_url=BASE_URL, fout=None):
   '''	Must be POST with "Content-Type: application/x-www-form-urlencoded"
 	or "Content-Type: multipart/form-data" with the POST body formatted accordingly.
 	See: http://pubchem.ncbi.nlm.nih.gov/pug_rest/PUG_REST.html and
@@ -261,14 +262,14 @@ def Inchi2CID(base_url, inchis, fout):
   logging.info(f"n_out: {n_out}")
 
 #############################################################################
-def GetAssayName(base_url, aids, fout):
+def GetAssayName(aids, base_url=BASE_URL, fout=None):
   for aid in aids:
     xmlstr = requests.get(base_url+f"/assay/aid/{aid}/description/XML").text
     name, source = AssayXML2NameAndSource(xmlstr)
     fout.write(f"{aid}\t{name}\t{source}\n")
 
 #############################################################################
-def GetAssayDescriptions(base_url, ids, skip, nmax, fout=None):
+def GetAssayDescriptions(ids, skip, nmax, base_url=BASE_URL, fout=None):
   """Example AIDs: 527,159014"""
   n_in=0; n_out=0; df=None;
   for aid in ids:
@@ -313,7 +314,7 @@ def GetAssayDescriptions(base_url, ids, skip, nmax, fout=None):
   if fout is None: return df
 
 #############################################################################
-def GetAssaySIDs(base_url, aids, skip, nmax, fout=None):
+def GetAssaySIDs(aids, skip, nmax, base_url=BASE_URL, fout=None):
   if skip: logging.info(f"SKIP: [1-{skip}]")
   if nmax: logging.info(f"NMAX: {nmax}")
   n_aid_in=0; n_aid_done=0; n_out=0; nchunk_sid=100; df=None; tags=None;
@@ -356,7 +357,7 @@ def GetAssaySIDs(base_url, aids, skip, nmax, fout=None):
   else: return df
 
 #############################################################################
-def GetAssaySIDResults(base_url, aids, sids, skip, nmax, fout):
+def GetAssaySIDResults(aids, sids, skip, nmax, base_url=BASE_URL, fout=None):
   '''One CSV line for each activity.  skip and nmax applied to AIDs.
 In this version of the function, use the "concise" mode to download full data
 for each AID, then iterate through SIDs and use local hash.
@@ -413,7 +414,7 @@ ns).text
   return name,source
 
 #############################################################################
-def GetSID2Synonyms(base_url, sids, fout):
+def GetSID2Synonyms(sids, base_url=BASE_URL, fout=None):
   synonyms=[]
   if fout: fout.write("SID\tSynonym\n")
   for sid in sids:
@@ -427,18 +428,18 @@ def GetSID2Synonyms(base_url, sids, fout):
   return synonyms
 
 #############################################################################
-def GetCID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
+def GetCID2Synonyms(cids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None):
   fout.write('CID\tSynonym\n')
   sids_all = set([])
   i_cid=0; n_out=0;
   for cid in cids:
     i_cid+=1
     if skip and i_cid<=skip: continue
-    sids_this = GetCID2SID(base_url, [cid], None)
+    sids_this = GetCID2SID([cid], base_url, None)
     sids_all |= set(sids_this)
     synonyms_this_cid = set()
     for sid in sids_this:
-      synonyms_this_sid = GetSID2Synonyms(base_url, [sid], None)
+      synonyms_this_sid = GetSID2Synonyms([sid], base_url)
       synonyms_this_cid |= set(synonyms_this_sid)
     synonyms_this_cid_nice = SortCompoundNamesByNiceness(list(synonyms_this_cid))
     for j,synonym in enumerate(synonyms_this_cid_nice):
@@ -452,39 +453,52 @@ def GetCID2Synonyms(base_url, cids, skip, nmax, nmax_per_cid, fout):
   logging.info(f"Totals: CIDs: {len(cids)}; SIDs: {len(sids_all)}; Synonyms: {n_out}")
 
 #############################################################################
-def GetName2SID(base_url, names, fout):
-  n_sid=0; sids_all = set()
-  if fout: fout.write("Name\tSID\n")
+def GetName2SID(names, base_url=BASE_URL, fout=None):
+  n_sid=0; sids_all=set(); df=None; tq=None;
   for name in names:
+    if tq is None: tq = tqdm.tqdm(total=len(names), unit="names")
     rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
     sids_this = rval['IdentifierList']['SID']
     for sid in sids_this:
+      df_this = pd.DataFrame({"Name":[name], "SID":[sid]})
+      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_sid==0), index=False)
+      else: df = pd.concat([df, df_this])
       n_sid+=1
-      if fout: fout.write(f"{name}\t{sid}\n")
-      sids_all |= set(sids_this)
-  logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_unique: {len(sids_all)}")
-  return list(sids_all)
+    sids_all |= set(sids_this)
+    tq.update()
+  tq.close()
+  logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}")
+  return df
 
 #############################################################################
-def GetName2CID(base_url, names, fout):
-  n_cid=0; cids_all = set()
-  if fout: fout.write("Name\tCID\n")
+def GetName2CID(names, base_url=BASE_URL, fout=None):
+  n_cid=0; cids_all=set(); n_sid=0; sids_all=set(); df=None; tq=None;
   for name in names:
-    sids_this = GetName2SID(base_url, [name], None)
-    cids_this = list(set(GetSID2CID(base_url, sids_this, None)) )
-    for cid in cids_this:
-      n_cid+=1
-      if fout: fout.write(f"{name}\t{cid}\n")
-    cids_all |= set(cids_this)
-  logging.info(f"n_name: {len(names)}; n_cid: {n_cid}; n_unique: {len(cids_all)}")
-  return list(cids_all)
+    if tq is None: tq = tqdm.tqdm(total=len(names), unit="names")
+    #sids_this = GetName2SID([name], base_url)
+    rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
+    sids_this = rval['IdentifierList']['SID']
+    sids_all |= set(sids_this)
+    for sid in sids_this:
+      n_sid+=1
+      cids_this = list(set(GetSID2CID([sid], base_url)) )
+      for cid in cids_this:
+        df_this = pd.DataFrame({"Name":[name], "SID":[sid], "CID":[cid]})
+        if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_cid==0), index=False)
+        else: df = pd.concat([df, df_this])
+        n_cid+=1
+      cids_all |= set(cids_this)
+    tq.update()
+  tq.close()
+  logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}; n_cid: {n_cid}; n_cid_unique: {len(cids_all)}")
+  return df
 
 #############################################################################
-def GetName2Synonyms(base_url, names, fout):
+def GetName2Synonyms(names, base_url=BASE_URL, fout=None):
   n_synonym=0; sids_all = set(); synonyms_all = set()
   if fout: fout.write("Name\tSID\tSynonym\n")
   for name in names:
-    sids_this = GetName2SID(base_url, [name], None)
+    sids_this = GetName2SID([name], base_url)
     sids_all |= set(sids_this)
     for sid in sids_this:
       rval = requests.get(base_url+f"/substance/sid/{sid}/synonyms/JSON").json()
@@ -497,7 +511,7 @@ def GetName2Synonyms(base_url, names, fout):
           n_synonym+=1
           if fout: fout.write(f"{name}\t{sid}\t{synonym}\n")
       synonyms_all |= set(synonyms_this_sid)
-  logging.info(f"n_name: {len(names)}; n_synonym: {n_synonym}; n_unique: {len(synonyms_all)}; n_sids_unique: {len(sids_all)}")
+  logging.info(f"n_name: {len(names)}; n_synonym: {n_synonym}; n_synonym_unique: {len(synonyms_all)}; n_sids_unique: {len(sids_all)}")
 
 #############################################################################
 def NameNicenessScore(name, len_optimal=9):
@@ -524,7 +538,7 @@ def SortCompoundNamesByNiceness(names):
   return [name for score,name in names_ranked]
 
 #############################################################################
-def GetCpdAssayStats(base_url, cid, smiles, aidset, fout_mol, fout_act, aidhash):
+def GetCpdAssayStats(cid, smiles, aidset, aidhash, base_url, fout_mol, fout_act):
   """
 THIS FUNCTION NEEDS WORK.
 From PubChem PUG REST API, determine activity stats for compounds.
@@ -622,7 +636,7 @@ From PubChem PUG REST API, determine activity stats for compounds.
   return mol_found,mol_active,n_sam,n_sam_active
 
 #############################################################################
-def GetCpdAssayData(base_url, cid_query, aidset, fout):
+def GetCpdAssayData(cid_query, aidset, base_url=BASE_URL, fout=None):
   """This function needs fixing."""
   try:
     fcsv = requests.get(base_url+f"/compound/cid/{cid_query}/assaysummary/CSV").text
