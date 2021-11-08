@@ -218,7 +218,7 @@ def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
   """Returns Canonical and Isomeric SMILES."""
   PROPTAGS = ['CanonicalSMILES', 'IsomericSMILES']
   url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
-  nchunk=50; nskip_this=0; tq=None;
+  nchunk=50; nskip_this=0; df=None; tq=None;
   n_in=0; n_out=0; n_err=0; results=[];
   while True:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="mols")
@@ -273,7 +273,6 @@ def Inchi2CID(inchis, base_url=BASE_URL, fout=None):
   '''
   n_out=0; tq=None; df=None;
   url = base_url+"/compound/inchi/cids/TXT"
-  #fout.write("InChI\tCID\n")
   for inchi in inchis:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="inchis")
     logging.info(f"inchi='{inchi}'")
@@ -286,8 +285,6 @@ def Inchi2CID(inchis, base_url=BASE_URL, fout=None):
       if re.match(r'[\d]+$', line.strip()):
         cid = line.strip()
         cids_this.add(cid)
-        #fout.write(f"{inchi}\t{cid}\n")
-        #n_out+=1
     df_this = pd.DataFrame({"InChI":inchi, "CID":list(cids_this)})
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
