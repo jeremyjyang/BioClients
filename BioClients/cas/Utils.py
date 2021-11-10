@@ -17,13 +17,18 @@ BASE_URL="https://"+API_HOST+API_BASE_PATH
 #############################################################################
 def GetRN2Details(ids, base_url=BASE_URL, fout=None):
   n_out=0; n_err=0; tags=None; df=None; tq=None;
-  for id_this in ids:
+  for i,id_this in enumerate(ids):
     uri = urllib.parse.quote(f"substance/pt/{id_this}")
     url = (base_url+f"/detail?uri={uri}")
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="mols")
+    tq.update(n=1)
     response = requests.get(url, headers={"Accept": "application/json"})
+    logging.debug(response.text)
+    if response.status_code==requests.codes.not_found:
+      continue
+    if response.status_code!=requests.codes.ok:
+      logging.error(f"HTTP status_code: {response.status_code}")
     mol = response.json()
-    logging.debug(json.dumps(mol,indent=2))
     if not tags:
       tags = list(mol.keys())
       for tag in tags[:]:
@@ -44,7 +49,6 @@ def GetRN2Details(ids, base_url=BASE_URL, fout=None):
     else:
       df = pd.concat([df, df_this])
     n_out+=1
-    tq.update(n=1)
   tq.close()
   logging.info(f"Input IDs: {len(ids)}; Output records: {n_out}")
   return df
