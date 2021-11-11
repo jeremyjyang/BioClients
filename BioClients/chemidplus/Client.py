@@ -12,7 +12,9 @@ from .. import chemidplus
 #
 ##############################################################################
 if __name__=='__main__':
-  ops = ["list_sources", "list_types", "get_id2summary", "get_id2names", "get_id2toxlist"]
+  ops = ["list_sources", "list_types", "get_id2summary", "get_id2names",
+	"get_id2numbers",
+	"get_id2toxlist"]
   parser = argparse.ArgumentParser(description="ChemIDPlus REST client")
   parser.add_argument("op", choices=ops,help='OPERATION')
   parser.add_argument("--i", dest="ifile", help="input IDs file")
@@ -57,6 +59,9 @@ if __name__=='__main__':
 
   elif args.op == 'get_id2names':
     chemidplus.GetId2Names(ids, args.id_type, base_url, fout)
+
+  elif args.op == 'get_id2numbers':
+    chemidplus.GetId2Numbers(ids, args.id_type, base_url, fout)
 
   elif args.op == 'get_id2toxlist':
     chemidplus.GetId2ToxicityList(ids, args.id_type, base_url, fout)
