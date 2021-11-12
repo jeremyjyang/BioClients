@@ -7,6 +7,8 @@ import pandas as pd
 
 TDLS = ['Tdark', 'Tbio', 'Tchem', 'Tclin']
 
+NCHUNK=1000;
+
 #############################################################################
 def Info(dbcon, fout=None):
   sql = 'SELECT * FROM dbinfo'
@@ -460,7 +462,7 @@ def ListPhenotypeTypes(dbcon, fout=None):
 
 #############################################################################
 def ListPublications(dbcon, fout=None):
-  df=None; n_out=0; tq=None; NCHUNK=1000;
+  df=None; n_out=0; tq=None;
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   N_row = pd.read_sql("SELECT COUNT(*) FROM pubmed", dbcon).iloc[0,0]
   sql="""
@@ -476,13 +478,70 @@ FROM
 """
   df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
   for df_this in df_itr:
-    if not quiet and tq is None: tq = tqdm.tqdm(total=N_row, unit="pubs")
-    if tq is not None: tq.update(NCHUNK)
-    if fout is not None: df_this.to_csv(fout, "\t", index=False)
+    if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
+    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
+    if tq is not None: tq.update(df_this.shape[0])
     n_out += df_this.shape[0]
   if tq is not None: tq.close()
   logging.info(f"rows: {n_out}")
-  if fout is None: return df
+  return df
+
+#############################################################################
+def ListCompounds(dbcon, fout=None):
+  df=None; n_out=0; tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  N_row = pd.read_sql("SELECT COUNT(DISTINCT cmpd_pubchem_cid,smiles) FROM cmpd_activity WHERE cmpd_pubchem_cid IS NOT NULL", dbcon).iloc[0,0]
+  sql="""\
+SELECT DISTINCT
+	cmpd_pubchem_cid,
+	smiles,
+	COUNT(DISTINCT target_id) target_count,
+	COUNT(DISTINCT id) activity_count
+FROM cmpd_activity
+WHERE cmpd_pubchem_cid IS NOT NULL
+GROUP BY
+	cmpd_pubchem_cid,smiles
+"""
+  df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
+  for df_this in df_itr:
+    if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
+    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    else: df = pd.concat([df, df_this])
+    if tq is not None: tq.update(df_this.shape[0])
+    n_out += df_this.shape[0]
+  if tq is not None: tq.close()
+  logging.info(f"rows: {n_out}")
+  return df
+
+#############################################################################
+def ListDrugs(dbcon, fout=None):
+  df=None; n_out=0; tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  N_row = pd.read_sql("SELECT COUNT(DISTINCT cmpd_pubchem_cid,dcid,smiles,drug) FROM drug_activity WHERE cmpd_pubchem_cid IS NOT NULL", dbcon).iloc[0,0]
+  sql="""\
+SELECT DISTINCT
+	cmpd_pubchem_cid,
+	dcid,
+	smiles,
+	drug,
+	COUNT(DISTINCT target_id) target_count,
+	COUNT(DISTINCT id) activity_count
+FROM drug_activity
+WHERE cmpd_pubchem_cid IS NOT NULL
+GROUP BY
+	cmpd_pubchem_cid,dcid,smiles,drug
+"""
+  logging.debug(sql)
+  df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
+  for df_this in df_itr:
+    if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
+    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    else: df = pd.concat([df, df_this])
+    if tq is not None: tq.update(df_this.shape[0])
+    n_out += df_this.shape[0]
+  if tq is not None: tq.close()
+  logging.info(f"rows: {n_out}")
+  return df
 
 #############################################################################

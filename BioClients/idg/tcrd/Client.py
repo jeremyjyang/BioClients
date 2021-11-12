@@ -18,6 +18,7 @@ if __name__=='__main__':
 	'listTargetsByDTO', 'listTargetFamilies',
 	'listPhenotypes', 'listPhenotypeTypes',
 	'listPublications',
+	'listCompounds', 'listDrugs',
 	'getTargets', 'getTargetsByXref', 'getTargetPage',
 	'listDiseases', 'listDiseaseTypes',
 	'getDiseaseAssociations', 'getDiseaseAssociationsPage',
@@ -164,6 +165,12 @@ if __name__=='__main__':
 
   elif args.op=='listDatasets':
     tcrd.Utils.ListDatasets(dbcon, fout)
+
+  elif args.op=='listCompounds':
+    tcrd.Utils.ListCompounds(dbcon, fout)
+
+  elif args.op=='listDrugs':
+    tcrd.Utils.ListDrugs(dbcon, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
