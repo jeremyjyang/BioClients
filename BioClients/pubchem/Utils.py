@@ -477,12 +477,12 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
   return df
 
 #############################################################################
-def GetCID2Synonyms(cids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None):
+def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None):
   #fout.write('CID\tSynonym\n')
   sids_all = set([])
   i_cid=0; n_out=0; tq=None; df=None;
-  for cid in cids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cids")
+  for cid in ids:
+    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="cids")
     i_cid+=1
     if skip and i_cid<=skip: continue
     sids_this = GetCID2SID([cid], base_url)
@@ -509,14 +509,16 @@ def GetCID2Synonyms(cids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None
     if nmax and i_cid>=(skip+nmax): break
     tq.update(n=1)
   tq.close()
-  logging.info(f"Totals: CIDs: {len(cids)}; SIDs: {len(sids_all)}; Synonyms: {n_out}")
+  logging.info(f"Totals: CIDs: {len(ids)}; SIDs: {len(sids_all)}; Synonyms: {n_out}")
   return df
 
 #############################################################################
-def GetName2SID(names, base_url=BASE_URL, fout=None):
-  n_sid=0; sids_all=set(); df=None; tq=None;
+def GetName2SID(names, skip, nmax, base_url=BASE_URL, fout=None):
+  i_name=0; n_sid=0; sids_all=set(); df=None; tq=None;
   for name in names:
-    if tq is None: tq = tqdm.tqdm(total=len(names), unit="names")
+    if tq is None: tq = tqdm.tqdm(total=len(names)-skip, unit="names")
+    i_name+=1
+    if skip and i_name<=skip: continue
     rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
     sids_this = rval['IdentifierList']['SID'] if 'IdentifierList' in rval and 'SID' in rval['IdentifierList'] else []
     for sid in sids_this:
@@ -526,15 +528,18 @@ def GetName2SID(names, base_url=BASE_URL, fout=None):
       n_sid+=1
     sids_all |= set(sids_this)
     tq.update()
+    if nmax and i_name>=(skip+nmax): break
   tq.close()
   logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}")
   return df
 
 #############################################################################
-def GetName2CID(names, base_url=BASE_URL, fout=None):
-  n_cid=0; cids_all=set(); n_sid=0; sids_all=set(); df=None; tq=None;
+def GetName2CID(names, skip, nmax, base_url=BASE_URL, fout=None):
+  i_name=0; n_cid=0; cids_all=set(); n_sid=0; sids_all=set(); df=None; tq=None;
   for name in names:
-    if tq is None: tq = tqdm.tqdm(total=len(names), unit="names")
+    if tq is None: tq = tqdm.tqdm(total=len(names)-skip, unit="names")
+    i_name+=1
+    if skip and i_name<=skip: continue
     #sids_this = GetName2SID([name], base_url)
     rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
     sids_this = rval['IdentifierList']['SID'] if 'IdentifierList' in rval and 'SID' in rval['IdentifierList'] else []
@@ -549,16 +554,17 @@ def GetName2CID(names, base_url=BASE_URL, fout=None):
         n_cid+=1
       cids_all |= set(cids_this)
     tq.update()
+    if nmax and i_name>=(skip+nmax): break
   tq.close()
   logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}; n_cid: {n_cid}; n_cid_unique: {len(cids_all)}")
   return df
 
 #############################################################################
-def GetName2Synonyms(names, base_url=BASE_URL, fout=None):
+def GetName2Synonyms(names, skip, nmax, base_url=BASE_URL, fout=None):
   n_synonym=0; sids_all=set(); synonyms_all=set(); tq=None; df=None;
   if fout: fout.write("Name\tSID\tSynonym\n")
   for name in names:
-    sids_this = GetName2SID([name], base_url)
+    sids_this = GetName2SID([name], 0, None, base_url)
     sids_all |= set(sids_this)
     for sid in sids_this:
       rval = requests.get(base_url+f"/substance/sid/{sid}/synonyms/JSON").json()

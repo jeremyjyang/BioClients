@@ -108,13 +108,13 @@ args.nmax_per_cid, base_url, fout)
     pubchem.GetSmiles2CID(ids, base_url, fout)
 
   elif args.op == 'get_name2sid':
-    pubchem.GetName2SID(ids, base_url, fout)
+    pubchem.GetName2SID(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_name2cid':
-    pubchem.GetName2CID(ids, base_url, fout)
+    pubchem.GetName2CID(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_name2synonyms':
-    pubchem.GetName2Synonyms(ids, base_url, fout)
+    pubchem.GetName2Synonyms(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_assayname':
     pubchem.GetAssayName(aids, base_url, fout)
