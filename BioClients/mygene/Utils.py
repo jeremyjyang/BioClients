@@ -16,25 +16,27 @@ NCHUNK=100;
 #############################################################################
 def GetGenes(ids, fields=FIELDS, fout=None):
   """Get genes by Entrez or Ensembl gene ID."""
-  df=pd.DataFrame();
+  ichunk=0; n_out=0; df=None;
   mgi = mg.MyGeneInfo()
-  ichunk=0;
   while ichunk*NCHUNK<len(ids):
     df_this = mgi.getgenes(ids[ichunk*NCHUNK:((ichunk+1)*NCHUNK)], fields, as_dataframe=True)
-    df = pd.concat([df, df_this])
+    if fout is not None: df.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df = pd.concat([df, df_this])
+    n_out+=df_this.shape[0]
     ichunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
   return df
 
 #############################################################################
 def SearchGenes(queries, species, fout=None):
   """Search genes by symbol, etc. using MyGene syntax."""
-  df=pd.DataFrame();
+  ichunk=0; n_out=0; df=None;
   mgi = mg.MyGeneInfo()
   for qry in queries:
     df_this = mgi.query(qry, species=species, as_dataframe=True)
-    df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+    if fout is not None: df.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df = pd.concat([df, df_this])
+    n_out+=df_this.shape[0]
+    ichunk+=1
   return df
 
 #############################################################################
