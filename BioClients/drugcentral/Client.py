@@ -32,6 +32,7 @@ if __name__=='__main__':
 	"list_structures",
 	"list_structures2smiles",
 	"list_structures2molfile",
+	"list_synonyms",
 	"list_active_ingredients",
 	"list_indications",
 	"list_indication_targets",
@@ -56,9 +57,11 @@ if __name__=='__main__':
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.drugcentral.yaml")
   parser.add_argument("--dbschema", default="public")
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
+  parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress notification.")
   args = parser.parse_args()
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  # logging.PROGRESS = 15 (custom)
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   if os.path.isfile(args.param_file):
     params = util_yaml.ReadParamFile(args.param_file)
@@ -129,11 +132,14 @@ if __name__=='__main__':
   elif args.op=='list_atcs':
     drugcentral.ListAtcs(dbcon, fout)
 
+  elif args.op=='list_synonyms':
+    drugcentral.ListSynonyms(dbcon, fout)
+
   elif args.op=='list_xref_types':
     drugcentral.ListXrefTypes(dbcon, fout)
 
   elif args.op=='list_xrefs':
-    drugcentral.ListXrefs(dbcon, args.xref_type, fout)
+    drugcentral.ListXrefs(dbcon, fout)
 
   elif args.op=='get_structure':
     drugcentral.GetStructure(dbcon, ids, fout)
@@ -142,7 +148,7 @@ if __name__=='__main__':
     drugcentral.GetStructureBySynonym(dbcon, ids, fout)
 
   elif args.op=="get_structure_by_xref":
-    drugcentral.GetStructureByXref(dbcon, args.xref_type, ids, fout)
+    drugcentral.GetStructureByXref(dbcon, ids, args.xref_type, fout)
 
   elif args.op=='get_structure_xrefs':
     drugcentral.GetStructureXrefs(dbcon, ids, fout)
@@ -184,5 +190,5 @@ if __name__=='__main__':
     parser.error(f"Invalid operation: {args.op}")
 
   dbcon.close()
-  logging.info('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
+  logging.info(f"Elapsed time: {time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))}")
 
