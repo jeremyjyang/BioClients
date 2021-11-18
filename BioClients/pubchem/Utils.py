@@ -103,7 +103,7 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
   n_out=0; tq=None; df=None;
   #fout.write("CID\tSMILES\tName\n")
   for smi in smis:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="smis")
+    if tq is None: tq = tqdm.tqdm(total=len(smis), unit="smis")
     name = re.sub(r'^[\S]+\s', '', smi) if re.search(r'^[\S]+\s', smi) else ""
     smi = re.sub(r'\s.*$', '', smi)
     rval = requests.get(base_url+f"/compound/smiles/{urllib.parse.quote(smi, '')}/cids/JSON").json()
@@ -252,7 +252,12 @@ def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data={'cid':idstr})
-    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    try:
+      df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    except Exception as e:
+      logging.error(f"{e}")
+      logging.debug(response.text)
+      continue
     if fout is not None:
       df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else:
