@@ -15,6 +15,7 @@ if __name__=='__main__':
         "get_smi2cid",
         "get_cid2smiles", "get_cid2sdf",
         "get_cid2properties", "get_cid2inchi",
+        "get_cid2descriptions",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
         "get_assayname", "get_assaydescriptions",
@@ -76,6 +77,9 @@ if __name__=='__main__':
   elif args.op == 'get_cid2synonyms':
     pubchem.GetCID2Synonyms(ids, args.skip, args.nmax,
 args.nmax_per_cid, base_url, fout)
+
+  elif args.op == 'get_cid2descriptions':
+    pubchem.GetCID2Descriptions(ids, base_url, fout)
 
   elif args.op == 'get_cid2properties':
     pubchem.GetCID2Properties(ids, base_url, fout)

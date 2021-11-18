@@ -270,6 +270,29 @@ def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
   return df
 
 #############################################################################
+def GetCID2Descriptions(ids, base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=None;
+  for i in tqdm.tqdm(range(len(ids))):
+    id_this = ids[i]
+    response = requests.get(base_url+f"/compound/cid/{id_this}/description/JSON")
+    if response.status_code!=200:
+      logging.error(f"status_code: {response.status_code}")
+      continue
+    rval = response.json()
+    infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
+    for info in infos:
+      if 'Description' not in info: continue
+      if not tags:
+        tags = list(info)
+      df_this = pd.DataFrame({tag:([info[tag]] if tag in info else ['']) for tag in tags})
+
+      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      else: df = pd.concat([df, df_this])
+      n_out+=df_this.shape[0]
+  logging.info(f"Input IDs: {len(ids)}; Output records: {n_out}")
+  return df
+
+#############################################################################
 def Inchi2CID(inchis, base_url=BASE_URL, fout=None):
   '''	Must be POST with "Content-Type: application/x-www-form-urlencoded"
 	or "Content-Type: multipart/form-data" with the POST body formatted accordingly.
