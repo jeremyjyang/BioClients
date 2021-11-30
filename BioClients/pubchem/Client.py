@@ -17,6 +17,7 @@ if __name__=='__main__':
         "get_cid2properties", "get_cid2inchi",
         "get_cid2descriptions",
         "get_cid2synonyms", "get_cid2sid", "get_cid2assaysummary",
+        "get_cid2nicename",
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
         "get_assayname", "get_assaydescriptions",
 	"get_assaysubstances",
@@ -33,10 +34,11 @@ if __name__=='__main__':
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=0)
   parser.add_argument("--nmax_per_cid", type=int, default=20)
+  parser.add_argument("-q", "--quiet", action="store_true", help="Suppress progress notification.")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
-  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
+  logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   base_url = 'https://'+args.api_host+args.api_base_path
 
@@ -75,8 +77,10 @@ if __name__=='__main__':
     pubchem.ListSources("substance", base_url, fout)
 
   elif args.op == 'get_cid2synonyms':
-    pubchem.GetCID2Synonyms(ids, args.skip, args.nmax,
-args.nmax_per_cid, base_url, fout)
+    pubchem.GetCID2Synonyms(ids, args.skip, args.nmax, args.nmax_per_cid, base_url, fout)
+
+  elif args.op == 'get_cid2nicename':
+    pubchem.GetCID2Nicename(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_cid2descriptions':
     pubchem.GetCID2Descriptions(ids, base_url, fout)

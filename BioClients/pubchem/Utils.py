@@ -486,9 +486,10 @@ ns).text
 
 #############################################################################
 def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   n_out=0; tq=None; df=None;
   for sid in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="sids")
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids), unit="sids")
     rval = requests.get(base_url+f"/substance/sid/{sid}/synonyms/JSON").json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
@@ -497,32 +498,28 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
       if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
       else: df = pd.concat([df, df_this])
       n_out+=len(synonyms_this)
-    tq.update(n=1)
-  tq.close()
+    if not quiet: tq.update(n=1)
+  if not quiet: tq.close()
   return df
 
 #############################################################################
 def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None):
-  #fout.write('CID\tSynonym\n')
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   sids_all = set([])
   i_cid=0; n_out=0; tq=None; df=None;
   for cid in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="cids")
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="cids")
     i_cid+=1
     if skip and i_cid<=skip: continue
     sids_this = GetCID2SID([cid], base_url)
     sids_all |= set(sids_this)
     synonyms_this_cid = set()
     for sid in sids_this:
-      synonyms_this_sid = GetSID2Synonyms([sid], base_url).Synonym.tolist()
+      synonyms_this_sid = GetSID2Synonyms([sid], base_url)
+      if synonyms_this_sid is None: continue
+      synonyms_this_sid = synonyms_this_sid.Synonym.tolist()
       synonyms_this_cid |= set(synonyms_this_sid)
     synonyms_this_cid_nice = SortCompoundNamesByNiceness(list(synonyms_this_cid))
-    #for j,synonym in enumerate(synonyms_this_cid_nice):
-    #  if nmax_per_cid and j>=nmax_per_cid:
-    #    logging.info(f"{i_cid}. CID={cid}: synonyms out+truncated=all: {nmax_per_cid}+{len(synonyms_this_cid_nice)-nmax_per_cid}={len(synonyms_this_cid_nice)}")
-    #    break
-    #  fout.write(f"{cid}\t{synonym}\n")
-    #  n_out+=1
     df_this = pd.DataFrame({"CID":cid, "Synonym":synonyms_this_cid_nice}) 
     if df_this.shape[0]>nmax_per_cid:
       df_this = df_this[:nmax_per_cid]
@@ -532,10 +529,14 @@ def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None)
     n_out+=len(synonyms_this_cid_nice)
     logging.info(f"{i_cid}. CID={cid}: SIDs: {len(sids_this)}; synonyms: {len(synonyms_this_cid)} ({min(len(synonyms_this_cid_nice), nmax_per_cid)})")
     if nmax and i_cid>=(skip+nmax): break
-    tq.update(n=1)
-  tq.close()
+    if not quiet: tq.update(n=1)
+  if not quiet: tq.close()
   logging.info(f"Totals: CIDs: {len(ids)}; SIDs: {len(sids_all)}; Synonyms: {n_out}")
   return df
+
+#############################################################################
+def GetCID2Nicename(ids, skip, nmax, base_url=BASE_URL, fout=None):
+  return GetCID2Synonyms(ids, skip, nmax, 1, base_url, fout)
 
 #############################################################################
 def GetName2SID(names, skip, nmax, base_url=BASE_URL, fout=None):
