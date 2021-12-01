@@ -44,6 +44,7 @@ def ListGlycans(base_url=BASE_URL, fout=None):
       break
     results = response.json()
     logging.debug(json.dumps(results, indent=2))
+    if len(results["results"])==0: break
     for result in results["results"]:
       if not tags:
         tags = list(result.keys())
@@ -58,8 +59,8 @@ def ListGlycans(base_url=BASE_URL, fout=None):
       if fout is None: df = pd.concat([df, df_this])
       else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
+      tq.update(n=df_this.shape[0])
     skip += NCHUNK
-    tq.update(n=n_out)
   tq.close()
   logging.info(f"n_out: {n_out}")
   return df
