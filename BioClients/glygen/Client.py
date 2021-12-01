@@ -15,8 +15,9 @@ if __name__=='__main__':
   epilog="Example GlyTouCan Accession IDs: G00053MO"
   parser = argparse.ArgumentParser(description='GlyGen REST API client', epilog=epilog)
   ops = [ 
-	"get",
-	"search"
+	"get_glycans",
+	"list_glycans",
+	"search_glycans"
 	]
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--ids", help="input IDs")
@@ -51,12 +52,15 @@ if __name__=='__main__':
   if args.op[:3]=="get" and not (args.ifile or args.ids):
     parser.error(f"--i or --ids required for operation {args.op}.")
 
-  if args.op == "get":
-    glygen.Get(ids, base_url, fout)
+  if args.op == "get_glycans":
+    glygen.GetGlycans(ids, base_url, fout)
 
-  elif args.op == "search":
+  elif args.op == "list_glycans":
+    glygen.ListGlycans(base_url, fout)
+
+  elif args.op == "search_glycans":
     parser.error(f'Not yet implemented: {args.op}')
-    #glygen.Search(args.query, base_url, fout)
+    #glygen.SearchGlycans(args.query, base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')
