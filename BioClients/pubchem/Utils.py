@@ -23,7 +23,7 @@ Utility functions for the PubChem PUG REST API.
   (name, smiles; inchi by POST only)
 """
 ###
-import sys,os,io,re,csv,json,pandas,math,time,logging,tempfile,tqdm
+import sys,os,io,re,csv,json,pandas,math,time,logging,tempfile,tqdm,tqdm.auto
 from xml.etree import ElementTree
 import requests
 import urllib.request,urllib.parse
@@ -82,7 +82,7 @@ def GetSID2Smiles(sids, base_url=BASE_URL, fout=None):
 
 #############################################################################
 def GetCID2SID(cids, base_url=BASE_URL, fout=None):
-  sids=set(); tq=None; df=None;
+  sids=set(); df=None;
   if fout: fout.write("CID\tSID\n")
   for cid in cids:
     rval = requests.get(base_url+f"/compound/cid/{cid}/sids/JSON").json()
@@ -486,51 +486,45 @@ ns).text
 
 #############################################################################
 def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
-  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
-  n_out=0; tq=None; df=None;
-  for sid in ids:
-    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids), unit="sids")
-    rval = requests.get(base_url+f"/substance/sid/{sid}/synonyms/JSON").json()
+  n_out=0; df=None;
+  for i_sid in range(len(ids)):
+    id_this = ids[i_sid]
+    rval = requests.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
       synonyms_this = info['Synonym'] if 'Synonym' in info else []
-      df_this = pd.DataFrame({"SID":sid, "Synonym":synonyms_this})
+      df_this = pd.DataFrame({"SID":id_this, "Synonym":synonyms_this})
       if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
       else: df = pd.concat([df, df_this])
       n_out+=len(synonyms_this)
-    if not quiet: tq.update(n=1)
-  if not quiet: tq.close()
   return df
 
 #############################################################################
 def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None):
-  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   sids_all = set([])
-  i_cid=0; n_out=0; tq=None; df=None;
-  for cid in ids:
-    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="cids")
-    i_cid+=1
-    if skip and i_cid<=skip: continue
-    sids_this = GetCID2SID([cid], base_url)
+  i_cid=0; n_out=0; df=None;
+  for i_cid in tqdm.auto.trange(len(ids), desc="CIDs"):
+    id_this = ids[i_cid]
+    if skip and i_cid<skip: continue
+    sids_this = GetCID2SID([id_this], base_url)
     sids_all |= set(sids_this)
     synonyms_this_cid = set()
-    for sid in sids_this:
+    for i_sid in tqdm.auto.trange(len(sids_this), desc="SIDs", leave=False):
+      sid = sids_this[i_sid]
       synonyms_this_sid = GetSID2Synonyms([sid], base_url)
       if synonyms_this_sid is None: continue
       synonyms_this_sid = synonyms_this_sid.Synonym.tolist()
       synonyms_this_cid |= set(synonyms_this_sid)
     synonyms_this_cid_nice = SortCompoundNamesByNiceness(list(synonyms_this_cid))
-    df_this = pd.DataFrame({"CID":cid, "Synonym":synonyms_this_cid_nice}) 
+    df_this = pd.DataFrame({"CID":id_this, "Synonym":synonyms_this_cid_nice}) 
     if df_this.shape[0]>nmax_per_cid:
       df_this = df_this[:nmax_per_cid]
-      logging.info(f"{i_cid}. CID={cid}: synonyms out+truncated=all: {nmax_per_cid}+{len(synonyms_this_cid_nice)-nmax_per_cid}={len(synonyms_this_cid_nice)}")
+      logging.debug(f"{i_cid+1}. CID={id_this}: synonyms out+truncated=all: {nmax_per_cid}+{len(synonyms_this_cid_nice)-nmax_per_cid}={len(synonyms_this_cid_nice)}")
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     n_out+=len(synonyms_this_cid_nice)
-    logging.info(f"{i_cid}. CID={cid}: SIDs: {len(sids_this)}; synonyms: {len(synonyms_this_cid)} ({min(len(synonyms_this_cid_nice), nmax_per_cid)})")
-    if nmax and i_cid>=(skip+nmax): break
-    if not quiet: tq.update(n=1)
-  if not quiet: tq.close()
+    logging.debug(f"{i_cid+1}. CID={id_this}: SIDs: {len(sids_this)}; synonyms: {len(synonyms_this_cid)} ({min(len(synonyms_this_cid_nice), nmax_per_cid)})")
+    if nmax and (i_cid+1)>=(skip+nmax): break
   logging.info(f"Totals: CIDs: {len(ids)}; SIDs: {len(sids_all)}; Synonyms: {n_out}")
   return df
 
