@@ -520,7 +520,9 @@ def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None)
     if df_this.shape[0]>nmax_per_cid:
       df_this = df_this[:nmax_per_cid]
       logging.debug(f"{i_cid+1}. CID={id_this}: synonyms out+truncated=all: {nmax_per_cid}+{len(synonyms_this_cid_nice)-nmax_per_cid}={len(synonyms_this_cid_nice)}")
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    if fout is not None:
+      df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      fout.flush()
     else: df = pd.concat([df, df_this])
     n_out+=len(synonyms_this_cid_nice)
     logging.debug(f"{i_cid+1}. CID={id_this}: SIDs: {len(sids_this)}; synonyms: {len(synonyms_this_cid)} ({min(len(synonyms_this_cid_nice), nmax_per_cid)})")

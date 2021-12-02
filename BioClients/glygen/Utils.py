@@ -17,7 +17,7 @@ API_BASE_PATH=""
 BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
 ##############################################################################
-def GetGlycans(ids, base_url=BASE_URL, fout=None):
+def GetGlycans(ids, skip, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None;
   for i in tqdm.auto.trange(len(ids), desc="IDs"):
     id_this = ids[i]
@@ -33,10 +33,10 @@ def GetGlycans(ids, base_url=BASE_URL, fout=None):
   return df
 
 ##############################################################################
-def ListGlycans(base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; df=None; tq=None; skip=1;
+def ListGlycans(skip, base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=None; tq=None;
   while True:
-    url = f"""{base_url}/directsearch/glycan/?query={{"offset":{skip},"limit":{NCHUNK}}}"""
+    url = f"""{base_url}/directsearch/glycan/?query={{"offset":{skip+1},"limit":{NCHUNK}}}"""
     response = requests.get(url, headers={"Content-Type":"application/json"})
     if response is None: break
     if response.status_code!=200:
@@ -54,7 +54,7 @@ def ListGlycans(base_url=BASE_URL, fout=None):
             logging.info(f"Ignoring tag: {tag}")
       if tq is None and "queryinfo" in results and "batch" in results["queryinfo"] and "total_hits" in results["queryinfo"]["batch"]:
         total_hits = results["queryinfo"]["batch"]["total_hits"]
-        tq = tqdm.tqdm(total=total_hits)
+        tq = tqdm.tqdm(total=(total_hits-skip))
       df_this = pd.DataFrame({tag:[result[tag] if tag in result else ""] for tag in tags})
       inchi_key = result["inchi_key"]["key"] if "inchi_key" in result and "key" in result["inchi_key"] else ""
       pubchem_cid=""; pubchem_sid=""; chebi_id=""; glytoucan_id="";

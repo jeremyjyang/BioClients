@@ -53,10 +53,10 @@ if __name__=='__main__':
     parser.error(f"--i or --ids required for operation {args.op}.")
 
   if args.op == "get_glycans":
-    glygen.GetGlycans(ids, base_url, fout)
+    glygen.GetGlycans(ids, args.skip, base_url, fout)
 
   elif args.op == "list_glycans":
-    glygen.ListGlycans(base_url, fout)
+    glygen.ListGlycans(args.skip, base_url, fout)
 
   elif args.op == "search_glycans":
     parser.error(f'Not yet implemented: {args.op}')
