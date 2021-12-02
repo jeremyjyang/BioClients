@@ -56,6 +56,17 @@ def ListGlycans(base_url=BASE_URL, fout=None):
         total_hits = results["queryinfo"]["batch"]["total_hits"]
         tq = tqdm.tqdm(total=total_hits)
       df_this = pd.DataFrame({tag:[result[tag] if tag in result else ""] for tag in tags})
+      inchi_key = result["inchi_key"]["key"] if "inchi_key" in result and "key" in result["inchi_key"] else ""
+      pubchem_cid=""; pubchem_sid=""; chebi_id=""; glytoucan_id="";
+      if "crossref" in result:
+        for crossref in result["crossref"]:
+          if crossref["database"]=="ChEBI": chebi_id = crossref["id"]
+          elif crossref["database"]=="PubChem Compound": pubchem_cid = crossref["id"]
+          elif crossref["database"]=="PubChem Substance": pubchem_sid = crossref["id"]
+          elif crossref["database"]=="GlyTouCan": glytoucan_id = crossref["id"]
+      df_this = pd.concat([df_this,
+	pd.DataFrame({"inchi_key":[inchi_key], "glytoucan_id":[glytoucan_id], "pubchem_cid":[pubchem_cid], "pubchem_sid":[pubchem_sid], "chebi_id":[chebi_id]})
+	], axis=1)
       if fout is None: df = pd.concat([df, df_this])
       else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
