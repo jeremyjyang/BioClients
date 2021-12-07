@@ -6,7 +6,7 @@ import os,sys,re,json,logging,yaml,tqdm
 import pandas as pd
 import psycopg2,psycopg2.extras
 
-NCHUNK=1000
+NCHUNK=100
 
 #############################################################################
 def Connect(dbhost, dbport, dbname, dbusr, dbpw):
@@ -92,6 +92,38 @@ def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
   if fout: df.to_csv(fout, "\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
+
+#############################################################################
+def ListStructures2Xref(dbcon, xref_type, dbschema="public", fout=None):
+  df=None; n_out=0;
+  sql = f"""\
+SELECT
+	structures.id struct_id,
+	structures.smiles,
+	structures.name dc_struct_name,
+	identifier.identifier {xref_type.lower()}
+FROM
+	structures
+	JOIN identifier ON identifier.struct_id = structures.id 
+WHERE
+	identifier.id_type = '{xref_type}'
+"""
+  logging.debug(f"SQL: {sql}")
+  df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
+  for df_this in df_itr:
+    if fout is not None: df_this.to_csv(fout, "\t", index=False)
+    else: df = pd.concat([df, df_this])
+    n_out += df_this.shape[0]
+  logging.info(f"n_out: {n_out}")
+  return df
+
+#############################################################################
+def ListStructures2Pubchem(dbcon, dbschema="public", fout=None):
+  return ListStructures2Xref(dbcon, "PUBCHEM_CID", dbschema, fout)
+
+#############################################################################
+def ListStructures2Chembl(dbcon, dbschema="public", fout=None):
+  return ListStructures2Xref(dbcon, "ChEMBL_ID", dbschema, fout)
 
 #############################################################################
 def ListStructures2Molfile(dbcon, dbschema="public", fout=None):

@@ -85,6 +85,7 @@ def GetCID2SID(cids, base_url=BASE_URL, fout=None):
   sids=set(); df=None;
   if fout: fout.write("CID\tSID\n")
   for cid in cids:
+    time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
     rval = requests.get(base_url+f"/compound/cid/{cid}/sids/JSON").json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
@@ -102,8 +103,8 @@ def GetCID2SID(cids, base_url=BASE_URL, fout=None):
 def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
   n_out=0; tq=None; df=None;
   #fout.write("CID\tSMILES\tName\n")
-  for smi in smis:
-    if tq is None: tq = tqdm.tqdm(total=len(smis), unit="smis")
+  for i_smi in tqdm.auto.trange(len(smis)):
+    smi = smis[i_smi]
     name = re.sub(r'^[\S]+\s', '', smi) if re.search(r'^[\S]+\s', smi) else ""
     smi = re.sub(r'\s.*$', '', smi)
     rval = requests.get(base_url+f"/compound/smiles/{urllib.parse.quote(smi, '')}/cids/JSON").json()
@@ -116,41 +117,35 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     n_out+=len(cids)
-    tq.update(n=1)
-  tq.close()
   logging.info(f"SMIs: {len(smis)}; CIDs out: {n_out}")
   return df
 
 #############################################################################
 def GetCID2AssaySummary(ids, base_url=BASE_URL, fout=None):
   """Example CIDs: 2519 (caffeine), 3034034 (quinine)"""
-  n_out=0; tq=None; df=None;
-  for id_this in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cids")
+  n_out=0; df=None;
+  for i_cid in tqdm.auto.trange(len(ids), desc="CIDs"):
+    id_this = ids[i_cid]
     rval = requests.get(base_url+f"/compound/cid/{id_this}/assaysummary/CSV").text
     if not rval: continue
     df_this = pandas.read_csv(io.StringIO(rval), sep=',')
     if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += df_this.shape[0]
-    tq.update(n=1)
-  tq.close()
   logging.info(f"CIDs: {len(ids)}; assay summaries out: {n_out}")
   return df
 
 #############################################################################
 def GetSID2AssaySummary(ids, base_url=BASE_URL, fout=None):
-  n_out=0; tq=None; df=None;
-  for id_this in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="sids")
+  n_out=0; df=None;
+  for i_sid in tqdm.auto.trange(len(ids), desc="SIDs"):
+    id_this = ids[i_sid]
     rval = requests.get(base_url+f"/substance/sid/{id_this}/assaysummary/CSV").text
     if not rval: continue
     df_this = pandas.read_csv(io.StringIO(rval), sep=',')
     if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += df_this.shape[0]
-    tq.update(n=1)
-  tq.close()
   logging.info(f"SIDs: {len(ids)}; assay summaries out: {n_out}")
   return df
 
@@ -489,6 +484,7 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
   n_out=0; df=None;
   for i_sid in range(len(ids)):
     id_this = ids[i_sid]
+    time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
     rval = requests.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
@@ -536,11 +532,10 @@ def GetCID2Nicename(ids, skip, nmax, base_url=BASE_URL, fout=None):
 
 #############################################################################
 def GetName2SID(names, skip, nmax, base_url=BASE_URL, fout=None):
-  i_name=0; n_sid=0; sids_all=set(); df=None; tq=None;
-  for name in names:
-    if tq is None: tq = tqdm.tqdm(total=len(names)-skip, unit="names")
-    i_name+=1
-    if skip and i_name<=skip: continue
+  n_sid=0; sids_all=set(); df=None;
+  for i_name in tqdm.auto.trange(len(names), leave=False):
+    name = names[i_name]
+    if skip and (i_name+1)<=skip: continue
     rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
     sids_this = rval['IdentifierList']['SID'] if 'IdentifierList' in rval and 'SID' in rval['IdentifierList'] else []
     for sid in sids_this:
@@ -549,19 +544,16 @@ def GetName2SID(names, skip, nmax, base_url=BASE_URL, fout=None):
       else: df = pd.concat([df, df_this])
       n_sid+=1
     sids_all |= set(sids_this)
-    tq.update()
-    if nmax and i_name>=(skip+nmax): break
-  tq.close()
+    if nmax and (i_name+1)>=(skip+nmax): break
   logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}")
   return df
 
 #############################################################################
 def GetName2CID(names, skip, nmax, base_url=BASE_URL, fout=None):
-  i_name=0; n_cid=0; cids_all=set(); n_sid=0; sids_all=set(); df=None; tq=None;
-  for name in names:
-    if tq is None: tq = tqdm.tqdm(total=len(names)-skip, unit="names")
-    i_name+=1
-    if skip and i_name<=skip: continue
+  n_cid=0; cids_all=set(); n_sid=0; sids_all=set(); df=None;
+  for i_name in tqdm.auto.trange(len(names), leave=False):
+    name = names[i_name]
+    if skip and (i_name+1)<=skip: continue
     #sids_this = GetName2SID([name], base_url)
     rval = requests.get(base_url+f"/substance/name/{urllib.parse.quote(name)}/sids/JSON").json()
     sids_this = rval['IdentifierList']['SID'] if 'IdentifierList' in rval and 'SID' in rval['IdentifierList'] else []
@@ -575,17 +567,16 @@ def GetName2CID(names, skip, nmax, base_url=BASE_URL, fout=None):
         else: df = pd.concat([df, df_this])
         n_cid+=1
       cids_all |= set(cids_this)
-    tq.update()
-    if nmax and i_name>=(skip+nmax): break
-  tq.close()
+    if nmax and (i_name+1)>=(skip+nmax): break
   logging.info(f"n_name: {len(names)}; n_sid: {n_sid}; n_sid_unique: {len(sids_all)}; n_cid: {n_cid}; n_cid_unique: {len(cids_all)}")
   return df
 
 #############################################################################
 def GetName2Synonyms(names, skip, nmax, base_url=BASE_URL, fout=None):
-  n_synonym=0; sids_all=set(); synonyms_all=set(); tq=None; df=None;
+  n_synonym=0; sids_all=set(); synonyms_all=set(); df=None;
   if fout: fout.write("Name\tSID\tSynonym\n")
-  for name in names:
+  for i_name in tqdm.auto.trange(len(names), leave=False):
+    name = names[i_name]
     sids_this = GetName2SID([name], 0, None, base_url)
     sids_all |= set(sids_this)
     for sid in sids_this:
