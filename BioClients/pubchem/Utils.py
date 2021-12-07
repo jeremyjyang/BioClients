@@ -498,9 +498,12 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
 
   for i_sid in range(len(ids)):
     id_this = ids[i_sid]
-    #time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
-    #rval = requests.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
-    rval = session.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
+    url_this = f"{base_url}/substance/sid/{id_this}/synonyms/JSON"
+    response = session.get(url_this)
+    if response.status_code!=200: #404 is normal
+      logging.debug(f"Status code: {response.status_code}; url_this: {url_this}")
+      continue
+    rval = response.json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
       synonyms_this = info['Synonym'] if 'Synonym' in info else []

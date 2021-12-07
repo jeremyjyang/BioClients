@@ -4,7 +4,10 @@ https://www.ebi.ac.uk/gwas/rest/docs/api
 """
 ###
 import sys,os,re,json,time,logging,tqdm
-import requests,urllib.parse
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+import urllib.request,urllib.parse
 import pandas as pd
 #
 API_HOST='www.ebi.ac.uk'
@@ -17,19 +20,31 @@ NCHUNK=100;
 def ListStudies(base_url=BASE_URL, fout=None):
   """Only simple metadata."""
   tags=[]; n_study=0; rval=None; df=None; tq=None;
+
+  retry_strategy = Retry(
+	total=10,
+	backoff_factor=2,
+	status_forcelist=[413, 429, 500, 502, 503, 504],
+	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
+	)
+  adapter = HTTPAdapter(max_retries=retry_strategy)
+  session = requests.Session()
+  session.mount("https://", adapter)
+  session.mount("http://", adapter)
+
   url_this = base_url+f'/studies?size={NCHUNK}'
   while True:
-    if rval:
-      if 'next' not in rval['_links']: break
-      elif url_this == rval['_links']['last']['href']: break
-      else: url_this = rval['_links']['next']['href']
     logging.debug(url_this)
-    response = requests.get(url_this)
+    response = session.get(url_this)
     if (response.status_code!=200):
       logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
       break
-    rval = response.json()
-    if rval is None or '_embedded' not in rval or 'studies' not in rval['_embedded']: break
+    try:
+      rval = response.json()
+    except Exception as e:
+      logging.error(f"{str(e)}; response.text: {response.text}")
+      break
+    if '_embedded' not in rval or 'studies' not in rval['_embedded']: break
     studies = rval['_embedded']['studies']
     if studies is None: break
     if tq is None: tq = tqdm.tqdm(total=rval["page"]["totalElements"])
@@ -45,6 +60,9 @@ def ListStudies(base_url=BASE_URL, fout=None):
       if fout is not None: df_this.to_csv(fout, "\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
       else: df = pd.concat([df, df_this])
       n_study+=1
+    if 'next' not in rval['_links']: break
+    elif url_this == rval['_links']['last']['href']: break
+    else: url_this = rval['_links']['next']['href']
   logging.info(f"n_study: {n_study}")
   return(df)
 
@@ -128,18 +146,33 @@ gc = genomicContext
   n_snp=0; n_gene=0; n_loc=0; df=None; tq=None;
   tags_snp=[]; tags_loc=[]; tags_gc=[]; tags_gcloc=[];  tags_gene=[]; 
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+
+  retry_strategy = Retry(
+	total=10,
+	backoff_factor=2,
+	status_forcelist=[413, 429, 500, 502, 503, 504],
+	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
+	)
+  adapter = HTTPAdapter(max_retries=retry_strategy)
+  session = requests.Session()
+  session.mount("https://", adapter)
+  session.mount("http://", adapter)
+
   url = base_url+'/singleNucleotidePolymorphisms'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
     if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip)
     if tq is not None: tq.update()
     url_this = url+'/'+id_this
-    response = requests.get(url_this)
-    if (response.status_code!=200):
+    #response = requests.get(url_this)
+    response = session.get(url_this)
+    if (response.status_code==404):
+      logging.debug(f"(status_code={response.status_code}): url_this: {url_this}")
+      continue
+    elif (response.status_code!=200):
       logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
       continue
     snp = response.json()
-    if snp is None: continue
     if 'genomicContexts' not in snp: continue
     if len(snp['genomicContexts'])==0: continue
     df_this=None;
