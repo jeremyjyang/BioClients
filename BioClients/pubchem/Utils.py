@@ -26,6 +26,8 @@ Utility functions for the PubChem PUG REST API.
 import sys,os,io,re,csv,json,pandas,math,time,logging,tempfile,tqdm,tqdm.auto
 from xml.etree import ElementTree
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 import urllib.request,urllib.parse
 import pandas as pd
 #
@@ -482,10 +484,23 @@ ns).text
 #############################################################################
 def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
   n_out=0; df=None;
+
+  retry_strategy = Retry(
+	total=10,
+	backoff_factor=2,
+	status_forcelist=[413, 429, 500, 502, 503, 504],
+	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
+	)
+  adapter = HTTPAdapter(max_retries=retry_strategy)
+  session = requests.Session()
+  session.mount("https://", adapter)
+  session.mount("http://", adapter)
+
   for i_sid in range(len(ids)):
     id_this = ids[i_sid]
-    time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
-    rval = requests.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
+    #time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
+    #rval = requests.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
+    rval = session.get(base_url+f"/substance/sid/{id_this}/synonyms/JSON").json()
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
       synonyms_this = info['Synonym'] if 'Synonym' in info else []

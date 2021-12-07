@@ -4,10 +4,8 @@ https://www.ebi.ac.uk/gwas/rest/docs/api
 """
 ###
 import sys,os,re,json,time,logging,tqdm
-import urllib.parse
+import requests,urllib.parse
 import pandas as pd
-#
-from ..util import rest
 #
 API_HOST='www.ebi.ac.uk'
 API_BASE_PATH='/gwas/rest/api'
@@ -26,23 +24,29 @@ def ListStudies(base_url=BASE_URL, fout=None):
       elif url_this == rval['_links']['last']['href']: break
       else: url_this = rval['_links']['next']['href']
     logging.debug(url_this)
-    rval = rest.GetURL(url_this, parse_json=True)
-    if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: break
+    response = requests.get(url_this)
+    if (response.status_code!=200):
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      break
+    rval = response.json()
+    if rval is None or '_embedded' not in rval or 'studies' not in rval['_embedded']: break
     studies = rval['_embedded']['studies']
-    if not studies: break
-    if tq is None: tq = tqdm.tqdm(total=rval["page"]["totalElements"], unit="studies")
+    if studies is None: break
+    if tq is None: tq = tqdm.tqdm(total=rval["page"]["totalElements"])
     for study in studies:
-      tq.update()
+      tq.update(n=1)
       if not tags:
-        for tag in study.keys():
-          if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
-            tags.append(tag) #Only simple metadata.
-      df_this = pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})
-      if fout: df_this.to_csv(fout, "\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
-      if fout is None: df = pd.concat([df, df_this])
+        tags = list(study.keys())
+        for tag in tags[:]:
+          if type(study[tag]) in (list, dict) and tag!="diseaseTrait":
+            tags.remove(tag)
+            logging.info(f"Ignoring tag: {tag}")
+      df_this = pd.DataFrame({tag:[str(study[tag]) if tag in study else ''] for tag in tags})
+      if fout is not None: df_this.to_csv(fout, "\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
+      else: df = pd.concat([df, df_this])
       n_study+=1
   logging.info(f"n_study: {n_study}")
-  if fout is None: return(df)
+  return(df)
 
 ##############################################################################
 def GetStudyAssociations(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
@@ -58,10 +62,14 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
   url = base_url+'/studies'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
-    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="studies")
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip)
     if tq is not None: tq.update()
     url_this = url+f'/{id_this}/associations?projection=associationByStudy'
-    rval = rest.GetURL(url_this, parse_json=True)
+    response = requests.get(url_this)
+    if (response.status_code!=200):
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      continue
+    rval = response.json()
     if not rval: continue
     if '_embedded' in rval and 'associations' in rval['_embedded']:
       assns = rval['_embedded']['associations']
@@ -84,11 +92,11 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
         for key in assn['loci'][0]['strongestRiskAlleles'][0].keys():
           if key != '_links':
             tags_sra.append(key)
-      df_assn = pd.DataFrame({tags_assn[j]:[assn[tags_assn[j]]] for j in range(len(tags_assn))})
-      df_study = pd.DataFrame({tags_study[j]:[assn['study'][tags_study[j]]] for j in range(len(tags_study))})
-      df_locus = pd.DataFrame({tags_locus[j]:[assn['loci'][0][tags_locus[j]]] for j in range(len(tags_locus))})
+      df_assn = pd.DataFrame({tag_assn:[assn[tag_assn]] for tag_assn in tags_assn})
+      df_study = pd.DataFrame({tag_study:[assn['study'][tag_study]] for tag_study in tags_study})
+      df_locus = pd.DataFrame({tag_locus:[assn['loci'][0][tag_locus]] for tag_locus in tags_locus})
       df_locus.columns = ['locus_'+s for s in df_locus.columns]
-      df_sra = pd.DataFrame({tags_sra[j]:[assn['loci'][0]['strongestRiskAlleles'][0][tags_sra[j]]] for j in range(len(tags_sra))})
+      df_sra = pd.DataFrame({tag_sra:[assn['loci'][0]['strongestRiskAlleles'][0][tag_sra]] for tag_sra in tags_sra})
       df_sra.columns = ['allele_'+s for s in df_sra.columns]
       df_assn = pd.concat([df_assn, df_study, df_locus, df_sra], axis=1)
       df_this = pd.concat([df_this, df_assn], axis=0)
@@ -123,11 +131,15 @@ gc = genomicContext
   url = base_url+'/singleNucleotidePolymorphisms'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
-    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip, unit="snps")
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip)
     if tq is not None: tq.update()
     url_this = url+'/'+id_this
-    snp = rest.GetURL(url_this, parse_json=True)
-    if not snp: continue
+    response = requests.get(url_this)
+    if (response.status_code!=200):
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      continue
+    snp = response.json()
+    if snp is None: continue
     if 'genomicContexts' not in snp: continue
     if len(snp['genomicContexts'])==0: continue
     df_this=None;
@@ -141,16 +153,16 @@ gc = genomicContext
           if key != '_links': tags_gcloc.append(key)
         for key in gc['gene'].keys():
           if key != '_links': tags_gene.append(key)
-      df_snp = pd.DataFrame({tags_snp[j]:[snp[tags_snp[j]]] for j in range(len(tags_snp))})
-      df_gc = pd.DataFrame({tags_gc[j]:[gc[tags_gc[j]]] for j in range(len(tags_gc))})
+      df_snp = pd.DataFrame({tag_snp:[snp[tag_snp]] for tag_snp in tags_snp})
+      df_gc = pd.DataFrame({tag_gc:[gc[tag_gc]] for tag_gc in tags_gc})
       gcloc = gc['location']
-      df_gcloc = pd.DataFrame({tags_gcloc[j]:[gcloc[tags_gcloc[j]]] for j in range(len(tags_gcloc))})
+      df_gcloc = pd.DataFrame({tag_gcloc:[gcloc[tag_gcloc]] for tag_gcloc in tags_gcloc})
       gene = gc['gene']
       try: gene["ensemblGeneIds"] = (",".join([gid["ensemblGeneId"] for gid in gene["ensemblGeneIds"]]))
       except: pass
       try: gene["entrezGeneIds"] = (",".join([gid["entrezGeneId"] for gid in gene["entrezGeneIds"]]))
       except: pass
-      df_gene = pd.DataFrame({tags_gene[j]:[gene[tags_gene[j]]] for j in range(len(tags_gene))})
+      df_gene = pd.DataFrame({tag_gene:[gene[tag_gene]] for tag_gene in tags_gene})
       df_snp = pd.concat([df_snp, df_gc, df_gcloc, df_gene], axis=1)
       df_this = pd.concat([df_this, df_snp], axis=0)
       n_gene+=1
@@ -183,7 +195,11 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
     return
   for id_this in ids:
     url_this = url.format(urllib.parse.quote(id_this))
-    rval = rest.GetURL(url_this, parse_json=True)
+    response = requests.get(url_this)
+    if (response.status_code!=200):
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      break
+    rval = response.json()
     if not rval or '_embedded' not in rval or 'studies' not in rval['_embedded']: continue
     studies = rval['_embedded']['studies']
     if not studies: continue
@@ -193,7 +209,7 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
           if type(study[tag]) not in (list, dict) or tag=="diseaseTrait":
             tags.append(tag) #Only simple metadata.
       n_study+=1
-      df_this = pd.DataFrame({tags[j]:([str(study[tags[j]])] if tags[j] in study else ['']) for j in range(len(tags))})
+      df_this = pd.DataFrame({tag:[str(study[tag]) if tag in study else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
       else: df_this.to_csv(fout, "\t", index=False)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
