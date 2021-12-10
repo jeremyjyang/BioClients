@@ -88,7 +88,16 @@ def GetCID2SID(cids, base_url=BASE_URL, fout=None):
   if fout: fout.write("CID\tSID\n")
   for cid in cids:
     time.sleep(0.01) #Kludge fix: requests.exceptions.ConnectionError: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
-    rval = requests.get(base_url+f"/compound/cid/{cid}/sids/JSON").json()
+    url_this = f"{base_url}/compound/cid/{cid}/sids/JSON"
+    response = requests.get(url_this)
+    if response.status_code!=200:
+      logging.debug(f"status_code: {response.status_code}; {url_this}")
+      continue
+    try:
+      rval = response.json()
+    except Exception as e:
+      logging.error(f"{str(e)}")
+      continue
     infos = rval['InformationList']['Information'] if 'InformationList' in rval and 'Information' in rval['InformationList'] else []
     for info in infos:
       sids_this = info['SID'] if 'SID' in info else []
@@ -486,7 +495,7 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
   n_out=0; df=None;
 
   retry_strategy = Retry(
-	total=10,
+	total=30,
 	backoff_factor=2,
 	status_forcelist=[413, 429, 500, 502, 503, 504],
 	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]

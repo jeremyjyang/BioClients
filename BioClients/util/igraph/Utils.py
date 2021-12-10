@@ -16,7 +16,7 @@ import igraph
 #############################################################################
 def Load_GraphML(ifile):
   g = igraph.Graph.Read_GraphML(ifile)
-  logging.info('\tnodes: %d ; edges: %d'%(g.vcount(),g.ecount()))
+  logging.info(f"\tnodes: {g.vcount()} ; edges: {g.ecount()}")
   return g
 
 #############################################################################
@@ -24,17 +24,17 @@ def GraphSummary(g):
   #igraph.summary(g,verbosity=0) ## verbosity=1 prints edge list!
 
   name = g['name'] if 'name' in g.attributes() else None
-  logging.info('graph name: "%s"'%(name))
-  logging.info('\t                 nodes: %3d'%(g.vcount()))
-  logging.info('\t                 edges: %3d'%(g.ecount()))
-  logging.info('\t             connected: %s'%(g.is_connected(mode=igraph.WEAK)))
-  logging.info('\t            components: %3d'%(len(g.components(mode=igraph.WEAK))))
-  logging.info('\t              directed: %s'%(g.is_directed()))
-  logging.info('\tDAG (directed-acyclic): %s'%(g.is_dag()))
-  logging.info('\t              weighted: %s'%(g.is_weighted()))
-  logging.info('\t              diameter: %3d'%(g.diameter()))
-  logging.info('\t                radius: %3d'%(g.radius()))
-  logging.info('\t             maxdegree: %3d'%(g.maxdegree()))
+  logging.info(f"graph name: '%s'"%(name))
+  logging.info(f"\t                 nodes: {g.vcount():3d}")
+  logging.info(f"\t                 edges: {g.ecount():3d}")
+  logging.info(f"\t             connected: {g.is_connected(mode=igraph.WEAK)}")
+  logging.info(f"\t            components: {len(g.components(mode=igraph.WEAK)):3d}")
+  logging.info(f"\t              directed: {g.is_directed()}")
+  logging.info(f"\tDAG (directed-acyclic): {g.is_dag()}")
+  logging.info(f"\t              weighted: {g.is_weighted()}")
+  logging.info(f"\t              diameter: {g.diameter():3d}")
+  logging.info(f"\t                radius: {g.radius():3d}")
+  logging.info(f"\t             maxdegree: {g.maxdegree():3d}")
 
 #############################################################################
 def XOR(a,b): return ((a and not b) or (b and not a))
@@ -43,10 +43,10 @@ def XOR(a,b): return ((a and not b) or (b and not a))
 def NodeSelect_String(g,selectfield,selectquery,exact,negate):
   vs=[]
   if exact:
-    vs = eval('g.vs.select(%s_%s = "%s")'%(selectfield,('ne' if negate else 'eq'),selectquery))
+    vs = eval(f"g.vs.select({selectfield}_{'ne' if negate else 'eq'} = '{selectquery}')")
   else:
     for v in g.vs:
-      if XOR(re.search(selectquery,v[selectfield],re.I),negate):
+      if XOR(re.search(selectquery, v[selectfield], re.I), negate):
         vs.append(v)
   return vs
 
@@ -84,37 +84,36 @@ def RootNodes(g):
   return vs
 
 #############################################################################
-def AddChildren(vs,r,depth,ntype):
+def AddChildren(vs, r, depth, ntype):
   if depth<=0: return
   for c in r.neighbors(ntype):
     vs.append(c)
-    AddChildren(vs,c,depth-1,ntype)
+    AddChildren(vs, c, depth-1, ntype)
 
 #############################################################################
-def TopNodes(g,depth):
+def TopNodes(g, depth):
   vs = []
   rs = RootNodes(g)
   vs.extend(rs)
   for r in rs:
-    PrintHierarchy(r,depth,0)
-    AddChildren(vs,r,depth,igraph.OUT)
+    PrintHierarchy(r, depth, 0)
+    AddChildren(vs, r, depth, igraph.OUT)
   return vs
 
 #############################################################################
-def PrintHierarchy(n,depth,i):
+def PrintHierarchy(n, depth, i):
   if i>depth: return
-  logging.info('%s%s: %s'%(('\t'*i),n['id'],n['name']))
+  logging.info("{}{}: {}".format('\t'*i, n['id'], n['name']))
   for c in n.neighbors(igraph.OUT):
-    PrintHierarchy(c,depth,i+1)
-
+    PrintHierarchy(c, depth, i+1)
 
 #############################################################################
 def DegreeDistribution(g):
-  dd = g.degree_distribution(bin_width=1,mode=igraph.ALL,loops=True)
-  logging.info('%s'%dd)
+  dd = g.degree_distribution(bin_width=1, mode=igraph.ALL, loops=True)
+  logging.info(f"{dd}")
 
 #############################################################################
-def ShortestPath(g,nidA,nidB):
+def ShortestPath(g, nidA, nidB):
   '''Must use GraphBase (not Graph) method to get path data.'''
 
   vA = g.vs.find(id = nidA)
@@ -122,7 +121,7 @@ def ShortestPath(g,nidA,nidB):
   paths = g.get_shortest_paths(vA, [vB], weights=None, mode=igraph.ALL, output="vpath")
 
   for path in paths:
-    logging.debug('path = %s'%str(path))
+    logging.debug(f"path = {str(path)}")
     n_v=len(path)
     for j in range(n_v):
       vid=path[j]
@@ -132,10 +131,10 @@ def ShortestPath(g,nidA,nidB):
         vid_next = path[j+1]
         edge = g.es.find(_between = ([vid], [vid_next]))
         dr = 'FROM' if edge.source==vid else 'TO'
-        #logging.debug('edge: %s %s %s'%(g.vs[edge.source]['doid'], dr, g.vs[edge.target]['doid']))
-      logging.debug('%d. %s (%s)%s'%(j+1,v['doid'], v['name'],(' %s...'%dr if dr else '')))
+        logging.debug(f"edge: {g.vs[edge.source]['doid']} {dr} {g.vs[edge.target]['doid']}")
+      logging.debug(f"{j+1}. {v['doid']} ({v['name']}){dr}")
     vid_pa = PathRoot(g,path)
-    logging.debug('path ancestor: %s'%g.vs[vid_pa]['doid'])
+    logging.debug(f"path ancestor: {g.vs[vid_pa]['doid']}")
 
 #############################################################################
 def PathRoot(g, path):
@@ -164,10 +163,9 @@ def GetAncestors(g,vidxA):
 #############################################################################
 def ShowAncestry(g,vidxA,level):
   vA = g.vs[vidxA]
-  logging.info('%2s %6s [%6s] %-14s (%s)'%(('-%d'%level if level else ''),
-	('^'*level), vA.index, vA['id'], vA['name']))
+  logging.info(f"{level if level else '':>2} {'^'*level:>6} [{vA.index:>6}] {vA['id']:-14} ({vA['name']})")
   for p in vA.neighbors(igraph.IN):
-    ShowAncestry(g,p.index,level+1)
+    ShowAncestry(g, p.index, level+1)
 
 #############################################################################
 ### GraphBase.bfs():
@@ -322,7 +320,7 @@ Note: select also deletes non-matching for modified output.
 	'disconnectednodes',
 	'node_select',
 	'edge_select' ]
-  parser.add_argument("op", choices=ops, help='operation')
+  parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", required=True, help="input file or URL (e.g. GraphML)")
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("--selectfield", help="field (attribute) to select")
@@ -361,8 +359,7 @@ Note: select also deletes non-matching for modified output.
 
   elif args.op=='node_select':
     if args.selectquery:
-      vs = NodeSelect_String(g, args.selectfield, args.selectquery,
-args.select_exact, args.select_negate)
+      vs = NodeSelect_String(g, args.selectfield, args.selectquery, args.select_exact, args.select_negate)
     elif args.selectval:
       parser.error('numerical select not implemented yet.')
     else:
@@ -398,10 +395,10 @@ args.select_exact, args.select_negate)
 
   if vs:
     #for v in vs:
-    #  logging.debug('%s: %s'%(v['id'],v['name']))
-    logging.info('selected nodes: %d'%len(vs))
+    #  logging.debug(f"{v['id']}: {v['name']}")
+    logging.info(f"selected nodes: {len(vs)}")
     g = g.induced_subgraph(vs, implementation="auto")
-    logging.info('SELECTED SUBGRAPH:  nodes: %d ; edges: %d'%(g.vcount(),g.ecount()))
+    logging.info(f"SELECTED SUBGRAPH:  nodes: {g.vcount()} ; edges: {g.ecount()}")
 
   ###
   #OUTPUT:
