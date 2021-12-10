@@ -20,6 +20,10 @@ def Load_GraphML(ifile):
   return g
 
 #############################################################################
+def Save_GraphML(g, fout):
+  g.write_graphml(fout) #Works but maybe changes tags?
+
+#############################################################################
 def GraphSummary(g):
   #igraph.summary(g,verbosity=0) ## verbosity=1 prints edge list!
   name = g['name'] if 'name' in g.attributes() else None
@@ -398,7 +402,7 @@ NOTE: select also deletes non-matching for modified output.
   #OUTPUT:
   ###
   if args.ofile:
-    g.write_graphml(fout) #Works but maybe changes tags?
+    Save_GraphML(g, fout)
     fout.close()
 
   elif args.display:

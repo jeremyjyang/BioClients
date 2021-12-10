@@ -198,7 +198,7 @@ if __name__=='__main__':
 
   fout = open(args.ofile,"w") if args.ofile else sys.stdout
 
-  g = igraph_utils.LoadGraph(args.ifile, 'graphml')
+  g = igraph_utils.Load_GraphML(args.ifile)
 
   igraph_utils.GraphSummary(g)
 
@@ -209,7 +209,7 @@ if __name__=='__main__':
   if args.op == 'computeIC':
     ComputeInfoContent(g)
     if args.ofile:
-      igraph_utils.SaveGraph(g,"graphml", fout)
+      igraph_utils.Save_GraphML(g, fout)
 
   elif args.op == 'findMICA':
     if not (args.nidA and args.nidB):
