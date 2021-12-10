@@ -16,13 +16,12 @@ import igraph
 #############################################################################
 def Load_GraphML(ifile):
   g = igraph.Graph.Read_GraphML(ifile)
-  logging.info(f"\tnodes: {g.vcount()} ; edges: {g.ecount()}")
+  logging.info(f"\tnodes: {g.vcount()}; edges: {g.ecount()}")
   return g
 
 #############################################################################
 def GraphSummary(g):
   #igraph.summary(g,verbosity=0) ## verbosity=1 prints edge list!
-
   name = g['name'] if 'name' in g.attributes() else None
   logging.info(f"graph name: '%s'"%(name))
   logging.info(f"\t                 nodes: {g.vcount():3d}")
@@ -33,7 +32,7 @@ def GraphSummary(g):
   logging.info(f"\tDAG (directed-acyclic): {g.is_dag()}")
   logging.info(f"\t              weighted: {g.is_weighted()}")
   logging.info(f"\t              diameter: {g.diameter():3d}")
-  logging.info(f"\t                radius: {g.radius():3d}")
+  logging.info(f"\t                radius: {g.radius():.3f}")
   logging.info(f"\t             maxdegree: {g.maxdegree():3d}")
 
 #############################################################################
@@ -70,7 +69,7 @@ def DisconnectedNodes(g):
 
 #############################################################################
 def RootNodes(g):
-  '''In a directed graph, which are the root nodes?'''
+  """In a directed graph, which are the root nodes?"""
   if not g.is_directed():
     logging.error('graph not directed; cannot have root nodes.')
   if not g.is_dag():
@@ -114,7 +113,7 @@ def DegreeDistribution(g):
 
 #############################################################################
 def ShortestPath(g, nidA, nidB):
-  '''Must use GraphBase (not Graph) method to get path data.'''
+  """Must use GraphBase (not Graph) method to get path data."""
 
   vA = g.vs.find(id = nidA)
   vB = g.vs.find(id = nidB)
@@ -138,7 +137,7 @@ def ShortestPath(g, nidA, nidB):
 
 #############################################################################
 def PathRoot(g, path):
-  '''Given a DAG path (NIDs), return NID for root, i.e. node with no target.'''
+  """Given a DAG path (NIDs), return NID for root, i.e. node with no target."""
   n_v=len(path)
   for j in range(n_v):
     vid=path[j]
@@ -177,50 +176,48 @@ def ShowAncestry(g,vidxA,level):
 #def BreadthFirstSearchTest(g):
 #  rs = igraph_utils.RootNodes(g)
 #  if len(rs)>1:
-#    logging.warning('multiple root nodes (%d) using one only.'%len(rs))
+#    logging.warning(f"multiple root nodes ({len(rs)}) using one only.")
 #  r = rs[0];
 #  bfs = g.bfs(r.index, mode=igraph.OUT)
 #  vids, start_idxs, prnts = bfs
-#  logging.debug('len(vids) = %d; len(start_idxs) = %d; len(prnts) = %d'%(len(vids),len(start_idxs), len(prnts)))
+#  logging.debug(f"len(vids) = {len(vids)}; len(start_idxs) = {len(start_idxs)}; len(prnts) = {len(prnts)}')
 #
-#  logging.info('layers: %d'%(len(start_idxs)))
+#  logging.info(f"layers: {len(start_idxs)}")
 #  start_idx_prev=0;
 #  for layer,start_idx in enumerate(start_idxs):
-#    logging.info('layer = %d'%(layer))
+#    logging.info(f"layer = {layer}")
 #    for i in range(start_idx_prev,start_idx):
-#      logging.info('\t%d) vs[%d]: %s (%s); parent = %s (%s)'%(layer, vids[i],
-#       g.vs[vids[i]]['id'], g.vs[vids[i]]['name'],
-#       g.vs[prnts[vids[i]]]['id'], g.vs[prnts[vids[i]]]['name']))
+#      logging.info(f"\t{layer}) vs[{vids[i]}]: {g.vs[vids[i]]['id']} ({g.vs[vids[i]]['name']}); parent = {g.vs[prnts[vids[i]]]['id']} ({g.vs[prnts[vids[i]]]['name']})")
 #    start_idx_prev=start_idx
 
 #############################################################################
 def DisplayGraph(g,layout,w,h):
-  '''Layouts:
+  """Layouts:
  "rt"          : reingold tilford tree
  "rt_circular" : reingold tilford circular
  "fr"          : fruchterman reingold
  "lgl"         : large_graph
-'''
+"""
   visual_style = {}
   #color_dict = {"m": "blue", "f": "pink"}
   #for v in g.vs:
-  #  v["gender"] = random.choice(('m','f'))
+  #  v["gender"] = random.choice(('m', 'f'))
   #for e in g.es:
-  #  e["is_formal"] = random.choice(range(0,3))
+  #  e["is_formal"] = random.choice(range(0, 3))
   if layout=='kk':
     visual_style["layout"] = g.layout('kk')
   elif layout=='rt':
-    visual_style["layout"] = g.layout('rt',3) #tree depth?
+    visual_style["layout"] = g.layout('rt', 3) #tree depth?
   else:
     visual_style["layout"] = g.layout('large')
 
   visual_style["bbox"] = (w, h)
   visual_style["vertex_label"] = g.vs["name"]
   visual_style["vertex_size"] = 25
-  #visual_style["vertex_size"] = [25+random.choice(range(-10,10)) for v in g.vs]
+  #visual_style["vertex_size"] = [25+random.choice(range(-10, 10)) for v in g.vs]
   visual_style["vertex_color"] = "lightblue"
   #visual_style["vertex_color"] = [color_dict[gender] for gender in g.vs["gender"]]
-  visual_style["vertex_shape"] = [random.choice(('rect','circle','rhombus')) for v in g.vs]
+  visual_style["vertex_shape"] = [random.choice(('rect', 'circle', 'rhombus')) for v in g.vs]
   #visual_style["edge_width"] = [1 + 2 * int(is_formal) for is_formal in g.es["is_formal"]]
   visual_style["edge_width"] = 2
   visual_style["margin"] = 20
@@ -228,9 +225,8 @@ def DisplayGraph(g,layout,w,h):
 
 #############################################################################
 def Graph2CyJsElements(g):
-  '''Convert igraph object to CytoscapeJS-compatible JSON "elements".'''
-  def merge_dicts(x,y):
-    #return x.copy().update(y) #Python2
+  """Convert igraph object to CytoscapeJS-compatible JSON "elements"."""
+  def merge_dicts(x, y):
     return {**x, **y} #Python3
   nodes = []
   for v in g.vs:
@@ -250,15 +246,15 @@ def Graph2CyJsElements(g):
 #############################################################################
 def VisualStyle(g):
   for v in g.vs:
-    v["gender"] = random.choice(('m','f'))
+    v["gender"] = random.choice(('m', 'f'))
   for e in g.es:
-    e["is_formal"] = random.choice(range(0,3))
+    e["is_formal"] = random.choice(range(0, 3))
   visual_style = {}
   #visual_style["vertex_size"] = 25
-  visual_style["vertex_size"] = [25+random.choice(range(-10,10)) for v in g.vs]
+  visual_style["vertex_size"] = [25+random.choice(range(-10, 10)) for v in g.vs]
   color_dict = {"m": "blue", "f": "pink"}
   visual_style["vertex_color"] = [color_dict[gender] for gender in g.vs["gender"]]
-  visual_style["vertex_shape"] = [random.choice(('rect','circle','rhombus')) for v in g.vs]
+  visual_style["vertex_shape"] = [random.choice(('rect', 'circle', 'rhombus')) for v in g.vs]
   visual_style["vertex_label"] = g.vs["name"]
   visual_style["edge_width"] = [1 + 2 * int(is_formal) for is_formal in g.es["is_formal"]]
   visual_style["bbox"] = (700, 500)
@@ -289,37 +285,34 @@ def Layout(g, method):
 
 #############################################################################
 if __name__=='__main__':
-  PROG=os.path.basename(sys.argv[0])
   DEPTH=1;
-  epilog='''\
-operations:
-        --summary ................... summary of graph
-        --degree_distribution ....... degree distribution
-        --node_select ............... select for nodes by criteria
-        --edge_select ............... select for edges by criteria
-	--connectednodes ............ connected node[s]
-	--disconnectednodes ......... disconnected node[s]
-	--rootnodes ................. root node[s] of DAG
-	--topnodes .................. root node[s] & children of DAG
-	--shortest_paths ............ shortest paths, nodes A ~ B
-	--show_ancestry ............. show ancestry, node A
-	--graph2cyjs ................ CytoscapeJS JSON
-
-Note: select also deletes non-matching for modified output.
-
-'''
-  parser = argparse.ArgumentParser(description='IGraph (python-igraph API) utility, graph processingand display')
-  ops = ['summary',
-	'degree_distribution',
-	'rootnodes',
-	'topnodes',
-  	'graph2cyjs',
-	'shortest_path',
-	'show_ancestry',
-	'connectednodes',
-	'disconnectednodes',
-	'node_select',
-	'edge_select' ]
+  epilog="""\
+OPERATIONS:
+summary: summary of graph;
+degree_distribution: degree distribution;
+node_select: select for nodes by criteria;
+edge_select: select for edges by criteria;
+connectednodes: connected node[s];
+disconnectednodes: disconnected node[s];
+rootnodes: root node[s] of DAG;
+topnodes: root node[s] & children of DAG;
+shortest_paths: shortest paths, nodes A ~ B;
+show_ancestry: show ancestry, node A;
+graph2cyjs: CytoscapeJS JSON;
+NOTE: select also deletes non-matching for modified output.
+"""
+  parser = argparse.ArgumentParser(description="IGraph (python-igraph API) utility, graph processingand display", epilog=epilog)
+  ops = ["summary",
+	"degree_distribution",
+	"rootnodes",
+	"topnodes",
+  	"graph2cyjs",
+	"shortest_path",
+	"show_ancestry",
+	"connectednodes",
+	"disconnectednodes",
+	"node_select",
+	"edge_select" ]
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", required=True, help="input file or URL (e.g. GraphML)")
   parser.add_argument("--o", dest="ofile", help="output file")
@@ -331,10 +324,11 @@ Note: select also deletes non-matching for modified output.
   parser.add_argument("--select_lt", action="store_true", help="numerical less-than select")
   parser.add_argument("--select_gt", action="store_true", help="numerical greater-than select")
   parser.add_argument("--select_negate", action="store_true", help="negate select criteria")
-  parser.add_argument("--display", help="display graph interactively")
+  parser.add_argument("--display", action="store_true", help="display graph interactively")
   parser.add_argument("--depth", type=int, default=DEPTH, help="depth for --topnodes")
   parser.add_argument("--nidA", help="nodeA ID")
   parser.add_argument("--nidB", help="nodeB ID")
+  parser.add_argument("--quiet", action="store_true")
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -398,7 +392,7 @@ Note: select also deletes non-matching for modified output.
     #  logging.debug(f"{v['id']}: {v['name']}")
     logging.info(f"selected nodes: {len(vs)}")
     g = g.induced_subgraph(vs, implementation="auto")
-    logging.info(f"SELECTED SUBGRAPH:  nodes: {g.vcount()} ; edges: {g.ecount()}")
+    logging.info(f"SELECTED SUBGRAPH:  nodes: {g.vcount()}; edges: {g.ecount()}")
 
   ###
   #OUTPUT:
@@ -407,7 +401,7 @@ Note: select also deletes non-matching for modified output.
     g.write_graphml(fout) #Works but maybe changes tags?
     fout.close()
 
-  elif display:
+  elif args.display:
     w,h = 700,500
     layout = 'rt'
     DisplayGraph(g, layout, w, h)

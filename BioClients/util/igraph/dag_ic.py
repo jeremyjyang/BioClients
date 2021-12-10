@@ -14,7 +14,7 @@
 ### Used for Disease Ontology, as converted to GraphML with obo2csv.py and 
 ### Go_do_graph_analysis.sh.
 #############################################################################
-import sys,os,argparse,logging
+import sys,os,argparse,tqdm,logging
 import igraph,numpy
 
 from .. import igraph as igraph_utils
@@ -37,8 +37,8 @@ def ComputeInfoContent(g):
 
 #############################################################################
 def NDescendants(g, vidx, level):
-  '''Recursive by depth first search.  Since DAG may not be a tree, need
-to avoid multiple counts via alternate parents.'''
+  """Recursive by depth first search.  Since DAG may not be a tree, need
+to avoid multiple counts via alternate parents."""
   dvidxs = set() #descendant vidxs
   for vidx_ in g.neighbors(vidx, mode=igraph.OUT):
     dvidxs.add(vidx_)
@@ -52,8 +52,8 @@ to avoid multiple counts via alternate parents.'''
 
 #############################################################################
 def FindMICA(g, vidxA, vidxB, vidxFrom=None):
-  '''Start with root node as default MICA.  Self may be MICA.  If not, test children. 
-Accumulate MICA list.  Recurse.'''
+  """Start with root node as default MICA.  Self may be MICA.  If not, test children. 
+Accumulate MICA list.  Recurse."""
   if vidxA==vidxB: return vidxA
   if not vidxFrom:
     r = igraph_utils.RootNodes(g)[0] #should be only one
@@ -122,8 +122,8 @@ def SimMatrixNodelist(g, fout):
 
 #############################################################################
 def SimMatrix(g, vidxA_query, skip, nmax, fout):
-  '''For every node-node pair in DAG, find MICA and write IC (similarity).
-If vidxA specified, compute one row only.'''
+  """For every node-node pair in DAG, find MICA and write IC (similarity).
+If vidxA specified, compute one row only."""
   fout.write("doidA\tdoidB\tdoidMICA\tsim\n")
   vidxs = [v.index for v in g.vs]
   vidxs.sort()
@@ -133,8 +133,8 @@ If vidxA specified, compute one row only.'''
     if nmax and (i-skip)==nmax: break
     vidxA = vidxs[i]
     if vidxA_query and vidxA_query!=vidxA: continue
-    vA=g.vs[vidxA]
-    doidA=vA['doid']
+    vA = g.vs[vidxA]
+    doidA = vA['doid']
     logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']})")
     n_nonzero_this=0
     n_in_this=0;
@@ -142,8 +142,8 @@ If vidxA specified, compute one row only.'''
       n_in+=1
       n_in_this+=1
       vidxB = vidxs[j]
-      vB=g.vs[vidxB]
-      doidB=vB['doid']
+      vB = g.vs[vidxB]
+      doidB = vB['doid']
       logging.debug(f"vB: [{vidxB}] {vB['doid']} ({vB['name']})")
       try:
         vidxMICA = FindMICA(g, vidxA, vidxB, None)
@@ -156,17 +156,17 @@ If vidxA specified, compute one row only.'''
         logging.error(f"vB: [{vidxB}] {vB['doid']} ({vB['name']})")
         n_err+=1
         continue
-      vMICA=g.vs[vidxMICA]
-      doidMICA=vMICA['doid']
-      ic=vMICA['ic']
+      vMICA = g.vs[vidxMICA]
+      doidMICA = vMICA['doid']
+      ic = vMICA['ic']
       if ic>0.0:
         n_nonzero_this+=1
         fout.write(f"{doidA.replace('DOID:','')}\t{doidB.replace('DOID:','')}\t{doidMICA.replace('DOID:','')}\t{ic:4f}\n")
         fout.flush()
         n_out+=1
-      if (n_in%1e5)==0: logging.info(f"n_in: {n_in} ; n_out: {n_out} ; n_nonzero: {n_nonzero} ({100.0*n_nonzero/n_in:.1f%%)")
+      if (n_in%1e5)==0: logging.info(f"n_in: {n_in}; n_out: {n_out}; n_nonzero: {n_nonzero} ({100.0*n_nonzero/n_in:.1f}%%)")
     n_nonzero+=n_nonzero_this
-    logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']}); n_nonzero_this = {n_nonzero_this}/{n_in_this} ; total n_nonzero = {n_nonzero}/{n_in} ({100.0*n_nonzero/n_in:.1f%%)")
+    logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']}); n_nonzero_this = {n_nonzero_this}/{n_in_this}; total n_nonzero = {n_nonzero}/{n_in} ({100.0*n_nonzero/n_in:.1f}%%)")
   logging.info(f"Total n_in: {n_in}; n_out: {n_out}; n_nonzero: {n_nonzero} ({100*n_nonzero/n_in:.1f}%%)")
   logging.info(f"Total n_err: {n_err}")
 
@@ -182,15 +182,8 @@ def test(g, nidA, nidB):
 
 #############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(
-	description='''
-Info content (IC) and most informative common ancestor (MICA)
-for directed acyclic graph (DAG)
-''',
-	epilog='''
-simMatrixNodelist outputs vertex indices with node IDs.
-simMatrix with --nidA to compute one row.
-''')
+  parser = argparse.ArgumentParser(description="Info content (IC) and most informative common ancestor (MICA) for directed acyclic graph (DAG)",
+	epilog="""simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA to compute one row.""")
   ops = ['computeIC', 'findMICA', 'simMatrix', 'simMatrixNodelist', 'test']
   parser.add_argument("op", choices=ops, help='OPERATION')
 
@@ -205,10 +198,6 @@ simMatrix with --nidA to compute one row.
 
   fout = open(args.ofile,"w") if args.ofile else sys.stdout
 
-  if not fout:
-    parser.error('ERROR: cannot open outfile: %s'%args.ofile)
-    parser.print_help()
-
   g = igraph_utils.LoadGraph(args.ifile, 'graphml')
 
   igraph_utils.GraphSummary(g)
@@ -220,7 +209,7 @@ simMatrix with --nidA to compute one row.
   if args.op == 'computeIC':
     ComputeInfoContent(g)
     if args.ofile:
-      igraph_utils.SaveGraph(g,"graphml",fout)
+      igraph_utils.SaveGraph(g,"graphml", fout)
 
   elif args.op == 'findMICA':
     if not (args.nidA and args.nidB):
@@ -260,13 +249,13 @@ simMatrix with --nidA to compute one row.
 
 #############################################################################
 # def FindMICA_try1(g, vidxAs, vidxB):
-#   '''MICA = Max Info Content Ancestor.  From vA (any in list) consider self, then
+#   """MICA = Max Info Content Ancestor.  From vA (any in list) consider self, then
 # search parents till a parent of vB.
 # BUGGY!    NOT COMMUTATIVE.
 # --nidA DOID:0050624 --nidB DOID:5467
 # 	!=
 # --nidB DOID:0050624 --nidA DOID:5467
-# '''
+# """
 #   r = igraph_utils.RootNodes(g)[0] #should be only one
 #   vB = g.vs[vidxB]
 #   logging.debug('\tvB_this: [%d] %s (%s)'%(vidxB,vB['doid'], vB['name']))
