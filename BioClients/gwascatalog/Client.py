@@ -44,7 +44,7 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
 
   t0 = time.time()
 
-  ids=[]
+  ids=[];
   if args.ifile:
     fin = open(args.ifile)
     while True:
@@ -53,6 +53,7 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
       ids.append(line.strip())
   elif args.ids:
     ids = re.split(r'\s*,\s*', args.ids.strip())
+  if ids: logging.info(f"Input IDs: {len(ids)}")
 
   if args.op == 'search_studies':
     gwascatalog.SearchStudies(ids, args.searchtype, base_url, fout)

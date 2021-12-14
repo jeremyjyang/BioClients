@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-#############################################################################
-### Compute information content (IC) for nodes in a directed acyclic graph
-### (DAG).
-### For each node, information content (IC) depends on total number of
-### descendants ndes, +1 for self.  Then IC is -log10((ndes+1)/n_total).
-### Given this we can identify the most informative common ancestor
-### (MICA), and the semantic similarity between any two nodes/terms.
-### Note that this is a kind of "Platonic" IC; in contrast, a set of
-### annotated disease instances could have a sampled IC which depends
-### on the frequency of each DO annotation.  In that scenario, an unused
-### disease has no effect on the sampled IC.
-#############################################################################
-### Used for Disease Ontology, as converted to GraphML with obo2csv.py and 
-### Go_do_graph_analysis.sh.
+###
+"""
+Compute information content (IC) for nodes in a directed acyclic graph
+(DAG).
+For each node, information content (IC) depends on total number of
+descendants ndes, +1 for self.  Then IC is -log10((ndes+1)/n_total).
+Given this we can identify the most informative common ancestor
+(MICA), and the semantic similarity between any two nodes/terms.
+Note that this is a kind of "Platonic" IC; in contrast, a set of
+annotated disease instances could have a sampled IC which depends
+on the frequency of each DO annotation.  In that scenario, an unused
+disease has no effect on the sampled IC.
+
+Used for Disease Ontology, as converted to GraphML with obo2csv.py and 
+Go_do_graph_IC.sh.
+"""
 #############################################################################
 import sys,os,argparse,tqdm,logging
 import igraph,numpy
@@ -25,7 +27,7 @@ sys.setrecursionlimit(sys.getrecursionlimit()*2)
 def ComputeInfoContent(g):
   rs = igraph_utils.RootNodes(g)
   if len(rs)>1:
-    logging.warning(f"multiple root nodes ({len(rs)}) using one only.")
+    logging.warning(f"Multiple root nodes ({len(rs)}) using one only.")
   r = rs[0];
   ridx = r.index
   g.vs["ndes"] = [0 for i in range(len(g.vs))]
@@ -74,16 +76,16 @@ Accumulate MICA list.  Recurse."""
     vidxAAncestors = igraph_utils.GetAncestors(g, vidxA)
     vidxBAncestors = igraph_utils.GetAncestors(g, vidxB)
   except Exception as e:
-    logging.error(f"(aack!): '{str(e)}'")
+    logging.error(f"(Aack!): '{str(e)}'")
     raise
 
   if not (vidxFrom==vidxA or (vidxFrom in vidxAAncestors)):
-    logging.error("(aack!): vidxFrom not in vidxAAncestors.")
+    logging.error("(Aack!): vidxFrom not in vidxAAncestors.")
     logging.debug(f"vFrom: [{vidxFrom}] {vFrom['doid']} ({vFrom['name']})")
     logging.debug(f"vidxAAncestors: {str(vidxAAncestors)}")
     return None
   if not (vidxFrom==vidxB or (vidxFrom in vidxBAncestors)):
-    logging.error("(aack!): vidxFrom not in vidxBAncestors.")
+    logging.error("(Aack!): vidxFrom not in vidxBAncestors.")
     logging.debug(f"vFrom: [{vidxFrom}] {vFrom['doid']} ({vFrom['name']})")
     logging.debug(f"vidxBAncestors: {str(vidxBAncestors)}")
     return None
@@ -91,7 +93,7 @@ Accumulate MICA list.  Recurse."""
   if vidxA==vidxFrom or vidxB==vidxFrom: return vidxFrom
 
   micas = [] #list of tuples (vidx, ic)
-  micas.append((vidxFrom,vFrom['ic']))
+  micas.append((vidxFrom, vFrom['ic']))
 
   vidxFrom_children = list(g.neighbors(vidxFrom, mode=igraph.OUT))
   for vidxFrom_child in vidxFrom_children:
@@ -99,15 +101,14 @@ Accumulate MICA list.  Recurse."""
       vidx_ = FindMICA(g, vidxA, vidxB, vidxFrom_child)
       if vidx_:
         v_ = g.vs[vidx_]
-        micas.append((vidx_,v_['ic']))
+        micas.append((vidx_, v_['ic']))
 
   if not micas:
-    logging.error('(aack!): no MICAs found.')
+    logging.error('(Aack!): no MICAs found.')
     return None
 
   micas = sorted(micas, key=lambda x: -x[1]) #on 2nd field, descending
   return micas[0][0]
-
 
 #############################################################################
 def SimMatrixNodelist(g, fout):
@@ -138,7 +139,7 @@ If vidxA specified, compute one row only."""
     logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']})")
     n_nonzero_this=0
     n_in_this=0;
-    for j in range(i+1,len(vidxs)):
+    for j in range(i+1, len(vidxs)):
       n_in+=1
       n_in_this+=1
       vidxB = vidxs[j]
@@ -148,7 +149,7 @@ If vidxA specified, compute one row only."""
       try:
         vidxMICA = FindMICA(g, vidxA, vidxB, None)
       except Exception as e:
-        logging.error(f"(aack!): '{str(e)}'")
+        logging.error(f"(Aack!): '{str(e)}'")
         vidxMICA = None
         pass
       if vidxMICA is None: #zero possible so use None
@@ -174,11 +175,11 @@ If vidxA specified, compute one row only."""
 def test(g, nidA, nidB):
   vA = g.vs.find(id = nidA)
   vB = g.vs.find(id = nidB)
-  logging.info('\tvA: [%d] %s (%s)'%(vA.index,vA['doid'], vA['name']))
-  logging.info('\tvB: [%d] %s (%s)'%(vB.index,vB['doid'], vB['name']))
+  logging.info(f"\tvA: [{vA.index}] {vA['doid']} ({vA['name']})")
+  logging.info(f"\tvB: [{vB.index}] {vB['doid']} ({vB['name']})")
   vidx_mica = FindMICA(g, vA.index, vB.index, None)
   v = g.vs[vidx_mica]
-  logging.info('MICA: [%d] %s (%s); IC = %f'%(vidx_mica,v['doid'], v['name'],v['ic']))
+  logging.info(f"MICA: [{vidx_mica}] {v['doid']} ({v['name']}); IC = {v['ic']:.3f}")
 
 #############################################################################
 if __name__=='__main__':
@@ -196,7 +197,7 @@ if __name__=='__main__':
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
-  fout = open(args.ofile,"w") if args.ofile else sys.stdout
+  fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   g = igraph_utils.Load_GraphML(args.ifile)
 
@@ -217,11 +218,11 @@ if __name__=='__main__':
       parser.print_help()
     vA = g.vs.find(id = args.nidA)
     vB = g.vs.find(id = args.nidB)
-    logging.debug('\tvA: [%d] %s (%s)'%(vA.index,vA['doid'], vA['name']))
-    logging.debug('\tvB: [%d] %s (%s)'%(vB.index,vB['doid'], vB['name']))
+    logging.debug(f"\tvA: [{vA.index}] {vA['doid']} ({vA['name']})")
+    logging.debug(f"\tvB: [{vB.index}] {vB['doid']} ({vB['name']})")
     vidx_mica = FindMICA(g, vA.index, vB.index, None)
     v = g.vs[vidx_mica]
-    logging.info('MICA: [%d] %s (%s); IC = %f'%(vidx_mica,v['doid'], v['name'],v['ic']))
+    logging.info(f"MICA: [{vidx_mica}] {v['doid']} ({v['name']}); IC = {v['ic']:.3f}")
 
   elif args.op == 'test':
     #if not (args.nidA and args.nidB):
@@ -245,7 +246,6 @@ if __name__=='__main__':
 
   if args.ofile:
     fout.close()
-
 
 #############################################################################
 # def FindMICA_try1(g, vidxAs, vidxB):

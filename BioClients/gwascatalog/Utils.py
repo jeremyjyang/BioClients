@@ -150,7 +150,7 @@ gc = genomicContext
   retry_strategy = Retry(
 	total=10,
 	backoff_factor=2,
-	status_forcelist=[413, 429, 500, 502, 503, 504],
+	status_forcelist=[413, 429, 502, 503, 504], #Not 500
 	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
 	)
   adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -166,10 +166,7 @@ gc = genomicContext
     url_this = url+'/'+id_this
     #response = requests.get(url_this)
     response = session.get(url_this)
-    if (response.status_code==404):
-      logging.debug(f"(status_code={response.status_code}): url_this: {url_this}")
-      continue
-    elif (response.status_code!=200):
+    if response.status_code!=200:
       logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
       continue
     snp = response.json()

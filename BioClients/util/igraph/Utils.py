@@ -27,7 +27,7 @@ def Save_GraphML(g, fout):
 def GraphSummary(g):
   #igraph.summary(g,verbosity=0) ## verbosity=1 prints edge list!
   name = g['name'] if 'name' in g.attributes() else None
-  logging.info(f"graph name: '%s'"%(name))
+  logging.info(f"graph name: '{name}'")
   logging.info(f"\t                 nodes: {g.vcount():3d}")
   logging.info(f"\t                 edges: {g.ecount():3d}")
   logging.info(f"\t             connected: {g.is_connected(mode=igraph.WEAK)}")
@@ -75,10 +75,12 @@ def DisconnectedNodes(g):
 def RootNodes(g):
   """In a directed graph, which are the root nodes?"""
   if not g.is_directed():
-    logging.error('graph not directed; cannot have root nodes.')
-  if not g.is_dag():
-    logging.error('graph not directed-acyclic; cannot have proper root nodes.')
-  vs=[]
+    logging.error("Graph not directed; cannot have root nodes.")
+    return []
+  elif not g.is_dag():
+    logging.error("Graph not directed-acyclic; cannot have proper root nodes.")
+    return []
+  vs=[];
   for v in g.vs:
     #if not g.neighbors(v, igraph.IN):
     #if g.indegree(v)==0:
@@ -389,12 +391,12 @@ NOTE: select also deletes non-matching for modified output.
     ShowAncestry(g, vidxA, 0)
 
   elif args.op=='graph2cyjs':
-    print(Graph2CyJsElements(g))
+    fout.write(Graph2CyJsElements(g))
 
   if vs:
-    #for v in vs:
-    #  logging.debug(f"{v['id']}: {v['name']}")
-    logging.info(f"selected nodes: {len(vs)}")
+    for v in vs:
+      logging.debug(f"{v['id']}: {v['name']}")
+    logging.info(f"Selected nodes: {len(vs)}")
     g = g.induced_subgraph(vs, implementation="auto")
     logging.info(f"SELECTED SUBGRAPH:  nodes: {g.vcount()}; edges: {g.ecount()}")
 
