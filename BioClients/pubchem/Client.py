@@ -9,7 +9,7 @@ from .. import pubchem
 #
 ##############################################################################
 if __name__=='__main__':
-  ops = [
+  OPS = [
         "list_sources_substance", "list_sources_assay",
         "get_name2sid", "get_name2cid", "get_name2synonyms",
         "get_smi2cid",
@@ -23,7 +23,7 @@ if __name__=='__main__':
 	"get_assaysubstances",
 	"get_assaysubstanceresults",]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
-  parser.add_argument("op",choices=ops,help='operation')
+  parser.add_argument("op", choices=OPS, help="OPERATION")
   parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID|SMILES|name)")
   parser.add_argument("--ids", help="input IDs (CID|SID|SMILES|name) (comma-separated)")
   parser.add_argument("--aids", help="input AIDs (comma-separated)")
@@ -40,7 +40,7 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
-  base_url = 'https://'+args.api_host+args.api_base_path
+  base_url = f"https://{args.api_host}{args.api_base_path}"
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
