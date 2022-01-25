@@ -20,11 +20,11 @@ XMLHEADER = """\
 <!DOCTYPE PCT-Data PUBLIC "-//NCBI//NCBI PCTools/EN" "NCBI_PCTools.dtd">"""
 #
 SOAP_ACTIONS = {
-	"exact":	"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
-	"substructure":	"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
-	"similarity":	"http://pubchem.ncbi.nlm.nih.gov/SimilaritySearch2D",
 	"standardize":	"http://pubchem.ncbi.nlm.nih.gov/Standardize",
-	"idexchange":	"http://pubchem.ncbi.nlm.nih.gov/IDExchange"
+	"idexchange":	"http://pubchem.ncbi.nlm.nih.gov/IDExchange",
+	"search_exact":	"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
+	"search_substructure":	"http://pubchem.ncbi.nlm.nih.gov/SubstructureSearch",
+	"search_similarity":	"http://pubchem.ncbi.nlm.nih.gov/SimilaritySearch2D",
 	}
 #
 API_HOST="pubchem.ncbi.nlm.nih.gov"
@@ -33,11 +33,12 @@ API_BASE_URL=f"https://{API_HOST}{API_BASE_PATH}"
 POLL_WAIT=10
 MAX_WAIT=300
 SIM_CUTOFF=0.80
+RETRY_NMAX=10;
 #
 #############################################################################
 class PugSoapRequest:
   """
-Normal status values: "success", "queued", "running"
+Normal status values: "success", "hit-limit", "queued", "running"
 Error status values: "server-error"
   """
   def __init__(self, pugxml, base_url):
@@ -71,13 +72,13 @@ Error status values: "server-error"
 
   def cancel(self):
     logging.debug(f"Connecting {self.base_url}...")
-    response = requests.post(self.base_url, data=(qxml_template.format(header=XMLHEADER, REQID=self.reqid, MODE="cancel")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
+    response = requests.post(self.base_url, data=(self.qxml_template.format(header=XMLHEADER, REQID=self.reqid, MODE="cancel")), headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/GetOperationStatus"})
     self.parsePugXml(response.text)
 
   def parsePugXml(self, pugxml):
     logging.debug(pugxml)
     try:
-      elt = ElementTree.parse(io.StringIO(pugxml)) #ElementTree instance
+      elt = ElementTree.parse(io.StringIO(pugxml))
     except Exception as e:
       logging.error(f"XML parse error: {e}; xml={pugxml}")
       sys.exit(1)
@@ -95,26 +96,29 @@ Error status values: "server-error"
     self.wenv = wenvs[0] if wenvs else None
     #Standardize:
     out_structs = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Structure_structure_string')
-    self.out_structs = out_structs if out_structs else None
-    self.out_struct = out_structs[0] if out_structs else None
+    self.out_struct = out_structs[0].rstrip() if out_structs else None #smiles or inchi
+    if self.out_struct is None:
+      out_struct_lines = xml.Utils.GetLeafValsByTagName(elt, 'PCT-Structure_structure_strings_E')
+      self.out_struct = ('\n'.join(out_struct_lines)) if out_struct_lines else None #sdf
 
   def waitForResult(self, poll_wait, max_wait):
     t0=time.time()
     while True:
       time.sleep(poll_wait)
       if time.time()-t0>max_wait:
-        self.cancel()
         logging.error(f"Max wait exceeded ({max_wait} sec); quitting.")
+        self.cancel()
       logging.info(f"Polling PUG [reqid={self.reqid}]...")
       self.getStatus()
-      if self.status=="success": 
-        logging.info(f"Success! [reqid={self.reqid}]")
+      if self.status in ("success", "hit-limit"): 
         if self.url is not None:
-          logging.info(f"Got url [reqid={self.reqid}]: {self.url}")
+          logging.info(f"{self.status}: Got url [reqid={self.reqid}]: {self.url}")
         elif self.qkey is not None:
-          logging.info(f"Got qkey [reqid={self.reqid}]: {self.qkey}")
+          logging.info(f"{self.status}: Got qkey [reqid={self.reqid}]: {self.qkey}")
+        elif self.out_struct is not None:
+          logging.info(f"{self.status}: Got out_struct [reqid={self.reqid}]: {self.out_struct}")
         else:
-          logging.error(f"Aaack! status=success but no url or qkey??? [reqid={self.reqid}]")
+          logging.error(f"Aaack! status={self.status} but no url, qkey, or out_struct??? [reqid={self.reqid}]")
         break
       logging.info(f"{time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))} elapsed; {poll_wait} sec wait; status={self.status}")
       if self.error:
@@ -124,60 +128,79 @@ Error status values: "server-error"
           break
 
 #############################################################################
-def SubmitRequest_Structural(smiles, searchtype, sim_cutoff, active=False,
+def SubmitRequest_StructuralSearch(query, searchtype, sim_cutoff, active=False,
 nmax=10000, base_url=API_BASE_URL):
-  qxml=(f"""{XMLHEADER}
-<PCT-Data><PCT-Data_input><PCT-InputData><PCT-InputData_query><PCT-Query>
-  <PCT-Query_type><PCT-QueryType><PCT-QueryType_css>
-    <PCT-QueryCompoundCS>
-    <PCT-QueryCompoundCS_query>
-      <PCT-QueryCompoundCS_query_data>{smiles}</PCT-QueryCompoundCS_query_data>
-    </PCT-QueryCompoundCS_query>
-    <PCT-QueryCompoundCS_type>
-""")
-  if searchtype.lower()=='similarity':
-    qxml+=(f"""\
-<PCT-QueryCompoundCS_type_similar><PCT-CSSimilarity>
-  <PCT-CSSimilarity_threshold>{int(sim_cutoff*100):d}</PCT-CSSimilarity_threshold>
-</PCT-CSSimilarity></PCT-QueryCompoundCS_type_similar>
-""")
-  elif searchtype.lower()=='substructure':
-    qxml+="""\
-<PCT-QueryCompoundCS_type_subss><PCT-CSStructure>
-  <PCT-CSStructure_isotopes value="false"/>
-  <PCT-CSStructure_charges value="false"/>
-  <PCT-CSStructure_tautomers value="false"/>
-  <PCT-CSStructure_rings value="false"/>
-  <PCT-CSStructure_bonds value="true"/>
-  <PCT-CSStructure_chains value="true"/>
-  <PCT-CSStructure_hydrogen value="false"/>
-</PCT-CSStructure></PCT-QueryCompoundCS_type_subss>
+  qxml=f"""{XMLHEADER}
+<PCT-Data>
+  <PCT-Data_input>
+    <PCT-InputData>
+      <PCT-InputData_query>
+        <PCT-Query>
+          <PCT-Query_type>
+            <PCT-QueryType>
+              <PCT-QueryType_css>
+                <PCT-QueryCompoundCS>
+                  <PCT-QueryCompoundCS_query>
+                    <PCT-QueryCompoundCS_query_data>{query}</PCT-QueryCompoundCS_query_data>
+                  </PCT-QueryCompoundCS_query>
+                  <PCT-QueryCompoundCS_type>
 """
-  else: #exact
-    qxml+="""\
-<PCT-QueryCompoundCS_type_identical>
-  <PCT-CSIdentity value="same-stereo-isotope">5</PCT-CSIdentity>
-</PCT-QueryCompoundCS_type_identical>
+  if searchtype.lower()=='search_similarity':
+    qxml+=f"""\
+                    <PCT-QueryCompoundCS_type_similar>
+                      <PCT-CSSimilarity>
+                        <PCT-CSSimilarity_threshold>{int(sim_cutoff*100):d}</PCT-CSSimilarity_threshold>
+                      </PCT-CSSimilarity>
+                    </PCT-QueryCompoundCS_type_similar>
 """
-  qxml+=(f"""\
-</PCT-QueryCompoundCS_type>
-<PCT-QueryCompoundCS_results>{nmax}</PCT-QueryCompoundCS_results>
-</PCT-QueryCompoundCS>
-</PCT-QueryType_css></PCT-QueryType>
-""")
+  elif searchtype.lower()=='search_substructure':
+    qxml+="""\
+                    <PCT-QueryCompoundCS_type_subss>
+                      <PCT-CSStructure>
+                        <PCT-CSStructure_isotopes value="false"/>
+                        <PCT-CSStructure_charges value="false"/>
+                        <PCT-CSStructure_tautomers value="false"/>
+                        <PCT-CSStructure_rings value="false"/>
+                        <PCT-CSStructure_bonds value="true"/>
+                        <PCT-CSStructure_chains value="true"/>
+                        <PCT-CSStructure_hydrogen value="false"/>
+                      </PCT-CSStructure>
+                    </PCT-QueryCompoundCS_type_subss>
+"""
+  else: #search_exact
+    qxml+="""\
+                    <PCT-QueryCompoundCS_type_identical>
+                      <PCT-CSIdentity value="same-stereo-isotope">5</PCT-CSIdentity>
+                    </PCT-QueryCompoundCS_type_identical>
+"""
+  qxml+=f"""\
+                  </PCT-QueryCompoundCS_type>
+                  <PCT-QueryCompoundCS_results>{nmax}</PCT-QueryCompoundCS_results>
+                </PCT-QueryCompoundCS>
+              </PCT-QueryType_css></PCT-QueryType>
+"""
   if active:
     qxml+="""\
-<PCT-QueryType><PCT-QueryType_cel><PCT-QueryCompoundEL>
-<PCT-QueryCompoundEL_activity>
-<PCT-CLByBioActivity value="active">2</PCT-CLByBioActivity>
-</PCT-QueryCompoundEL_activity>
-</PCT-QueryCompoundEL></PCT-QueryType_cel></PCT-QueryType>
-</PCT-Query_type></PCT-Query>
-</PCT-InputData_query></PCT-InputData></PCT-Data_input></PCT-Data>
+            <PCT-QueryType>
+              <PCT-QueryType_cel>
+                <PCT-QueryCompoundEL>
+                  <PCT-QueryCompoundEL_activity>
+                    <PCT-CLByBioActivity value="active">2</PCT-CLByBioActivity>
+                  </PCT-QueryCompoundEL_activity>
+                </PCT-QueryCompoundEL>
+              </PCT-QueryType_cel>
+            </PCT-QueryType>
 """
-  logging.debug(f"Requesting: base_url: {base_url}; searchtype: {searchtype}; smiles: {smiles}")
-  if searchtype.lower()=='similarity':
-    logging.debug(f"Similarity cutoff: {sim_cutoff}")
+  qxml+="""\
+          </PCT-Query_type>
+        </PCT-Query>
+      </PCT-InputData_query>
+    </PCT-InputData>
+  </PCT-Data_input>
+</PCT-Data>
+"""
+  logging.debug(f"qxml: {qxml}")
+  logging.info(f"StructuralSearch: base_url: {base_url}; searchtype: {searchtype}{'(sim>='+str(sim_cutoff)+')' if searchtype.lower()=='search_similarity' else '' }; query: {query}")
   response = requests.post(base_url, data=qxml, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS[searchtype]})
   return PugSoapRequest(response.text, base_url)
 
@@ -199,14 +222,35 @@ def SubmitRequest_IDExchange(ids, ifmt, ofmt, operator, do_gz, base_url=API_BASE
                 <PCT-QueryIDExchange>
                   <PCT-QueryIDExchange_input>
                     <PCT-QueryUids>
+""")
+  if ifmt in ("cid", "sid"):
+    qxml+=(f"""\
+                      <PCT-QueryUids_ids>
+                        <PCT-ID-List>
+                          <PCT-ID-List_db>{"pccompound" if ifmt=="cid" else "pcsubstance"}</PCT-ID-List_db>
+                          <PCT-ID-List_uids>
+""")
+    for id_this in ids:
+      qxml+=(f"""\
+                            <PCT-ID-List_uids_E>{id_this}</PCT-ID-List_uids_E>
+""")
+    qxml+=(f"""\
+                          </PCT-ID-List_uids>
+                        </PCT-ID-List>
+                      </PCT-QueryUids_ids>
+""")
+  else:
+    qxml+=(f"""\
                       <PCT-QueryUids_{fmt2tag[ifmt]}>
 """)
-  for id_this in ids:
-    qxml+=(f"""\
+    for id_this in ids:
+      qxml+=(f"""\
                         <PCT-QueryUids_{fmt2tag[ifmt]}_E>{id_this}</PCT-QueryUids_{fmt2tag[ifmt]}_E>
 """)
-  qxml+=(f"""\
+    qxml+=(f"""\
                       </PCT-QueryUids_{fmt2tag[ifmt]}>
+""")
+  qxml+=(f"""\
                     </PCT-QueryUids>
                   </PCT-QueryIDExchange_input>
                   <PCT-QueryIDExchange_operation-type value="{operator}"/>
@@ -224,7 +268,7 @@ def SubmitRequest_IDExchange(ids, ifmt, ofmt, operator, do_gz, base_url=API_BASE
 </PCT-Data>
 """)
   logging.debug(f"qxml: {qxml}")
-  logging.debug(f"Requesting: base_url: {base_url}: IDs: {len(ids)}")
+  logging.debug(f"IDExchange: base_url: {base_url}: IDs: {len(ids)}")
   response = requests.post(base_url, data=qxml, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS["idexchange"]})
   if response.status_code!=200:
     logging.error(f"(status_code={response.status_code})")
@@ -260,7 +304,7 @@ def SubmitRequest_Standardize(id_this, ifmt, ofmt, do_gz, base_url=API_BASE_URL)
 </PCT-Data>
 """)
   logging.debug(f"qxml: {qxml}")
-  logging.debug(f"Requesting: base_url: {base_url}")
+  logging.debug(f"Standardize: base_url: {base_url}")
   response = requests.post(base_url, data=qxml, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":SOAP_ACTIONS["standardize"]})
   return PugSoapRequest(response.text, base_url)
 
@@ -282,12 +326,12 @@ def MonitorQuery(qkey, webenv, fmt='smiles', do_gz=False, base_url=API_BASE_URL)
 </PCT-InputData></PCT-Data_input></PCT-Data>
 """)
   logging.debug(f"qxml: {qxml}")
-  logging.info(f"MonitorQuery] Requesting: base_url: {base_url}; qkey: {qkey}")
+  logging.debug(f"[MonitorQuery] Requesting: base_url: {base_url}; qkey: {qkey}")
   response = requests.post(base_url, data=qxml, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
   return PugSoapRequest(response.text, base_url)
 
 #############################################################################
-def DownloadResults(download_url, fout=sys.stdout):
+def DownloadResults(download_url, ofmt, do_gz=False, fout=sys.stdout):
   """FTP urls not handled by requests package?!"""
 
 #  response = requests.get(download_url, headers={"Accept":"text/soap+xml; charset=utf-8", "SOAPAction":"http://pubchem.ncbi.nlm.nih.gov/Download"})
@@ -299,24 +343,19 @@ def DownloadResults(download_url, fout=sys.stdout):
 #    fout.write(response.content.encode("utf-8"))
 #  logging.info(f"Data downloaded to {fout.name}")
 
-  TIMEOUT=10;
-  RETRY_NMAX=10;
-  RETRY_WAIT=5;
   request = urllib.request.Request(url=download_url)
   logging.debug(f"request type = {request.type}")
   logging.debug(f"request host = {request.host}")
   logging.debug(f"request method = {request.get_method()}")
-  i_try=0
-  while True:
-    i_try+=1
+  for i_try in range(RETRY_NMAX):
     try:
-      with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
-        fbytes = response.read() #With Python3 read bytes from sockets.
-        fout.write(fbytes.decode("utf-8"))
+      with urllib.request.urlopen(request, timeout=POLL_WAIT) as response:
+        fbytes = response.read()
+        fout.write(fbytes if do_gz else fbytes.decode("utf-8"))
     except Exception as e:
-      logging.warn(f"[RETRY:{i_try}/{RETRY_NMAX}]: {e}")
+      logging.warn(f"RETRY({i_try+1}/{RETRY_NMAX}): {e}")
       if i_try<RETRY_NMAX:
-        time.sleep(RETRY_WAIT)
+        time.sleep(POLL_WAIT)
         continue
     break
 
