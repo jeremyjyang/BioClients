@@ -8,15 +8,15 @@ as imported GraphML "id" values.
 See also: igraph_plot.py
 """
 #############################################################################
-import sys,os,argparse,logging
-import re,random,tempfile,shutil
-import json
+import sys,os,argparse,logging,tqdm
+import re,random,tempfile,shutil,json
+import numpy as np
 import igraph
 
 #############################################################################
 def Load_GraphML(ifile):
   g = igraph.Graph.Read_GraphML(ifile)
-  logging.info(f"\tnodes: {g.vcount()}; edges: {g.ecount()}")
+  logging.info(f"nodes: {g.vcount()}; edges: {g.ecount()}")
   return g
 
 #############################################################################
@@ -28,16 +28,16 @@ def GraphSummary(g):
   #igraph.summary(g,verbosity=0) ## verbosity=1 prints edge list!
   name = g['name'] if 'name' in g.attributes() else None
   logging.info(f"graph name: '{name}'")
-  logging.info(f"\t                 nodes: {g.vcount():3d}")
-  logging.info(f"\t                 edges: {g.ecount():3d}")
-  logging.info(f"\t             connected: {g.is_connected(mode=igraph.WEAK)}")
-  logging.info(f"\t            components: {len(g.components(mode=igraph.WEAK)):3d}")
-  logging.info(f"\t              directed: {g.is_directed()}")
-  logging.info(f"\tDAG (directed-acyclic): {g.is_dag()}")
-  logging.info(f"\t              weighted: {g.is_weighted()}")
-  logging.info(f"\t              diameter: {g.diameter():3d}")
-  logging.info(f"\t                radius: {g.radius():.3f}")
-  logging.info(f"\t             maxdegree: {g.maxdegree():3d}")
+  logging.info(f"                 nodes: {g.vcount():3d}")
+  logging.info(f"                 edges: {g.ecount():3d}")
+  logging.info(f"             connected: {g.is_connected(mode=igraph.WEAK)}")
+  logging.info(f"            components: {len(g.components(mode=igraph.WEAK)):3d}")
+  logging.info(f"              directed: {g.is_directed()}")
+  logging.info(f"DAG (directed-acyclic): {g.is_dag()}")
+  logging.info(f"              weighted: {g.is_weighted()}")
+  logging.info(f"              diameter: {g.diameter():3d}")
+  logging.info(f"                radius: {g.radius():.3f}")
+  logging.info(f"             maxdegree: {g.maxdegree():3d}")
 
 #############################################################################
 def XOR(a,b): return ((a and not b) or (b and not a))
@@ -197,6 +197,15 @@ def ShowAncestry(g,vidxA,level):
 #    start_idx_prev=start_idx
 
 #############################################################################
+def InducedSubgraph(g, vs, implementation="auto"):
+  for v in vs:
+    logging.debug(f"{v['id']}: {v['name']}")
+  logging.info(f"Selected nodes: {len(vs)}")
+  g = g.induced_subgraph(vs, implementation=implementation)
+  logging.info(f"SELECTED SUBGRAPH:  nodes: {g.vcount()}; edges: {g.ecount()}")
+  return g
+
+#############################################################################
 def DisplayGraph(g,layout,w,h):
   """Layouts:
  "rt"          : reingold tilford tree
@@ -234,10 +243,9 @@ def Graph2CyJsElements(g):
   """Convert igraph object to CytoscapeJS-compatible JSON "elements"."""
   def merge_dicts(x, y):
     return {**x, **y} #Python3
-  nodes = []
+  nodes=[]; edges=[];
   for v in g.vs:
     nodes.append({'data':merge_dicts({'id':v['id']}, v.attributes())})
-  edges = []
   for e in g.es:
     v_source = g.vs[e.source]
     v_target = g.vs[e.target]
@@ -290,3 +298,142 @@ def Layout(g, method):
     visual_style["layout"] = g.layout("lgl")
 
 #############################################################################
+def ComputeInfoContent(g):
+  rs = igraph_utils.RootNodes(g)
+  if len(rs)>1:
+    logging.warning(f"Multiple root nodes ({len(rs)}) using one only.")
+  r = rs[0];
+  ridx = r.index
+  g.vs["ndes"] = [0 for i in range(len(g.vs))]
+  g.vs["ic"] = [0.0 for i in range(len(g.vs))]
+  NDescendants(g, ridx, 0)
+  for v in g.vs:
+    v["ic"] = -numpy.log10(min(float((v["ndes"]+1)/r["ndes"]), 1.0))
+    v["ic"] = numpy.abs(v["ic"])
+
+#############################################################################
+def NDescendants(g, vidx, level):
+  """Recursive by depth first search.  Since DAG may not be a tree, need
+to avoid multiple counts via alternate parents."""
+  dvidxs = set() #descendant vidxs
+  for vidx_ in g.neighbors(vidx, mode=igraph.OUT):
+    dvidxs.add(vidx_)
+    dvidxs_this = NDescendants(g, vidx_, level+1)
+    dvidxs |= dvidxs_this
+    g.vs[vidx_]["ndes"] = len(dvidxs_this)
+  ndes=len(dvidxs) #number of descendants of vidx
+  logging.debug(f"{level*'>'}{level}) vs[{vidx}]: {g.vs[vidx]['id']} ({g.vs[vidx]['name']}); ndes = {ndes}")
+  g.vs[vidx]["ndes"] = ndes
+  return dvidxs
+
+#############################################################################
+def FindMICA(g, vidxA, vidxB, vidxFrom=None):
+  """Start with root node as default MICA.  Self may be MICA.  If not, test children. 
+Accumulate MICA list.  Recurse."""
+  if vidxA==vidxB: return vidxA
+  if not vidxFrom:
+    r = igraph_utils.RootNodes(g)[0] #should be only one
+    vidxFrom = r.index
+  vFrom = g.vs[vidxFrom] #provisional
+
+  ##Short cut: If sole shared parent, is MICA:
+  ##Also a kludge to avoid pathological recursion with DOID:265, DOID:268
+  vidxA_parents = set(g.neighbors(vidxA, mode=igraph.IN))
+  vidxB_parents = set(g.neighbors(vidxB, mode=igraph.IN))
+  coparents = vidxA_parents & vidxB_parents
+  if len(coparents)==1:
+    vidxCop = list(coparents)[0]
+    #logging.debug('returning coparent: %d'%(vidxCop))
+    return vidxCop
+  try:
+    vidxAAncestors = igraph_utils.GetAncestors(g, vidxA)
+    vidxBAncestors = igraph_utils.GetAncestors(g, vidxB)
+  except Exception as e:
+    logging.error(f"(Aack!): '{str(e)}'")
+    raise
+  if not (vidxFrom==vidxA or (vidxFrom in vidxAAncestors)):
+    logging.error("(Aack!): vidxFrom not in vidxAAncestors.")
+    logging.debug(f"vFrom: [{vidxFrom}] {vFrom['doid']} ({vFrom['name']})")
+    logging.debug(f"vidxAAncestors: {str(vidxAAncestors)}")
+    return None
+  if not (vidxFrom==vidxB or (vidxFrom in vidxBAncestors)):
+    logging.error("(Aack!): vidxFrom not in vidxBAncestors.")
+    logging.debug(f"vFrom: [{vidxFrom}] {vFrom['doid']} ({vFrom['name']})")
+    logging.debug(f"vidxBAncestors: {str(vidxBAncestors)}")
+    return None
+  if vidxA==vidxFrom or vidxB==vidxFrom: return vidxFrom
+  micas = [] #list of tuples (vidx, ic)
+  micas.append((vidxFrom, vFrom['ic']))
+  vidxFrom_children = list(g.neighbors(vidxFrom, mode=igraph.OUT))
+  for vidxFrom_child in vidxFrom_children:
+    if (vidxFrom_child in vidxAAncestors) and (vidxFrom_child in vidxBAncestors):
+      vidx_ = FindMICA(g, vidxA, vidxB, vidxFrom_child)
+      if vidx_:
+        v_ = g.vs[vidx_]
+        micas.append((vidx_, v_['ic']))
+  if not micas:
+    logging.error('(Aack!): no MICAs found.')
+    return None
+  micas = sorted(micas, key=lambda x: -x[1]) #on 2nd field, descending
+  return micas[0][0]
+
+#############################################################################
+def SimMatrixNodelist(g, fout):
+  fout.write("vidx\tdoid\n")
+  vidxs = [v.index for v in g.vs]
+  vidxs.sort()
+  for vidx in vidxs:
+    v=g.vs[vidx]
+    doid=v['doid']
+    fout.write(f"{vidx}\t{doid}\n")
+  logging.info(f"n_node: {len(vidxs)}")
+
+#############################################################################
+def SimMatrix(g, vidxA_query, skip, nmax, fout):
+  """For every node-node pair in DAG, find MICA and write IC (similarity).
+If vidxA specified, compute one row only."""
+  fout.write("doidA\tdoidB\tdoidMICA\tsim\n")
+  vidxs = [v.index for v in g.vs]
+  vidxs.sort()
+  n_in=0; n_out=0; n_nonzero=0; n_err=0;
+  for i in range(len(vidxs)):
+    if skip and i<skip: continue
+    if nmax and (i-skip)==nmax: break
+    vidxA = vidxs[i]
+    if vidxA_query and vidxA_query!=vidxA: continue
+    vA = g.vs[vidxA]
+    doidA = vA['doid']
+    logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']})")
+    n_nonzero_this=0
+    n_in_this=0;
+    for j in range(i+1, len(vidxs)):
+      n_in+=1
+      n_in_this+=1
+      vidxB = vidxs[j]
+      vB = g.vs[vidxB]
+      doidB = vB['doid']
+      logging.debug(f"vB: [{vidxB}] {vB['doid']} ({vB['name']})")
+      try:
+        vidxMICA = FindMICA(g, vidxA, vidxB, None)
+      except Exception as e:
+        logging.error(f"(Aack!): '{str(e)}'")
+        vidxMICA = None
+        pass
+      if vidxMICA is None: #zero possible so use None
+        logging.error(f"vA: [{vidxA}] {vA['doid']} ({vA['name']})")
+        logging.error(f"vB: [{vidxB}] {vB['doid']} ({vB['name']})")
+        n_err+=1
+        continue
+      vMICA = g.vs[vidxMICA]
+      doidMICA = vMICA['doid']
+      ic = vMICA['ic']
+      if ic>0.0:
+        n_nonzero_this+=1
+        fout.write(f"{doidA.replace('DOID:','')}\t{doidB.replace('DOID:','')}\t{doidMICA.replace('DOID:','')}\t{ic:4f}\n")
+        fout.flush()
+        n_out+=1
+      if (n_in%1e5)==0: logging.info(f"n_in: {n_in}; n_out: {n_out}; n_nonzero: {n_nonzero} ({100.0*n_nonzero/n_in:.1f}%%)")
+    n_nonzero+=n_nonzero_this
+    logging.debug(f"vA: [{vidxA}] {vA['doid']} ({vA['name']}); n_nonzero_this = {n_nonzero_this}/{n_in_this}; total n_nonzero = {n_nonzero}/{n_in} ({100.0*n_nonzero/n_in:.1f}%%)")
+  logging.info(f"Total n_in: {n_in}; n_out: {n_out}; n_nonzero: {n_nonzero} ({100*n_nonzero/n_in:.1f}%%)")
+  logging.info(f"Total n_err: {n_err}")
