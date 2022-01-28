@@ -111,6 +111,16 @@ def AllChildCount(r):
   return count
 
 #############################################################################
+def LeafChildCount(r):
+  if len(r.neighbors(igraph.OUT))==0:
+    count=1
+  else:
+    count=0;
+    for c in r.neighbors(igraph.OUT):
+      count+=LeafChildCount(c)
+  return count
+
+#############################################################################
 def TopNodes(g, depth=1):
   """Return top node[s] of DAG to given depth from root[s]."""
   vs=[];
@@ -126,7 +136,10 @@ def TopNodes(g, depth=1):
 def Hierarchy(n, depth, i):
   if i>depth: return
   indent = "".join([f" {ii}> " for ii in range(i+1)])
-  logging.info(f"{indent}{n['id']:>12}: {n['name']} (children:{AllChildCount(n)})")
+  n_child = ChildCount(n, 1)
+  n_all = AllChildCount(n)
+  n_leaf = LeafChildCount(n)
+  logging.info(f"{indent}{n['id']:>12}: {n['name']} (child:{n_child}; all:{n_all}; leaf:{n_leaf})")
   for c in n.neighbors(igraph.OUT):
     Hierarchy(c, depth, i+1)
 
