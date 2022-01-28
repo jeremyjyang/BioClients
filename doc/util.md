@@ -35,15 +35,16 @@ Graph analytics with igraph, and with GraphML and CyJS formats.
 $ python3 -m BioClients.util.igraph.App -h
 usage: App.py [-h] --i IFILE [--o OFILE] [--selectfield SELECTFIELD]
               [--selectquery SELECTQUERY] [--selectval SELECTVAL]
-              [--select_exact SELECT_EXACT] [--select_equal] [--select_lt] [--select_gt]
-              [--select_negate] [--display] [--depth DEPTH] [--nidA NIDA] [--nidB NIDB]
-              [--quiet] [-v]
-              {summary,degree_distribution,rootnodes,topnodes,graph2cyjs,shortest_path,show_ancestry,connectednodes,disconnectednodes,node_select,edge_select}
+              [--select_exact SELECT_EXACT] [--select_equal] [--select_lt]
+              [--select_gt] [--select_negate] [--display] [--depth DEPTH] [--nidA NIDA]
+              [--nidB NIDB] [--nmax NMAX] [--skip SKIP]
+              [--recursionlimit RECURSIONLIMIT] [--quiet] [-v]
+              {summary,degree_distribution,rootnodes,topnodes,graph2cyjs,shortest_path,show_ancestry,connectednodes,disconnectednodes,node_select,edge_select,ic_computeIC,ic_findMICA,ic_simMatrix,ic_simMatrixNodelist,ic_test}
 
 IGraph (python-igraph API) utility, graph processingand display
 
 positional arguments:
-  {summary,degree_distribution,rootnodes,topnodes,graph2cyjs,shortest_path,show_ancestry,connectednodes,disconnectednodes,node_select,edge_select}
+  {summary,degree_distribution,rootnodes,topnodes,graph2cyjs,shortest_path,show_ancestry,connectednodes,disconnectednodes,node_select,edge_select,ic_computeIC,ic_findMICA,ic_simMatrix,ic_simMatrixNodelist,ic_test}
                         OPERATION
 
 optional arguments:
@@ -66,6 +67,9 @@ optional arguments:
   --depth DEPTH         depth for --topnodes
   --nidA NIDA           nodeA ID
   --nidB NIDB           nodeB ID
+  --nmax NMAX
+  --skip SKIP
+  --recursionlimit RECURSIONLIMIT
   --quiet
   -v, --verbose
 
@@ -74,7 +78,9 @@ node_select: select for nodes by criteria; edge_select: select for edges by crit
 connectednodes: connected node[s]; disconnectednodes: disconnected node[s]; rootnodes:
 root node[s] of DAG; topnodes: root node[s] & children of DAG; shortest_paths: shortest
 paths, nodes A ~ B; show_ancestry: show ancestry, node A; graph2cyjs: CytoscapeJS JSON;
-NOTE: select also deletes non-matching for modified output.
+NOTE: select also deletes non-matching for modified output. Info content (IC) and most
+informative common ancestor (MICA) for directed acyclic graph (DAG). simMatrixNodelist
+outputs vertex indices with node IDs. simMatrix with --nidA to compute one row.
 ```
 
 ```
@@ -102,4 +108,22 @@ optional arguments:
 
 simMatrixNodelist outputs vertex indices with node IDs. simMatrix with --nidA to compute
 one row.
+```
+
+##  `obo`
+
+The Open Biological and Biomedical Ontology (OBO) Foundry
+
+* <https://obofoundry.org/>
+
+```
+usage: App.py [-h] --i IFILE [--o OFILE] [-v]
+
+OBO to TSV converter
+
+optional arguments:
+  -h, --help     show this help message and exit
+  --i IFILE      input OBO file
+  --o OFILE      output (TSV)
+  -v, --verbose
 ```

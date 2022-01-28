@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-http://igraph.org/python/doc/tutorial/tutorial.html
+https://igraph.org/python/doc/tutorial/tutorial.html
 
 Note that igraph defines its own IDs.  These are integers, not the same
 as imported GraphML "id" values.
 
-See also: igraph_plot.py
 """
 #############################################################################
 import sys,os,argparse,logging,tqdm
 import re,random,tempfile,shutil,json
 import numpy as np
+import pandas as pd
 import igraph
 
 #############################################################################
@@ -89,28 +89,46 @@ def RootNodes(g):
   return vs
 
 #############################################################################
-def AddChildren(vs, r, depth, ntype):
+def AddChildren(vs, r, depth=1):
   if depth<=0: return
-  for c in r.neighbors(ntype):
+  for c in r.neighbors(igraph.OUT):
     vs.append(c)
-    AddChildren(vs, c, depth-1, ntype)
+    AddChildren(vs, c, depth-1)
 
 #############################################################################
-def TopNodes(g, depth):
-  vs = []
+def ChildCount(r, depth=1):
+  if depth<=0: return 0
+  count=0;
+  for c in r.neighbors(igraph.OUT):
+    count+=(1+ChildCount(c, depth-1))
+  return count
+
+#############################################################################
+def AllChildCount(r):
+  count=0;
+  for c in r.neighbors(igraph.OUT):
+    count+=(1+AllChildCount(c))
+  return count
+
+#############################################################################
+def TopNodes(g, depth=1):
+  """Return top node[s] of DAG to given depth from root[s]."""
+  vs=[];
   rs = RootNodes(g)
   vs.extend(rs)
   for r in rs:
-    PrintHierarchy(r, depth, 0)
-    AddChildren(vs, r, depth, igraph.OUT)
+    Hierarchy(r, depth, 0)
+    AddChildren(vs, r, depth)
+  logging.info(f"Returned {len(rs)} root node[s] and hierarchy to depth {depth}")
   return vs
 
 #############################################################################
-def PrintHierarchy(n, depth, i):
+def Hierarchy(n, depth, i):
   if i>depth: return
-  logging.info("{}{}: {}".format('\t'*i, n['id'], n['name']))
+  indent = "".join([f" {ii}> " for ii in range(i+1)])
+  logging.info(f"{indent}{n['id']:>12}: {n['name']} (children:{AllChildCount(n)})")
   for c in n.neighbors(igraph.OUT):
-    PrintHierarchy(c, depth, i+1)
+    Hierarchy(c, depth, i+1)
 
 #############################################################################
 def DegreeDistribution(g):
