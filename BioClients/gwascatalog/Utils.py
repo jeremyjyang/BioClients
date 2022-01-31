@@ -165,7 +165,11 @@ gc = genomicContext
     if tq is not None: tq.update()
     url_this = url+'/'+id_this
     #response = requests.get(url_this)
-    response = session.get(url_this)
+    try:
+      response = session.get(url_this)
+    except Exception as e:
+      logging.error(f"Failed for SNP:{id_this}; URL:{url_this}; {str(e)}")
+      continue
     if response.status_code!=200:
       logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
       continue
