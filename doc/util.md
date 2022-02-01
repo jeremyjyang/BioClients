@@ -6,6 +6,50 @@ Miscellaneous utilities for web service clients.
 
 Processing CSV/TSV files.
 
+```
+$ python3 -m BioClients.util.pandas.App -h
+usage: BioClients.util.pandas.Utils [-h] --i IFILE [--o OFILE] [--coltags COLTAGS]
+                                    [--cols COLS] [--search_qrys SEARCH_QRYS]
+                                    [--search_rels SEARCH_RELS]
+                                    [--search_typs SEARCH_TYPS]
+                                    [--compression {gzip,zip,bz2}] [--csv] [--tsv]
+                                    [--disallow_bad_lines] [--nrows NROWS]
+                                    [--skiprows SKIPROWS] [--sample_frac SAMPLE_FRAC]
+                                    [--sample_n SAMPLE_N] [-v]
+                                    {csv2tsv,shape,summary,showcols,list_columns,to_html,selectcols,selectcols_deduplicate,uvalcounts,colvalcounts,sortbycols,deduplicate,colstats,searchrows,pickle,sample,set_header,remove_header}
+
+Pandas utilities for simple datafile transformations.
+
+positional arguments:
+  {csv2tsv,shape,summary,showcols,list_columns,to_html,selectcols,selectcols_deduplicate,uvalcounts,colvalcounts,sortbycols,deduplicate,colstats,searchrows,pickle,sample,set_header,remove_header}
+                        OPERATION
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --i IFILE             input (CSV|TSV)
+  --o OFILE             output (CSV|TSV)
+  --coltags COLTAGS     cols specified by tag (comma-separated)
+  --cols COLS           cols specified by idx (1+) (comma-separated)
+  --search_qrys SEARCH_QRYS
+                        qrys (comma-separated, NA|NaN handled specially)
+  --search_rels SEARCH_RELS
+                        relationships (=|>|<) (comma-separated)
+  --search_typs SEARCH_TYPS
+                        types (str|int|float) (comma-separated)
+  --compression {gzip,zip,bz2}
+  --csv                 delimiter is comma
+  --tsv                 delimiter is tab
+  --disallow_bad_lines  default=allow+skip+warn
+  --nrows NROWS
+  --skiprows SKIPROWS
+  --sample_frac SAMPLE_FRAC
+                        sampling probability (0-1)
+  --sample_n SAMPLE_N   sampling N
+  -v, --verbose
+
+Python: 3.8.10; pandas: 1.1.3
+```
+
 ##  `rest`
 
 Convenience functions for REST APIs.
