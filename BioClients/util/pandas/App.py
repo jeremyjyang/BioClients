@@ -33,6 +33,7 @@ if __name__=='__main__':
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--sample_frac", type=float, default=.01, help="sampling probability (0-1)")
   parser.add_argument("--sample_n", type=int, help="sampling N")
+  parser.add_argument("--html_prettify", action="store_true", help="requires Pandas v1.4.0+")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
@@ -89,11 +90,7 @@ error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op in ('showcols', 'li
     df.to_csv(fout, '\t', index=False)
 
   elif args.op=='to_html':
-    df.to_html(fout, index=False, header=True,
-	formatters=None, float_format=None, sparsify=None,
-	bold_rows=True, border=None, justify=None,
-	classes=None, render_links=True,
-	show_dimensions=False)
+    util_pandas.ToHtml(df, args.html_prettify, fout)
 
   elif args.op == 'selectcols':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
