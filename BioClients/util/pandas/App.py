@@ -28,11 +28,12 @@ if __name__=='__main__':
   parser.add_argument("--compression", choices=compressions)
   parser.add_argument("--csv", action="store_true", help="delimiter is comma")
   parser.add_argument("--tsv", action="store_true", help="delimiter is tab")
-  parser.add_argument("--disallow_bad_lines", action="store_true", help="default=allow+skip+warn")
+  parser.add_argument("--on_bad_lines", choices=["error", "warn", "skip"], default="warn")
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--sample_frac", type=float, default=.01, help="sampling probability (0-1)")
   parser.add_argument("--sample_n", type=int, help="sampling N")
+  parser.add_argument("--html_title", help="table title")
   parser.add_argument("--html_prettify", action="store_true", help="requires Pandas v1.4.0+")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
@@ -70,7 +71,7 @@ if __name__=='__main__':
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
   df = pd.read_csv(args.ifile, sep=delim, compression=compression,
-error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
+on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
@@ -90,7 +91,7 @@ error_bad_lines=args.disallow_bad_lines, nrows=(1 if args.op in ('showcols', 'li
     df.to_csv(fout, '\t', index=False)
 
   elif args.op=='to_html':
-    util_pandas.ToHtml(df, args.html_prettify, fout)
+    util_pandas.ToHtml(df, args.html_title, args.html_prettify, fout)
 
   elif args.op == 'selectcols':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")

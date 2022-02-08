@@ -52,15 +52,16 @@ def SetHeader(df, coltags, delim, fout):
     df.to_csv(fout, delim, index=False, header=coltags)
 
 #############################################################################
-def ToHtml(df, prettify, fout):
-  if prettify: # Requires Pandas version 1.4.0+.
-    def PrettifyHtml(styler):
-      styler.set_caption("TEST")
-      styler.background_gradient(axis=None, vmin=1, vmax=5, cmap="YlGnBu")
-      return styler
-    fout.write(df.style.pipe(PrettifyHtml).to_html())
+def ToHtml(df, title, prettify, fout):
+  precision=3;
+  if prettify:
+    from pandas.io.formats.style import Styler #Pandas v1.4.0+.
+    styler = Styler(df, precision=precision)
+    styler.set_caption(title if title is not None else (f"{df.shape[0]}rows,{df.shape[1]}cols"))
+    styler.set_properties(**{'background-color': 'white', 'color':'navy', 'border':'1px solid black'})
+    fout.write(styler.to_html())
   else:
-    df.to_html(fout, index=False, header=True,
+    df.round(precision).to_html(fout, index=True, header=True,
 	formatters=None, float_format=None, sparsify=None,
 	bold_rows=True, border=None, justify=None,
 	classes=None, render_links=True,
