@@ -60,7 +60,7 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
 	"rootnodes",
 	"topnodes",
   	"graph2cyjs",
-	"shortest_path",
+	"shortest_paths",
 	"show_ancestry",
 	"connectednodes",
 	"disconnectednodes",
@@ -79,6 +79,9 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
   parser.add_argument("--select_gt", action="store_true", help="numerical greater-than select")
   parser.add_argument("--select_negate", action="store_true", help="negate select criteria")
   parser.add_argument("--display", action="store_true", help="display graph interactively")
+  parser.add_argument("--display_width", type=int, default=700)
+  parser.add_argument("--display_height", type=int, default=500)
+  parser.add_argument("--display_layout", default="rt")
   parser.add_argument("--depth", type=int, default=1, help="depth for --topnodes")
   parser.add_argument("--nidA", help="nodeA ID")
   parser.add_argument("--nidB", help="nodeB ID")
@@ -92,16 +95,13 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   fin = open(args.ifile)
-
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
   sys.setrecursionlimit(args.recursionlimit)
 
   ###
-  #INPUT:
-  ###
+  #Load graph:
   g = util_igraph.Load_GraphML(args.ifile)
-
   vs=[]; #vertices for subgraph selection
 
   if args.op=='summary':
@@ -118,6 +118,7 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
     else:
       parser.error('Select query or value required.')
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
   elif args.op=='edge_select':
     parser.error(f"Operation not implemented yet: {args.op}")
@@ -125,40 +126,44 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
   elif args.op=='connectednodes':
     vs = util_igraph.ConnectedNodes(g)
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
   elif args.op=='disconnectednodes':
     vs = util_igraph.DisconnectedNodes(g)
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
   elif args.op=='rootnodes':
     vs = util_igraph.RootNodes(g)
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
   elif args.op=='topnodes':
     vs = util_igraph.TopNodes(g, args.depth)
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
-  elif args.op=='shortest_path':
+  elif args.op=='shortest_paths':
     if not (args.nidA and  args.nidB): parser.error('--shortest_path requires nidA and nidB.')
-    vs = util_igraph.ShortestPath(g, args.nidA, args.nidB)
+    vs = util_igraph.ShortestPaths(g, args.nidA, args.nidB)
     g = util_igraph.InducedSubgraph(g, vs, implementation="auto")
+    util_igraph.Save_GraphML(g, fout)
 
   elif args.op=='show_ancestry':
     if not nidA: parser.error('--show_ancestry requires nidA.')
-    vA = g.vs.find(id =  args.nidA)
+    vA = g.vs.find(id=args.nidA)
     vidxA = vA.index
     util_igraph.ShowAncestry(g, vidxA, 0)
 
   elif args.op=='graph2cyjs':
     fout.write(util_igraph.Graph2CyJsElements(g))
 
-  elif args.op == 'computeIC':
+  elif args.op == 'ic_computeIC':
     if not g.is_dag(): parser.error(f"Graph not DAG; required for operation: {args.op}")
     util_igraph.ComputeInfoContent(g)
-    if args.ofile:
-      util_igraph.Save_GraphML(g, fout)
+    util_igraph.Save_GraphML(g, fout)
 
-  elif args.op == 'findMICA':
+  elif args.op == 'ic_findMICA':
     if not g.is_dag(): parser.error(f"Graph not DAG; required for operation: {args.op}")
     if not (args.nidA and args.nidB):
       parser.error('findMICA requires --nidA and --nidB.')
@@ -171,6 +176,13 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
     v = g.vs[vidx_mica]
     logging.info(f"MICA: [{vidx_mica}] {v['doid']} ({v['name']}); IC = {v['ic']:.3f}")
 
+  elif args.op == 'ic_simMatrix':
+    vidxA = g.vs.find(id=args.nidA).index if args.nidA else None
+    util_igraph.SimMatrix(g, vidxA, args.skip, args.nmax, fout)
+
+  elif args.op == 'ic_simMatrixNodelist':
+    util_igraph.SimMatrixNodelist(g, fout)
+
   elif args.op == 'test':
     #if not (args.nidA and args.nidB):
     #  parser.error('test requires --nidA and --nidB.')
@@ -180,26 +192,12 @@ simMatrixNodelist outputs vertex indices with node IDs.  simMatrix with --nidA t
     cProfile.run('SimMatrix(g, 0, 1, fout)')
     #cProfile.runctx('TestMICA(g,"%s","%s")'%(args.nidA,args.nidB), globals(), locals())
 
-  elif args.op == 'simMatrix':
-    vidxA = g.vs.find(id = args.nidA).index if args.nidA else None
-    util_igraph.SimMatrix(g, vidxA, args.skip, args.nmax, fout)
-
-  elif args.op == 'simMatrixNodelist':
-    util_igraph.SimMatrixNodelist(g, fout)
-
   else:
     parser.error('No operation specified.')
     parser.print_help()
 
-  ###
-  #OUTPUT:
-  ###
-  if args.ofile:
-    util_igraph.Save_GraphML(g, fout)
-    fout.close()
+  fout.close()
 
-  elif args.display:
-    w,h = 700,500
-    layout = 'rt'
-    util_igraph.DisplayGraph(g, layout, w, h)
+  if args.display:
+    util_igraph.DisplayGraph(g, args.display_layout, args.display_width, args.display_height)
 

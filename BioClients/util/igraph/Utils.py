@@ -149,19 +149,19 @@ def DegreeDistribution(g):
   logging.info(f"{dd}")
 
 #############################################################################
-def ShortestPath(g, nidA, nidB):
+def ShortestPaths(g, nidA, nidB):
   """Must use GraphBase (not Graph) method to get path data."""
-
+  vs=set();
   vA = g.vs.find(id = nidA)
   vB = g.vs.find(id = nidB)
   paths = g.get_shortest_paths(vA, [vB], weights=None, mode=igraph.ALL, output="vpath")
-
   for path in paths:
     logging.debug(f"path = {str(path)}")
     n_v=len(path)
     for j in range(n_v):
       vid=path[j]
       v = g.vs[vid]
+      vs.add(v)
       dr=None
       if j+1<n_v:
         vid_next = path[j+1]
@@ -169,8 +169,9 @@ def ShortestPath(g, nidA, nidB):
         dr = 'FROM' if edge.source==vid else 'TO'
         logging.debug(f"edge: {g.vs[edge.source]['doid']} {dr} {g.vs[edge.target]['doid']}")
       logging.debug(f"{j+1}. {v['doid']} ({v['name']}){dr}")
-    vid_pa = PathRoot(g,path)
+    vid_pa = PathRoot(g, path)
     logging.debug(f"path ancestor: {g.vs[vid_pa]['doid']}")
+  return list(vs)
 
 #############################################################################
 def PathRoot(g, path):
@@ -211,7 +212,7 @@ def ShowAncestry(g,vidxA,level):
 ###     The parent of every vertex in the BFS
 #############################################################################
 #def BreadthFirstSearchTest(g):
-#  rs = igraph_utils.RootNodes(g)
+#  rs = RootNodes(g)
 #  if len(rs)>1:
 #    logging.warning(f"multiple root nodes ({len(rs)}) using one only.")
 #  r = rs[0];
@@ -330,7 +331,7 @@ def Layout(g, method):
 
 #############################################################################
 def ComputeInfoContent(g):
-  rs = igraph_utils.RootNodes(g)
+  rs = RootNodes(g)
   if len(rs)>1:
     logging.warning(f"Multiple root nodes ({len(rs)}) using one only.")
   r = rs[0];
@@ -339,8 +340,8 @@ def ComputeInfoContent(g):
   g.vs["ic"] = [0.0 for i in range(len(g.vs))]
   NDescendants(g, ridx, 0)
   for v in g.vs:
-    v["ic"] = -numpy.log10(min(float((v["ndes"]+1)/r["ndes"]), 1.0))
-    v["ic"] = numpy.abs(v["ic"])
+    v["ic"] = -np.log10(min(float((v["ndes"]+1)/r["ndes"]), 1.0))
+    v["ic"] = np.abs(v["ic"])
 
 #############################################################################
 def NDescendants(g, vidx, level):
@@ -363,7 +364,7 @@ def FindMICA(g, vidxA, vidxB, vidxFrom=None):
 Accumulate MICA list.  Recurse."""
   if vidxA==vidxB: return vidxA
   if not vidxFrom:
-    r = igraph_utils.RootNodes(g)[0] #should be only one
+    r = RootNodes(g)[0] #should be only one
     vidxFrom = r.index
   vFrom = g.vs[vidxFrom] #provisional
 
@@ -377,8 +378,8 @@ Accumulate MICA list.  Recurse."""
     #logging.debug('returning coparent: %d'%(vidxCop))
     return vidxCop
   try:
-    vidxAAncestors = igraph_utils.GetAncestors(g, vidxA)
-    vidxBAncestors = igraph_utils.GetAncestors(g, vidxB)
+    vidxAAncestors = GetAncestors(g, vidxA)
+    vidxBAncestors = GetAncestors(g, vidxB)
   except Exception as e:
     logging.error(f"(Aack!): '{str(e)}'")
     raise
