@@ -50,6 +50,14 @@ optional arguments:
 Python: 3.8.10; pandas: 1.1.3
 ```
 
+##  `db`
+
+Convenience functions for database connections.
+
+### Dependencies
+
+* Python packages: `SQLAlchemy`
+
 ##  `rest`
 
 Convenience functions for REST APIs.

@@ -6,6 +6,7 @@ import os,sys,argparse,re,time,json,logging
 
 from ...idg import tcrd
 from ...util import yaml as util_yaml
+from ...util import db as util_db
 
 #############################################################################
 if __name__=='__main__':
@@ -65,17 +66,23 @@ if __name__=='__main__':
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
+#  try:
+#    import mysql.connector as mysql
+#    dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+#  except Exception as e:
+#    logging.error(f'{e}')
+#    try:
+#      import MySQLdb as mysql
+#      dbcon = mysql.connect(host=params['DBHOST'], port=int(params['DBPORT']), user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+#    except Exception as e2:
+#      logging.error(f'{e2}')
+#      sys.exit(1)
+
   try:
-    import mysql.connector as mysql
-    dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
+    dbcon = util_db.MySqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
   except Exception as e:
     logging.error(f'{e}')
-    try:
-      import MySQLdb as mysql
-      dbcon = mysql.connect(host=params['DBHOST'], port=int(params['DBPORT']), user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
-    except Exception as e2:
-      logging.error(f'{e2}')
-      sys.exit(1)
+    sys.exit(1)
 
   if args.op=='listColumns':
     tcrd.Utils.ListColumns(dbcon, fout)

@@ -6,6 +6,7 @@ import os,sys,argparse,re,time,logging
 
 from ...cfde import cfchemdb
 from ...util import yaml as util_yaml
+from ...util import db as util_db
 
 #############################################################################
 if __name__=='__main__':
@@ -64,10 +65,11 @@ if __name__=='__main__':
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    dbcon = cfchemdb.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
+    #dbcon = cfchemdb.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
+    dbcon = util_db.PostgreSqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
   except Exception as e:
-    logging.error("Connect failed.")
-    parser.error(f"{e}")
+    logging.error(f"Connect failed: {e}")
+    sys.exit(1)
 
   if args.op=='list_tables':
     cfchemdb.ListTables(dbcon, args.dbschema, fout)
