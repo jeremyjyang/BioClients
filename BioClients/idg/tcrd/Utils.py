@@ -205,8 +205,13 @@ ORDER BY
   return df
 
 #############################################################################
+# E.g., TID 228 has 2 ensemblGeneIds.
 def GetTargetPage(dbcon, tid, fout=None):
   df = GetTargets(dbcon, [tid], "TID", None)
+  if df['ensemblGeneId'].nunique()>1:
+    df.sort_values("ensemblGeneId", inplace=True)
+    logging.warning(f"TID:{tid}; multiple ({df.shape[0]}) ensemblGeneIds: {','.join(df['ensemblGeneId'].tolist())} (keeping 1st only)")
+    df = df.iloc[[0]]
   target = df.to_dict(orient='records')
   fout.write(json.dumps(target, indent=2))
 
@@ -229,15 +234,18 @@ def GetTargets(dbcon, ids, idtype, fout=None):
 	'protein.chr']
   sql = f"""\
 SELECT
-	{(','.join(map(lambda s: (s+" "+s.replace('.', '_')), cols)))}
+	{(','.join(map(lambda s: (s+" "+s.replace('.', '_')), cols)))},
+	x.value ensemblGeneId
 FROM
 	target
 LEFT OUTER JOIN
 	t2tc ON target.id = t2tc.target_id
 LEFT OUTER JOIN
 	protein ON protein.id = t2tc.protein_id
+LEFT OUTER JOIN
+	(SELECT * FROM xref WHERE xref.xtype = 'Ensembl' AND xref.value REGEXP '^ENSG'
+	) x ON x.protein_id = protein.id
 """
-
   n_id=0; n_hit=0; df=pd.DataFrame();
   for id_this in ids:
     n_id+=1
