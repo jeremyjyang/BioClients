@@ -136,7 +136,7 @@ outputs vertex indices with node IDs. simMatrix with --nidA to compute one row.
 ```
 
 ```
- python3 -m BioClients.util.igraph.InfoContent -h
+$ python3 -m BioClients.util.igraph.InfoContent -h
 usage: InfoContent.py [-h] --i IFILE [--o OFILE] [--nidA NIDA] [--nidB NIDB]
                       [--nmax NMAX] [--skip SKIP] [-v]
                       {computeIC,findMICA,simMatrix,simMatrixNodelist,test}
@@ -169,6 +169,7 @@ The Open Biological and Biomedical Ontology (OBO) Foundry
 * <https://obofoundry.org/>
 
 ```
+$ python3 -m BioClients.util.obo.App -h
 usage: App.py [-h] --i IFILE [--o OFILE] [-v]
 
 OBO to TSV converter
@@ -177,5 +178,36 @@ optional arguments:
   -h, --help     show this help message and exit
   --i IFILE      input OBO file
   --o OFILE      output (TSV)
+  -v, --verbose
+```
+
+##  `rdf`
+
+RDF utilities using rdflib.
+
+* <https://github.com/RDFLib/rdflib>
+* <https://rdflib.readthedocs.io/>
+
+```
+$ python3 -m BioClients.util.rdf.App -h
+RDFLib Version: 5.0.0
+usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}]
+              [--ofmt {text/turtle,application/rdf+xml,text/n3}] [--o OFILE] [-v]
+              {validate,describe,convert}
+
+RDF utility
+
+positional arguments:
+  {validate,describe,convert}
+                        OPERATION
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --i IFILE             input RDF file
+  --ifmt {text/turtle,application/rdf+xml,text/n3}
+                        input RDF format
+  --ofmt {text/turtle,application/rdf+xml,text/n3}
+                        output RDF format
+  --o OFILE             output RDF file
   -v, --verbose
 ```
