@@ -183,31 +183,31 @@ optional arguments:
 
 ##  `rdf`
 
-RDF utilities using rdflib.
+RDF and OWL utilities using rdflib and owlready2.
 
 * <https://github.com/RDFLib/rdflib>
 * <https://rdflib.readthedocs.io/>
+* <https://owlready2.readthedocs.io/>
 
 ```
 $ python3 -m BioClients.util.rdf.App -h
-RDFLib Version: 5.0.0
 usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}]
               [--ofmt {text/turtle,application/rdf+xml,text/n3}] [--o OFILE] [-v]
-              {validate,describe,convert}
+              {describe_rdf,validate_rdf,convert_rdf,describe_owl,validate_owl}
 
 RDF utility
 
 positional arguments:
-  {validate,describe,convert}
+  {describe_rdf,validate_rdf,convert_rdf,describe_owl,validate_owl}
                         OPERATION
 
 optional arguments:
   -h, --help            show this help message and exit
-  --i IFILE             input RDF file
+  --i IFILE             input file (RDF or OWL)
   --ifmt {text/turtle,application/rdf+xml,text/n3}
                         input RDF format
   --ofmt {text/turtle,application/rdf+xml,text/n3}
                         output RDF format
-  --o OFILE             output RDF file
+  --o OFILE             output file
   -v, --verbose
 ```
