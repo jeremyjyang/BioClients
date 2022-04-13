@@ -51,16 +51,15 @@ def GetDataset(ids, base_url=BASE_URL, fout=None):
 def GetCompound(ids, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None; tq=None;
   for id_this in ids:
-    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cpds")
+    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="compounds")
     url = f"{base_url}/Compounds/{id_this}"
     response = requests.get(url)
-    rval = response.json()
-    logging.debug(json.dumps(rval, indent=2))
-    cpd = rval
+    compound = response.json()
+    logging.debug(json.dumps(compound, indent=2))
     if not tags:
-      tags = list(cpd.keys())
+      tags = list(compound.keys())
       for tag in tags[:]:
-        if type(cpd[tag]) in (list, dict):
+        if type(compound[tag]) in (list, dict):
           tags.remove(tag)
           logging.info(f"Ignoring tag \"{tag}\"")
     df_this = pd.DataFrame({tag:[compound[tag]] for tag in tags})
