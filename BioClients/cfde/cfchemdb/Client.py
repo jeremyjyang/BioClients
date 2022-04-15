@@ -17,6 +17,7 @@ if __name__=='__main__':
 	"list_tables_rowCounts",
 	"version",
 	"get_structure",
+	"get_structure_by_smiles",
 	"list_structures",
 	"list_structures2smiles",
 	"meta_listdbs"
@@ -24,7 +25,6 @@ if __name__=='__main__':
   parser.add_argument("op", choices=ops, help="OPERATION (select one)")
   parser.add_argument("--i", dest="ifile", help="input ID file")
   parser.add_argument("--ids", help="input IDs (comma-separated)")
-  parser.add_argument("--xref_type", help="xref ID type")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--dbhost")
   parser.add_argument("--dbport")
@@ -59,13 +59,12 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('Input IDs: %d'%(len(ids)))
+    logging.info(f"Input IDs: {len(ids)}")
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
   try:
-    #dbcon = cfchemdb.Connect(params['DBHOST'], params['DBPORT'], params['DBNAME'], params['DBUSR'], params['DBPW'])
     dbcon = util_db.PostgreSqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
   except Exception as e:
     logging.error(f"Connect failed: {e}")
@@ -91,6 +90,9 @@ if __name__=='__main__':
 
   elif args.op=='get_structure':
     cfchemdb.GetStructure(dbcon, ids, fout)
+
+  elif args.op=='get_structure_by_smiles':
+    cfchemdb.GetStructureBySmiles(dbcon, ids, fout)
 
   elif args.op=='meta_listdbs':
     cfchemdb.MetaListdbs(dbcon, fout)

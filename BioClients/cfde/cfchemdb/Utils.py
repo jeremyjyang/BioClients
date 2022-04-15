@@ -95,14 +95,37 @@ def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
 
 #############################################################################
 def GetStructure(dbcon, ids, fout=None):
-  df=None;
+  df=None; n_out=0;
   sql = ("""SELECT id,name,cansmi FROM mols WHERE id = '{}'""")
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = pd.read_sql(sql.format(id_this), dbcon)
-    df = df_this if df is None else pd.concat([df, df_this])
+    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df = df_this if df is None else pd.concat([df, df_this])
+    n_out+=1
   if fout: df.to_csv(fout, "\t", index=False)
-  logging.info(f"n_out: {df.shape[0]}")
+  logging.info(f"n_out: {n_out}/{len(ids)}")
+  return df
+
+#############################################################################
+def GetStructureBySmiles(dbcon, smis, fout=None):
+  """Casting smiles to MOL canonicalizes molecular graph for isomorphism eval."""
+  df=None; n_out=0; n_not_found=0;
+  sql = ("""SELECT id,name,cansmi FROM mols WHERE mols.molecule = '{}'::MOL""")
+  for smi_this in smis:
+    smi_this = re.sub(r'\s.*$', '', smi_this)
+    logging.debug(sql.format(smi_this))
+    try:
+      df_this = pd.read_sql(sql.format(smi_this), dbcon)
+    except Exception as e:
+      logging.error(f"{e}")
+      continue
+    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df = df_this if df is None else pd.concat([df, df_this])
+    if df_this.shape[0]==0:
+      n_not_found+=1
+    n_out+=df_this.shape[0]
+  logging.info(f"n_found: {len(smis)-n_not_found}/{len(smis)}; n_not_found: {n_not_found}/{len(smis)}; n_out: {n_out}")
   return df
 
 #############################################################################
