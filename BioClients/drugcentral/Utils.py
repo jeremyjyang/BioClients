@@ -226,6 +226,34 @@ WHERE
   return df
 
 #############################################################################
+def GetStructureIndications(dbcon, ids, fout=None):
+  df=None;
+  sql = ("""\
+SELECT omop.struct_id,
+	omop.concept_id omop_concept_id,
+	omop.concept_name omop_concept_name,
+	omop.umls_cui,
+	omop.cui_semantic_type umls_semantic_type,
+	omop.snomed_conceptid,
+	omop.snomed_full_name
+FROM
+	omop_relationship omop
+JOIN
+	structures s ON omop.struct_id = s.id
+WHERE
+	omop.struct_id = '{}'
+AND
+	omop.relationship_name = 'indication'
+""")
+  for id_this in ids:
+    logging.debug(sql.format(id_this))
+    df_this = pd.read_sql(sql.format(id_this), dbcon)
+    df = df_this if df is None else pd.concat([df, df_this])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
+
+#############################################################################
 def ListIndicationTargets(dbcon, fout=None):
   sql="""\
 SELECT DISTINCT
@@ -419,6 +447,11 @@ def GetDrugPage(dbcon, struct_id, fout):
   if not df_targets.empty:
     drug["targets"] = df_targets[["target_id","target_name","gene","action_type","act_source","act_type","act_comment","relation","moa","moa_source","moa_source_url","ref_pmid","ref_doi","ref_title","ref_year"]].to_dict(orient='records')
 
+  #Add indications
+  df_indications = GetStructureIndications(dbcon, [struct_id], None)
+  if not df_indications.empty:
+    drug["indications"] = df_indications[["omop_concept_id","omop_concept_name","umls_cui","umls_semantic_type","snomed_conceptid","snomed_full_name"]].to_dict(orient='records')
+ 
   fout.write(json.dumps(drug, indent=2))
 
 #############################################################################
