@@ -212,7 +212,7 @@ def GetTargetPage(dbcon, tid, fout=None):
     df.sort_values("ensemblGeneId", inplace=True)
     logging.warning(f"TID:{tid}; multiple ({df.shape[0]}) ensemblGeneIds: {','.join(df['ensemblGeneId'].tolist())} (keeping 1st only)")
     df = df.iloc[[0]]
-  target = df.to_dict(orient='records')
+  target = df.to_dict(orient='records')[0]
   fout.write(json.dumps(target, indent=2))
 
 #############################################################################
