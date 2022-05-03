@@ -38,7 +38,7 @@ if __name__=='__main__':
 
   fout = open(args.ofile, 'w') if args.ofile else sys.stdout
 
-  ids=[]
+  ids=[];
   if args.ifile:
     fin = open(args.ifile)
     while True:
