@@ -113,7 +113,6 @@ def GetCID2SID(cids, base_url=BASE_URL, fout=None):
 #############################################################################
 def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
   n_out=0; tq=None; df=None;
-  #fout.write("CID\tSMILES\tName\n")
   for i_smi in tqdm.auto.trange(len(smis)):
     smi = smis[i_smi]
     name = re.sub(r'^[\S]+\s', '', smi) if re.search(r'^[\S]+\s', smi) else ""
@@ -121,9 +120,7 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
     rval = requests.get(base_url+f"/compound/smiles/{urllib.parse.quote(smi, '')}/cids/JSON").json()
     if not rval: continue
     cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
-    #for cid in cids:
-    #  fout.write(f"{cid}\t{smi}\t{name}\n")
-    #  n_out+=1
+    if len(cids)==0: continue
     df_this = pd.DataFrame({"CID":cids, "SMILES":smi, "Name":name})
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
