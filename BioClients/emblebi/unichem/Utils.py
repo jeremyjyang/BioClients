@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+EMBL-EBI Unichem
+https://chembl.gitbook.io/unichem/webservices
 """
 import sys,os,re,time,json,logging,requests,tqdm
 import urllib,urllib.parse
@@ -15,6 +17,9 @@ def GetFromSourceId(ids, src_id_in, src_id_out=None, base_url=API_BASE_URL, fout
   n_out=0; tags=None; df=None;
   for id_this in ids:
     response = requests.get(f"{base_url}/src_compound_id/{id_this}/{src_id_in}/{src_id_out if src_id_out else ''}")
+    if response.status_code!=200:
+      logging.debug(f"Status code: {response.status_code}")
+      continue
     logging.debug(response.text)
     things = response.json()
     for thing in things:
