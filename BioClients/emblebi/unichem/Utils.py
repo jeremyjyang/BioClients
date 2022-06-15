@@ -19,7 +19,7 @@ def GetFromSourceId(ids, src_id_in, src_id_out=None, base_url=API_BASE_URL, fout
   n_out=0; df=None;
   compound_tags=None; source_tags=None;
   query = {"sourceID":src_id_in, "type":"sourceID"}
-  for id_this in ids:
+  for id_this in tqdm.tqdm(ids):
     query["compound"] = id_this
     response = requests.post(f"{base_url}/compounds", data=json.dumps(query), headers=HEADERS)
     if response.status_code!=200:
@@ -82,7 +82,7 @@ def GetFromInchi(ids, inchi_rep, search_components=False, src_id_in=None, src_id
   compound_tags=None; source_tags=None;
   query = {"searchComponents":search_components, "type":inchi_rep}
   if src_id_in is not None: query["sourceID"] = src_id_in
-  for id_this in ids:
+  for id_this in tqdm.tqdm(ids):
     query["compound"] = id_this
     response = requests.post(f"{base_url}/connectivity", data=json.dumps(query), headers=HEADERS)
     if response.status_code!=200:
