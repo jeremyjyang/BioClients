@@ -4,122 +4,98 @@ Utility functions for BioGRID REST API.
 See: http://wiki.thebiogrid.org/doku.php/biogridrest
 """
 ###
-import sys,os,re,json,time,logging,yaml
+import sys,os,re,json,time,logging,requests,tqdm
+import pandas as pd
 #
-from ..util import rest
+API_HOST="webservice.thebiogrid.org"
+API_BASE_PATH=""
+API_BASE_URL=f"https://{API_HOST}{API_BASE_PATH}"
 #
 ##############################################################################
-def ReadParamFile(fparam):
-  params={};
-  with open(fparam, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
-  return params
+def ListOrganisms(params, base_url=API_BASE_URL, fout=None):
+  url = f"{base_url}/organisms/?accesskey={params['API_KEY']}&format=json"
+  response = requests.get(url)
+  organisms = response.json()
+  logging.debug(json.dumps(organisms, indent=2))
+  df = pd.DataFrame.from_dict(organisms, orient="index")
+  df.reset_index(drop=False, inplace=True)
+  df.columns = ["organism_id", "organism"]
+  if fout is not None: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
 
 ##############################################################################
-def ListOrganisms(base_url, params, fout):
-  n_all=0; n_out=0; n_err=0;
-  url=base_url+'/organisms/?accesskey=%s'%params['API_KEY']
-  url+=('&format=tab2')
-  rval=rest.GetURL(url, parse_json=False)
-  txt = rval
-  lines = txt.splitlines()
-  fout.write('organism_id, organism"\n')
-  for line in lines:
-    oid,org = re.split('\t', line)
-    fout.write('%s\t"%s"\n'%(oid, org))
-    n_out+=1
-  logging.info('n_out: %d'%(n_out))
+def ListIdTypes(params, base_url=API_BASE_URL, fout=None):
+  url = f"{base_url}/identifiers/?accesskey={params['API_KEY']}&format=json"
+  response = requests.get(url)
+  idtypes = response.json()
+  logging.debug(json.dumps(idtypes, indent=2))
+  df = pd.DataFrame.from_dict(idtypes, orient="index")
+  df.reset_index(drop=False, inplace=True)
+  if fout is not None: df.to_csv(fout, "\t", index=False, header=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
 
 ##############################################################################
-def ListIdTypes(base_url, params, fout):
-  n_all=0; n_out=0; n_err=0;
-  url=base_url+'/identifiers/?accesskey=%s'%params['API_KEY']
-  url+=('&format=tab2')
-  rval=rest.GetURL(url, parse_json=False)
-  txt = rval
-  lines = txt.splitlines()
-  for line in lines:
-    fout.write('%s\n'%(line))
-    n_all+=1
-    n_out+=1
-  logging.info('n_out: %d'%(n_out))
+def GetInteractions(params, ids, base_url=API_BASE_URL, fout=None):
+  n_out=0; tags=None; df=None;
+  for id_this in ids:
+    url = f"{base_url}/interactions/{id_this}?accesskey={params['API_KEY']}&format=json"
+    response = requests.get(url)
+    result = response.json()
+    logging.debug(json.dumps(result, indent=2, sort_keys=False)+'\n')
+    intr = result[id_this]
+    if not tags:
+      tags = list(intr.keys())
+      for tag in tags[:]:
+        if type(intr[tag]) in (list, dict):
+          logging.info(f"Ignoring field: {tag}")
+          tags.remove(tag)
+    df_this = pd.DataFrame({tag:[intr[tag]] for tag in tags})
+    if fout is None: df = pd.concat([df, df_this])
+    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    n_out += df_this.shape[0]
+  logging.info(f"n_out: {n_out}")
+  return df
 
 ##############################################################################
-def GetInteractions(base_url, params, ids, fout):
-  n_all=0; n_out=0; n_err=0;
-  t0=time.time()
-  tags=[];
-
-  for iid in ids:
-    url=base_url+'/interactions/%s?'%iid
-    url+=('&accesskey=%s&format=json'%params['API_KEY'])
-    rval=rest.GetURL(url, parse_json=True)
-    logging.debug(json.dumps(rval, indent=2, sort_keys=False)+'\n')
-
-    if type(rval) is not dict:
-      n_err+=1
-      continue
-    if not iid in rval :
-      n_err+=1
-      continue
-    intr = rval[iid]
-    n_all+=1
-
-    if n_all==1 or not tags:
-      tags=intr.keys()
-      fout.write('\t'.join(tags)+'\n')
-
-    vals=[intr[tag] if tag in intr else '' for tag in tags]
-    fout.write(('\t'.join(vals))+'\n')
-    n_out+=1
-
-  logging.info('n_all: %d; n_out: %d; n_err: %d'%(n_all, n_out, n_err))
-
-##############################################################################
-def SearchInteractions(base_url, params, ids, search_params, fout):
-  n_all=0; n_out=0; n_err=0;
-  t0=time.time()
-  tags=[];
-
-  url=base_url+('/interactions/?accesskey=%s&format=json'%params['API_KEY'])
-  if ids:
-    url+=('&geneList=%s'%('|'.join(ids)))
-  url+=('&interSpeciesExcluded=%s'%str(not search_params['inc_interspecies']).lower())
-  url+=('&selfInteractionsExcluded=%s'%str(not search_params['inc_self']).lower())
-  if search_params['elist']:
-    url+=('&includeEvidence=%s'%str(search_params['inc_evidence']).lower())
-    url+=('&evidenceList=%s'%('|'.join(search_params['elist'])))
-  if search_params['addl_idtypes']:
-    url+=('&additionalIdentifierTypes=%s'%('|'.join(search_params['addl_idtypes'])))
-  if search_params['human']:
-    url+=('&taxId=9606')
-
+def SearchInteractions(params, ids, search_params, base_url=API_BASE_URL, fout=None):
+  n_out=0; tags=None; df=None;
   skip=0; chunk=1000;
-
+  url = f"{base_url}/interactions/{id_this}?accesskey={params['API_KEY']}&format=json"
+  if ids:
+    url+=f"&geneList={'|'.join(ids)}"
+  url+=f"&interSpeciesExcluded={str(not search_params['inc_interspecies']).lower()}"
+  url+=f"&selfInteractionsExcluded={str(not search_params['inc_self']).lower()}"
+  if search_params['elist']:
+    url+=f"&includeEvidence={str(search_params['inc_evidence']).lower()}"
+    url+=f"&evidenceList={'|'.join(search_params['elist'])}"
+  if search_params['addl_idtypes']:
+    url+=f"&additionalIdentifierTypes={'|'.join(search_params['addl_idtypes'])}"
+  if search_params['human']:
+    url+=f"&taxId=9606"
   while True:
-    url_this=url+('&start=%d&max=%d'%(skip, chunk))
-    rval=rest.GetURL(url_this, parse_json=True)
-    logging.debug(json.dumps(rval, indent=2, sort_keys=False)+'\n')
-    if not rval: break
-    if type(rval) is not dict:
-      n_err+=1
-      continue
-    intrs = rval
-    for iid, intr in intrs.items():
-      n_all+=1
-      if n_all==1 or not tags:
-        tags=intr.keys()
-        fout.write('\t'.join(tags)+'\n')
-      vals=[];
-      for tag in tags:
-        vals.append(intr[tag] if tag in intr else '')
-      fout.write(('\t'.join(vals))+'\n')
-      n_out+=1
+    url_this = url+f"&start={skip}&max={chunk}"
+    response = requests.get(url_this)
+    if response.status_code!=200:
+      logging.debug(f"Status code: {response.status_code}")
+      break
+    result = response.json()
+    logging.debug(json.dumps(result, indent=2, sort_keys=False)+'\n')
+    intrs = result
+    for id_this, intr in intrs.items():
+      if not tags:
+        tags = list(intr.keys())
+        for tag in tags[:]:
+          if type(intr[tag]) in (list, dict):
+            logging.info(f"Ignoring field: {tag}")
+            tags.remove(tag)
+      df_this = pd.DataFrame({tag:[intr[tag]] for tag in tags})
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      n_out += df_this.shape[0]
     skip+=chunk
-
-  logging.info('n_all: %d; n_out: %d; n_err: %d'%(n_all, n_out, n_err))
-  logging.info(('Elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0)))))
+  logging.info(f"n_out: {n_out}")
+  return df
 
 ##############################################################################

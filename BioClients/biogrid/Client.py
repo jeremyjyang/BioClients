@@ -26,9 +26,7 @@ EXPERIMENTAL_SYSTEM
 import sys,os,re,json,argparse,time,yaml,logging
 #
 from .. import biogrid
-#
-API_HOST='webservice.thebiogrid.org'
-API_BASE_PATH=''
+from ..util import yaml as util_yaml
 #
 ##############################################################################
 if __name__=='__main__':
@@ -49,14 +47,14 @@ if __name__=='__main__':
   parser.add_argument("--nchunk", type=int)
   parser.add_argument("--nmax", type=int, default=None)
   parser.add_argument("--skip", type=int, default=0)
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=biogrid.API_HOST)
+  parser.add_argument("--api_base_path", default=biogrid.API_BASE_PATH)
   parser.add_argument("--api_key", help="has precedence over param_file")
   parser.add_argument("--param_file", default=os.environ['HOME']+"/.biogrid.yaml")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
-  params = biogrid.ReadParamFile(args.param_file)
+  params = util_yaml.ReadParamFile(args.param_file)
   if args.api_key: params['API_KEY'] = args.api_key
 
   search_params = {
@@ -70,7 +68,7 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  base_url='https://'+args.api_host+args.api_base_path
+  base_url = f"https://{args.api_host}{args.api_base_path}"
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
@@ -87,16 +85,16 @@ if __name__=='__main__':
   t0=time.time()
 
   if args.op =="list_organisms":
-    biogrid.ListOrganisms(base_url, params, fout)
+    biogrid.ListOrganisms(params, base_url, fout)
 
   elif args.op =="list_idtypes":
-    biogrid.ListIdTypes(base_url, params, fout)
+    biogrid.ListIdTypes(params, base_url, fout)
 
   elif args.op =="get_interactions":
-    biogrid.GetInteractions(base_url, params, ids, fout)
+    biogrid.GetInteractions(params, ids, base_url, fout)
 
   elif args.op =="search_interactions":
-    biogrid.SearchInteractions(base_url, params, ids, search_params, fout)
+    biogrid.SearchInteractions(params, ids, search_params, base_url, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))

@@ -26,6 +26,8 @@ Example InChIkey: LCNDUGHNYMJGIW-UHFFFAOYSA-N
   parser.add_argument("--search_components", action="store_true", help="InChI search option")
   parser.add_argument("--api_host", default=emblebi.unichem.API_HOST)
   parser.add_argument("--api_base_path", default=emblebi.unichem.API_BASE_PATH)
+  parser.add_argument("--skip", type=int, help="")
+  parser.add_argument("--nmax", type=int, help="")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -50,10 +52,10 @@ Example InChIkey: LCNDUGHNYMJGIW-UHFFFAOYSA-N
     ids = re.split(r'[,\s]+', args.ids)
 
   if args.op == "getFromSourceId":
-    emblebi.unichem.Utils.GetFromSourceId(ids, args.src_id_in, args.src_id_out, api_base_url, fout)
+    emblebi.unichem.Utils.GetFromSourceId(ids, args.src_id_in, args.src_id_out, args.skip, args.nmax, api_base_url, fout)
 
   elif args.op == "getFromInchi":
-    emblebi.unichem.Utils.GetFromInchi(ids, args.inchi_representation, args.search_components, args.src_id_in, args.src_id_out, api_base_url, fout)
+    emblebi.unichem.Utils.GetFromInchi(ids, args.inchi_representation, args.search_components, args.src_id_in, args.src_id_out, args.skip, args.nmax, api_base_url, fout)
 
   elif args.op == "listSources":
     emblebi.unichem.Utils.ListSources(api_base_url, fout)
