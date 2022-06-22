@@ -473,6 +473,7 @@ def ListPublications(dbcon, fout=None):
   df=None; n_out=0; tq=None;
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
   N_row = pd.read_sql("SELECT COUNT(*) FROM pubmed", dbcon).iloc[0,0]
+  logging.debug(f"rows: {N_row}")
   sql="""
 SELECT
 	id AS pmid,
@@ -492,7 +493,7 @@ FROM
     if tq is not None: tq.update(df_this.shape[0])
     n_out += df_this.shape[0]
   if tq is not None: tq.close()
-  logging.info(f"rows: {n_out}")
+  logging.info(f"n_out: {n_out}")
   return df
 
 #############################################################################
