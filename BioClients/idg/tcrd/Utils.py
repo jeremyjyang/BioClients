@@ -7,7 +7,7 @@ import pandas as pd
 
 TDLS = ['Tdark', 'Tbio', 'Tchem', 'Tclin']
 
-NCHUNK=1000;
+NCHUNK=100;
 
 #############################################################################
 def Info(dbcon, fout=None):
