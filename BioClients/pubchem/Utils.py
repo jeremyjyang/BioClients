@@ -128,8 +128,13 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
       logging.error(f"status_code: {response.status_code}")
       continue
     result = response.json()
+    logging.debug(json.dumps(result, indent=2))
     cids = result['IdentifierList']['CID'] if 'IdentifierList' in result and 'CID' in result['IdentifierList'] else []
-    if len(cids)==0: continue
+    if 0 in cids: cids.remove(0)
+    if None in cids: cids.remove(None)
+    if len(cids)==0:
+      logging.warning(f"CID not found for SMI: \"{smi}\"")
+      continue
     df_this = pd.DataFrame({"CID":cids, "SMILES":smi, "Name":name})
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
