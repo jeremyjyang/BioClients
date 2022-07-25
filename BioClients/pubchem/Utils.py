@@ -42,6 +42,8 @@ API_HOST='pubchem.ncbi.nlm.nih.gov'
 API_BASE_PATH='/rest/pug'
 BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
+NCHUNK=100
+#
 #############################################################################
 def OutcomeCode(txt):
   return OUTCOME_CODES[txt.lower()] if txt.lower() in OUTCOME_CODES else OUTCOME_CODES['unspecified']
@@ -117,10 +119,22 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
     smi = smis[i_smi]
     name = re.sub(r'^[\S]+\s', '', smi) if re.search(r'^[\S]+\s', smi) else ""
     smi = re.sub(r'\s.*$', '', smi)
-    rval = requests.get(base_url+f"/compound/smiles/{urllib.parse.quote(smi, '')}/cids/JSON").json()
-    if not rval: continue
-    cids = rval['IdentifierList']['CID'] if 'IdentifierList' in rval and 'CID' in rval['IdentifierList'] else []
-    if len(cids)==0: continue
+    try:
+      response = requests.get(base_url+f"/compound/smiles/{urllib.parse.quote(smi, '')}/cids/JSON")
+    except Exception as e:
+      logging.error(f"{smi} REST request failed: {e}")
+      continue
+    if response.status_code!=200:
+      logging.error(f"status_code: {response.status_code}")
+      continue
+    result = response.json()
+    logging.debug(json.dumps(result, indent=2))
+    cids = result['IdentifierList']['CID'] if 'IdentifierList' in result and 'CID' in result['IdentifierList'] else []
+    if 0 in cids: cids.remove(0)
+    if None in cids: cids.remove(None)
+    if len(cids)==0:
+      logging.warning(f"CID not found for SMI: \"{smi}\"")
+      continue
     df_this = pd.DataFrame({"CID":cids, "SMILES":smi, "Name":name})
     if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
@@ -159,30 +173,40 @@ def GetSID2AssaySummary(ids, base_url=BASE_URL, fout=None):
 
 #############################################################################
 def GetCID2Inchi(ids, base_url=BASE_URL, fout=None):
-  PROPTAGS = [ "InChIKey", "InChI" ]
-  ids_dict = {'cid':(','.join(map(lambda x:str(x), ids)))}
-  url = (base_url+f"/compound/cid/property/{','.join(PROPTAGS)}/CSV")
-  response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data=ids_dict)
-  df = pandas.read_csv(io.StringIO(response.text), sep=',')
-  if fout is not None: df.to_csv(fout, sep='\t', index=False)
-  logging.info(f"Input IDs: {len(ids)}; Output InChIs: {df.shape[0]}")
+  nskip_this=0; n_out=0; tq=None; df=None;
+  PROPTAGS = ["InChIKey", "InChI"]
+  HEADERS = {'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}
+  url = f"{base_url}/compound/cid/property/{','.join(PROPTAGS)}/CSV"
+  while True:
+    if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cids")
+    if nskip_this>=len(ids): break
+    ids_this = ids[nskip_this:nskip_this+NCHUNK]
+    ids_this_dict = {'cid':(','.join(map(lambda x:str(x), ids_this)))}
+    response = requests.post(url, headers=HEADERS, data=ids_this_dict)
+    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    if fout is None: df = pd.concat([df, df_this], axis=0)
+    else: df_this.to_csv(fout, sep='\t', index=False, header=bool(nskip_this==0))
+    nskip_this+=NCHUNK
+    n_out += df_this.shape[0]
+    tq.update(n=len(ids_this))
+  tq.close()
+  logging.info(f"Input IDs: {len(ids)}; Output InChIs: {n_out}")
   return df
 
 ##############################################################################
 def GetCID2SDF(ids, base_url=BASE_URL, fout=None):
   """Request in chunks.  Works for 50, and not for 200 (seems to be a limit)."""
-  nchunk=50; nskip_this=0; n_out=0; tq=None; txt_out="";
+  nskip_this=0; n_out=0; tq=None; txt_out="";
   while True:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cids")
     if nskip_this>=len(ids): break
-    ids_this = ids[nskip_this:nskip_this+nchunk]
+    ids_this = ids[nskip_this:nskip_this+NCHUNK]
     idstr = (','.join(map(lambda x:str(x), ids_this)))
-    #rval = rest.Utils.PostURL(base_url+'/compound/cid/SDF', data={'cid':idstr})
     response = requests.post(base_url+'/compound/cid/SDF', data={'cid':idstr})
     if fout is not None: fout.write(response.text)
     else: txt_out += response.text
     n_out += len(re.findall(r'^\$\$\$\$$', response.text, re.M))
-    nskip_this+=nchunk
+    nskip_this+=NCHUNK
     tq.update(n=len(ids_this))
   tq.close()
   logging.info(f"SDFs out: {n_out}")
@@ -194,13 +218,13 @@ def GetSID2SDF(ids, skip, nmax, base_url=BASE_URL, fout=None):
   for 200 (seems to be a limit)."""
   n_out=0; tq=None; txt_out="";
   if skip: logging.debug(f"skip: [1-{skip}]")
-  nchunk=50; nskip_this=skip;
+  nskip_this=skip;
   while True:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="cids")
     if nskip_this>=len(ids): break
-    nchunk = min(nchunk, nmax-(nskip_this-skip))
+    nchunk = min(NCHUNK, nmax-(nskip_this-skip))
     n_sid_in+=nchunk
-    ids_this = ids[nskip_this:nskip_this+nchunk]
+    ids_this = ids[nskip_this:nskip_this+NCHUNK]
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     #rval = rest.Utils.PostURL(base_url+'/substance/sid/SDF', data={'sid':idstr})
     response = requests.post(base_url+'/substance/sid/SDF', data={'sid':idstr})
@@ -221,12 +245,12 @@ def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
   """Returns Canonical and Isomeric SMILES."""
   PROPTAGS = ['CanonicalSMILES', 'IsomericSMILES']
   url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
-  nchunk=50; nskip_this=0; df=None; tq=None;
+  nskip_this=0; df=None; tq=None;
   n_in=0; n_out=0; n_err=0; results=[];
   while True:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="mols")
     if nskip_this>=len(ids): break
-    ids_this = ids[nskip_this:nskip_this+nchunk]
+    ids_this = ids[nskip_this:nskip_this+NCHUNK]
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     response = requests.post(url, data={'cid':idstr})
@@ -235,7 +259,7 @@ def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
       df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else:
       df = pd.concat([df, df_this])
-    nskip_this+=nchunk
+    nskip_this+=NCHUNK
     n_out+=len(ids_this)
     tq.update(n=len(ids_this))
   tq.close()
@@ -246,12 +270,12 @@ def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
 def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
   PROPTAGS = ["CanonicalSMILES", "IsomericSMILES", "InChIKey", "InChI", "MolecularFormula", "HeavyAtomCount", "MolecularWeight", "XLogP", "TPSA"]
   url = (base_url+"/compound/cid/property/{}/CSV".format(','.join(PROPTAGS)))
-  nchunk=50; nskip_this=0; df=None; tq=None;
+  nskip_this=0; df=None; tq=None;
   n_in=0; n_out=0; n_err=0; results=[];
   while True:
     if tq is None: tq = tqdm.tqdm(total=len(ids), unit="mols")
     if nskip_this>=len(ids): break
-    ids_this = ids[nskip_this:nskip_this+nchunk]
+    ids_this = ids[nskip_this:nskip_this+NCHUNK]
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data={'cid':idstr})
@@ -265,7 +289,7 @@ def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
       df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else:
       df = pd.concat([df, df_this])
-    nskip_this+=nchunk
+    nskip_this+=NCHUNK
     n_out+=len(ids_this)
     tq.update(n=len(ids_this))
   tq.close()
