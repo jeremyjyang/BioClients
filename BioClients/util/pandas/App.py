@@ -70,8 +70,7 @@ if __name__=='__main__':
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
-  df = pd.read_csv(args.ifile, sep=delim, compression=compression,
-on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
+  df = pd.read_csv(args.ifile, sep=delim, compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
