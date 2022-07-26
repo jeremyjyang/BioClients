@@ -211,3 +211,41 @@ optional arguments:
   --o OFILE             output file
   -v, --verbose
 ```
+
+## neo4j
+
+```
+$ python3 -m BioClients.util.neo4j.App -h
+usage: App.py [-h] [--i IFILE] [--cql CQL] [--o OFILE] [--ofmt {TSV,JSON}]
+              [--dbhost DBHOST] [--dbport DBPORT] [--dbscheme DBSCHEME] [--dbusr DBUSR]
+              [--dbpw DBPW] [--secure] [-v]
+              {dbinfo,query,dbsummary}
+
+Neo4j client (via py2neo API)
+
+positional arguments:
+  {dbinfo,query,dbsummary}
+                        OPERATION
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --i IFILE             input query file (CQL aka Cypher)
+  --cql CQL             input query (CQL aka Cypher)
+  --o OFILE             output (TSV|JSON)
+  --ofmt {TSV,JSON}
+  --dbhost DBHOST
+  --dbport DBPORT
+  --dbscheme DBSCHEME
+  --dbusr DBUSR
+  --dbpw DBPW
+  --secure              secure connection (TLS)
+  -v, --verbose
+
+See https://neo4j.com/docs/cypher-manual, https://py2neo.org.
+```
+
+Example using [KGAP LINCS+IDG](https://github.com/IUIDSL/kgap_lincs-idg):
+
+```
+$ python3 -m BioClients.util.neo4j.App --dbhost localhost --dbport 11006  query --cql "MATCH (d:Drug)--(s:Signature)--(g:Gene) WHERE d.name = 'tamoxifen' RETURN d.name,g.name" 
+```
