@@ -10,11 +10,11 @@ import py2neo
 DBHOST="localhost"
 DBPORT=7687
 DBSCHEME="bolt"
-DBUSER="neo4j"
+DBUSR="neo4j"
 DBPW="neo4j"
 
 #############################################################################
-def DbConnect(dbhost, dbport, dbscheme, dbusr, dbpw, secure=False):
+def DbConnect(dbhost=DBHOST, dbport=DBPORT, dbscheme=DBSCHEME, dbusr=DBUSR, dbpw=DBPW, secure=False):
   db=None;
   try:
     db = py2neo.GraphService(host=dbhost, port=dbport, scheme=dbscheme, secure=secure, user=dbusr, password=dbpw)

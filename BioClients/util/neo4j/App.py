@@ -22,7 +22,7 @@ if __name__=='__main__':
   parser.add_argument("--dbhost", default=util_neo4j.DBHOST)
   parser.add_argument("--dbport", type=int, default=util_neo4j.DBPORT)
   parser.add_argument("--dbscheme", default=util_neo4j.DBSCHEME)
-  parser.add_argument("--dbusr", default=util_neo4j.DBUSER)
+  parser.add_argument("--dbusr", default=util_neo4j.DBUSR)
   parser.add_argument("--dbpw", default=util_neo4j.DBPW)
   parser.add_argument("--secure", action="store_true", help="secure connection (TLS)")
   parser.add_argument("-v", "--verbose", dest="verbose", action="count", default=0)
