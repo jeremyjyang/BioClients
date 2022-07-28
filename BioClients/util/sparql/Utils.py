@@ -10,8 +10,8 @@ import SPARQLWrapper
 #############################################################################
 def SparqlRequest(rq_code, rq_uri, defgraph=None, fmt=None):
   rq_results = None
-  logging.debug('URI: %s'%(rq_uri))
-  logging.debug('%s'%(rq_code))
+  logging.debug(f"URI: {rq_uri}")
+  logging.debug(rq_code)
   try:
     sparql = SPARQLWrapper.SPARQLWrapper(rq_uri)
     sparql.setQuery(rq_code)
@@ -19,11 +19,11 @@ def SparqlRequest(rq_code, rq_uri, defgraph=None, fmt=None):
       sparql.setReturnFormat(fmt)
     rq_results = sparql.query()
   except Exception as e:
-    logging.error('Error: %s'%e)
+    logging.error(f"Error: {e}")
     errtype,val,traceback = sys.exc_info()
-    logging.error('sys.exc_info:\n(%s)\n%s'%(errtype,val))
-    if traceback: logging.info('traceback:\n%s>'%(traceback))
-    logging.error('%s'%str(rq_code))
+    logging.error(f"sys.exc_info:\n({errtype})\n{val}")
+    if traceback: logging.info(f"traceback:\n{traceback}>")
+    logging.error(str(rq_code))
   return rq_results
 
 #############################################################################
@@ -35,15 +35,15 @@ def Results2TSV(results, variables, nmax, fout):
     variables=[]
   if not variables:
     variables = results["head"]["vars"]
-  logging.debug("selected vars: %s"%(','.join(variables)))
+  logging.debug("selected vars: "+(','.join(variables)))
   if "link" in results["head"]:
-    logging.debug("links: %s"%(','.join(results["head"]["link"])))
+    logging.debug("links: "+(','.join(results['head']['link'])))
   if "distinct" in results["results"]:
-    logging.debug("distinct: %s"%results["results"]["distinct"])
+    logging.debug(f"distinct: {results['results']['distinct']}")
   if "ordered" in results["results"]:
-    logging.debug("ordered: %s"%results["results"]["ordered"])
+    logging.debug(f"ordered: {results['results']['ordered']}")
   n_row=0;
-  fout.write('%s\n'%('\t'.join(variables)))
+  fout.write(('\t'.join(variables))+"\n")
   for binding in results["results"]["bindings"]:
     logging.debug(json.dumps(binding, indent=2))
     row_out=[]
@@ -51,21 +51,21 @@ def Results2TSV(results, variables, nmax, fout):
       if var in binding:
         val = binding[var]["value"]
         if binding[var]["type"]=='uri':
-          val=('<%s>'%val)
+          val=(f"<{val}>")
       else:
         val=''
       try:
         val=val.encode('utf8')
       except:
-        logging.info('unicode error [%d]'%n_row)
+        logging.info(f"unicode error [{n_row}]")
         val='error'
       row_out.append(val)
-    fout.write('%s\n'%('\t'.join(row_out)))
+    fout.write(('\t'.join(row_out))+"\n")
     n_row+=1
     if n_row==nmax:
-      logging.info('NOTE: Output truncated at NMAX = %d.'%nmax)
+      logging.info(f"Output truncated at NMAX = {nmax}.")
       break
-  logging.info('N = %d'%n_row)
+  logging.info(f"N = {n_row}")
 
 #############################################################################
 ### Return list of rows, each row list of values.
@@ -78,80 +78,78 @@ def Results2List(results, variables, nmax):
     variables=[]
   if not variables:
     variables = results["head"]["vars"]
-  logging.debug("selected vars: %s"%(','.join(variables)))
+  logging.debug("selected vars: "+(','.join(variables)))
   if "link" in results["head"]:
-    logging.debug("links: %s"%(','.join(results["head"]["link"])))
+    logging.debug("links: "+(','.join(results['head']['link'])))
   if "distinct" in results["results"]:
-    logging.debug("distinct: %s"%results["results"]["distinct"])
+    logging.debug(f"distinct: {results['results']['distinct']}")
   if "ordered" in results["results"]:
-    logging.debug("ordered: %s"%results["results"]["ordered"])
+    logging.debug(f"ordered: {results['results']['ordered']}")
   n_row=0
   results_out=[]
-  for binding in results["results"]["bindings"]:
+  for binding in results['results']['bindings']:
     logging.debug(json.dumps(binding, indent=2))
     row_out=[]
     for var in variables:
       if var in binding:
-        val = binding[var]["value"]
-        if binding[var]["type"]=='uri':
-          val=('<%s>'%val)
+        val = binding[var]['value']
+        if binding[var]['type']=='uri':
+          val=(f"<{val}>")
       else:
         val=''
       try:
         val=val.encode('utf8')
       except:
-        logging.info('unicode error [%d]'%n_row)
+        logging.info(f"unicode error [{n_row}]")
         val='error'
       row_out.append(val)
     results_out.append(row_out)
     n_row+=1
     if n_row==nmax:
-      logging.info('NOTE: Output truncated at NMAX = %d.'%nmax)
+      logging.info(f"NOTE: Output truncated at NMAX = {nmax}.")
       break
-
-  logging.info('N = %d'%n_row)
-
+  logging.info(f"N = {n_row}")
   return results_out
 
 #############################################################################
 #  FILTER (lang(?propval) = "en" || lang(?propval) = "" ) ##removes depiction
 #  FILTER (lang(?propval) IN ( "en" , "" )) ##removes depiction
 def Drugname2Sparql(drugname):
-  rq_code='''\
+  rq_code = f"""\
 SELECT DISTINCT
   ?drug ?propname ?propval
 WHERE
-{
-  {
-    <http://dbpedia.org/resource/%(DRUGNAME)s> rdf:type <http://dbpedia.org/ontology/Drug> .
-    <http://dbpedia.org/resource/%(DRUGNAME)s> ?propname ?propval .
-  }
+{{
+  {{
+    <http://dbpedia.org/resource/{drugname}> rdf:type <http://dbpedia.org/ontology/Drug> .
+    <http://dbpedia.org/resource/{drugname}> ?propname ?propval .
+  }}
   UNION
-  {
+  {{
     ?drug rdf:type <http://dbpedia.org/ontology/Drug> .
     ?drug ?propname ?propval .
-    { ?drug <http://dbpedia.org/property/licenceEu> ?synonym . }
+    {{ ?drug <http://dbpedia.org/property/licenceEu> ?synonym . }}
     UNION
-    { ?drug <http://dbpedia.org/property/licenceUs> ?synonym . }
+    {{ ?drug <http://dbpedia.org/property/licenceUs> ?synonym . }}
     UNION
-    { ?drug <http://dbpedia.org/property/tradename> ?synonym . }
+    {{ ?drug <http://dbpedia.org/property/tradename> ?synonym . }}
     UNION
-    {
+    {{
       ?drug rdfs:label ?synonym .
-      FILTER (regex(?synonym, "^%(DRUGNAME)s$", "i"))
-    }
-    FILTER (regex(?synonym, "^%(DRUGNAME)s$", "i"))
-  }
-}
-'''%{'DRUGNAME':drugname}
+      FILTER (regex(?synonym, "^{drugname}$", "i"))
+    }}
+    FILTER (regex(?synonym, "^{drugname}$", "i"))
+  }}
+}}
+"""
   return rq_code
 
 #############################################################################
 def Test(drugname="metformin", fmt=SPARQLWrapper.JSON):
-  RQ_URI='http://dbpedia.org/sparql'
-  logging.info('drugname: "%s"; endpoint: %s'%(drugname, RQ_URI))
+  RQ_URI = 'http://dbpedia.org/sparql'
+  logging.info(f"drugname: '{drugname}'; endpoint: {RQ_URI}")
   rq_code = Drugname2Sparql(drugname)
-  logging.debug('sparql:\n%s'%(rq_code))
+  logging.debug(f"sparql:\n{rq_code}")
   rq_results = SparqlRequest(rq_code, RQ_URI, defgraph=None, fmt=fmt)
   if fmt in (SPARQLWrapper.JSON, SPARQLWrapper.JSONLD):
     print(json.dumps(rq_results.convert(), indent=2))

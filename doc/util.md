@@ -62,10 +62,6 @@ Convenience functions for database connections.
 
 Convenience functions for REST APIs.
 
-##  `sparql`
-
-For Sparql endpoints.
-
 ### Dependencies
 
 * Python packages: `SPARQLWrapper`
@@ -209,6 +205,38 @@ optional arguments:
   --ofmt {text/turtle,application/rdf+xml,text/n3}
                         output RDF format
   --o OFILE             output file
+  -v, --verbose
+```
+
+##  `sparql`
+
+For Sparql endpoints.
+
+```
+$ python3 -m BioClients.util.sparql.Client -h
+usage: Client.py [-h] [--rqfile RQFILE] [--rq RQ] [--o OFILE] [--endpoint ENDPOINT]
+                 [--defgraph DEFGRAPH] [--nmax NMAX]
+                 [--fmt {JSON,JSONLD,XML,RDF,RDFXML,N3,TTL,CSV,TSV}]
+                 [--test_drugname TEST_DRUGNAME] [-v]
+                 op
+
+Sparql utilities
+
+positional arguments:
+  op                    OPERATION
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --rqfile RQFILE       Sparql input file
+  --rq RQ               Sparql input string
+  --o OFILE             output results (TSV)
+  --endpoint ENDPOINT   Sparql endpoint [http://dbpedia.org/sparql]
+  --defgraph DEFGRAPH   default graph URL
+  --nmax NMAX           max returned triples
+  --fmt {JSON,JSONLD,XML,RDF,RDFXML,N3,TTL,CSV,TSV}
+                        output format
+  --test_drugname TEST_DRUGNAME
+                        test drugname query
   -v, --verbose
 ```
 

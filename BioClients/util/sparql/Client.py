@@ -7,7 +7,7 @@ import os,sys,json,argparse,re,time,logging
 
 import SPARQLWrapper
 
-from .. import sparql
+from .. import sparql as util_sparql
 
 FMTS={
 	'JSON':SPARQLWrapper.Wrapper.JSON,
@@ -23,62 +23,60 @@ FMTS={
 
 #############################################################################
 if __name__=='__main__':
-  epilog="SPARQLWRAPPERVERSION: {}".format(SPARQLWrapper.__version__)
+  epilog = f"SPARQLWRAPPERVERSION: {SPARQLWrapper.__version__}"
   parser = argparse.ArgumentParser(description='Sparql utilities', epilog=epilog)
-  endpoint="http://dbpedia.org/sparql"
+  ENDPOINT="http://dbpedia.org/sparql"
+  OPERATIONS = ["query", "test", ]
+  parser.add_argument("op", help="OPERATION")
   parser.add_argument("--rqfile", help="Sparql input file")
   parser.add_argument("--rq", help="Sparql input string")
   parser.add_argument("--o", dest="ofile", help="output results (TSV)")
-  parser.add_argument("--endpoint", default=endpoint, help="Sparql endpoint")
+  parser.add_argument("--endpoint", default=ENDPOINT, help=f"Sparql endpoint [{ENDPOINT}]")
   parser.add_argument("--defgraph", help="default graph URL")
   parser.add_argument("--nmax", type=int, default=1000, help="max returned triples")
   parser.add_argument("--fmt", choices=FMTS.keys(), default='JSON', help="output format")
-  parser.add_argument("--test", action="store_true", help="test query")
   parser.add_argument("--test_drugname", default="metformin", help="test drugname query")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if args.test:
-    sparql.Utils.Test(args.test_drugname, FMTS[args.fmt])
-    sys.exit()
-
-  if args.rqfile:
-    with open(args.rqfile) as fin:
-      rqcode = fin.read()
-  elif args.rq:
-    rqcode = args.rq
-  else:
-    parser.error("--rq or --rqfile required.")
-
-  fout = open(args.ofile,'w+') if args.ofile else sys.stdout
-
   t0=time.time()
+  fout = open(args.ofile, 'w+') if args.ofile else sys.stdout
 
-  logging.info('fmt: %s'%(args.fmt))
+  logging.debug(f"SPARQLWrapper_Version: {SPARQLWrapper.__version__}")
+  logging.debug(f"fmt: {args.fmt}")
 
-  if args.fmt=='XML':
-    results = sparql.Utils.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
-    results = results.convert()
-    fout.write('%s\n'%results.toxml())
+  if args.op== "test":
+    util_sparql.Test(args.test_drugname, FMTS[args.fmt])
 
-  elif args.fmt=='JSON':
-    results = sparql.Utils.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
-    results = results.convert()
-    fout.write('%s\n'%json.dumps(results, indent=2))
+  elif args.op== "query":
+    if args.rqfile:
+      with open(args.rqfile) as fin:
+        rqcode = fin.read()
+    elif args.rq:
+      rqcode = args.rq
+    else:
+      parser.error("--rq or --rqfile required.")
 
-  elif args.fmt=='N3':
-    results = sparql.Utils.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
-    fout.write('%s\n'%results._convertN3())
-
-  elif args.fmt=='TSV':
-    results = sparql.Utils.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS['JSON'])
-    results = results.convert()
-    sparql.Utils.Results2TSV(results, [], nmax, fout)
+    if args.fmt=='XML':
+      results = util_sparql.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
+      results = results.convert()
+      fout.write(f"{results.toxml()}\n")
+    elif args.fmt=='JSON':
+      results = util_sparql.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
+      results = results.convert()
+      fout.write(json.dumps(results, indent=2)+"\n")
+    elif args.fmt=='N3':
+      results = util_sparql.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS[args.fmt])
+      fout.write(results._convertN3()+"\n")
+    elif args.fmt=='TSV':
+      results = util_sparql.SparqlRequest(rqcode, args.endpoint, args.defgraph, FMTS['JSON'])
+      results = results.convert()
+      util_sparql.Results2TSV(results, [], nmax, fout)
+    else:
+      results = util_sparql.SparqlRequest(rqcode, args.endpoint, args.defgraph, None)
+      fout.write(str(results)+"\n")
 
   else:
-    results = sparql.Utils.SparqlRequest(rqcode, args.endpoint, args.defgraph, None)
-    fout.write('%s\n'%str(results))
-
-
+    parser.error(f"Unsupported operation: {args.op}")
