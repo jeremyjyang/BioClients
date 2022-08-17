@@ -23,10 +23,9 @@ from .. import wikidata
 
 #############################################################################
 if __name__=="__main__":
-  verstr = (f"Python: {sys.version.split()[0]}; wikidataintegrator: {wikidataintegrator.__version__}")
-  parser = argparse.ArgumentParser(description="Wikidata utilities with biomedical focus", epilog=verstr)
-  ops = ["list_drugTargetPairs", "list_geneDiseasePairs", "test"]
-  parser.add_argument("op", choices=ops, help="OPERATION (select one)")
+  parser = argparse.ArgumentParser(description="Wikidata utilities", epilog="")
+  ops = ["query", "list_drugTargetPairs", "list_geneDiseasePairs", ]
+  parser.add_argument("op", choices=ops, help="OPERATION")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--rqfile", help="input Sparql file")
   parser.add_argument("--rq", help="input Sparql string")
@@ -35,12 +34,15 @@ if __name__=="__main__":
 
   logging.basicConfig(format="%(levelname)s:%(message)s", level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  logging.debug(verstr)
+  logging.debug(f"Python: {sys.version.split()[0]}; wikidataintegrator: {wikidataintegrator.__version__}")
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
-  if args.op == "test":
-    wikidata.Test(fout)
+  rq = open(args.rqfile).read() if args.rqfile else args.rq if args.rq else None
+
+  if args.op == "query":
+    if not rq: parser.error(f"--rq or --rqfile required for: {args.op}")
+    wikidata.Query(rq, fout)
 
   elif args.op == "list_drugTargetPairs":
     wikidata.ListDrugTargetPairs(fout)

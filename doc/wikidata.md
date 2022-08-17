@@ -28,5 +28,24 @@ biomedical entities and particularly GeneWiki.
 ### Usage
 
 ```
-python3 -m BioClients.wikidata.Client list_geneDiseasePairs
+$ python3 -m BioClients.wikidata.Client -h
+usage: Client.py [-h] [--o OFILE] [--rqfile RQFILE] [--rq RQ] [-v]
+                 {query,list_drugTargetPairs,list_geneDiseasePairs}
+
+Wikidata utilities
+
+positional arguments:
+  {list_drugTargetPairs,list_geneDiseasePairs,query,test}
+                        OPERATION
+
+options:
+  -h, --help            show this help message and exit
+  --o OFILE             output (TSV)
+  --rqfile RQFILE       input Sparql file
+  --rq RQ               input Sparql string
+  -v, --verbose
+```
+
+```
+$ python3 -m BioClients.wikidata.Client list_geneDiseasePairs
 ```
