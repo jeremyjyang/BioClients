@@ -15,7 +15,6 @@ stitch.embl.de
 """
 ###
 import sys,os,re,json,argparse,time,logging
-import urllib,urllib.request,urllib.parse
 #
 from .. import stringdb
 #
@@ -25,13 +24,11 @@ if __name__=='__main__':
         epilog="""\
 Example protein IDs: DRD1 DRD1_HUMAN DRD2 DRD2_HUMAN ;
 Example species: 9606 (human, via taxon identifiers, http://www.uniprot.org/taxonomy) ;
-Image formats: PNG PNG_highres SVG ;
-MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
+Image formats: PNG|PNG_highres|SVG
 """)
   ops = ['getIds', 'getInteractionPartners',
 	'getNetwork', 'getNetworkImage',
-	'getEnrichment', 'getPPIEnrichment',
-	'getInteractors', 'getActions', 'getAbstracts']
+	'getEnrichment', 'getPPIEnrichment', ]
   parser.add_argument("op",choices=ops,help='operation')
   parser.add_argument("--id", dest="id", help="protein ID (ex:DRD1_HUMAN)")
   parser.add_argument("--ids", dest="ids", help="protein IDs, comma-separated")
@@ -39,6 +36,7 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("--species", help="taxon code, ex: 9606 (human)")
   parser.add_argument("--minscore", type=int, default=500, help="signifcance threshold 0-1000")
+  parser.add_argument("--limit", type=int, default=100, help="Max # interaction partners")
   parser.add_argument("--netflavor", choices=stringdb.NETWORK_FLAVORS, default='evidence', help="network flavor")
   parser.add_argument("--imgfmt", choices=stringdb.IMG_FMTS, default='image', help="image format")
   parser.add_argument("--api_host", default=stringdb.API_HOST)
@@ -70,17 +68,9 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
     if not ids: parser.error('PID[s] required.')
     stringdb.GetIds(ids, base_url, fout)
 
-  elif args.op == 'getInteractors':
-    if not ids: parser.error('ID[s] required.')
-    stringdb.GetInteractors(ids, args.species, args.minscore, base_url, fout)
-
   elif args.op == 'getInteractionPartners':
     if not ids: parser.error('ID[s] required.')
-    stringdb.GetInteractionPartners(ids, args.species, args.minscore, base_url, fout)
-
-  elif args.op == 'getActions':
-    if not ids: parser.error('ID[s] required.')
-    stringdb.GetActions(ids, args.species, args.minscore, base_url, fout)
+    stringdb.GetInteractionPartners(ids, args.species, args.limit, args.minscore, base_url, fout)
 
   elif args.op == 'getEnrichment':
     if not len(ids)>1: parser.error('IDs (2+) required.')
@@ -90,10 +80,6 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
     if not len(ids)>1: parser.error('IDs (2+) required.')
     stringdb.GetPPIEnrichment(ids, args.species, args.minscore, base_url, fout)
 
-  elif args.op == 'getAbstracts':
-    if not ids: parser.error('ID[s] required.')
-    stringdb.GetAbstracts(ids, args.species, base_url, fout)
-
   elif args.op == 'getNetwork':
     if not ids: parser.error('ID required.')
     stringdb.GetNetwork(ids[0], args.species, args.minscore, args.netflavor, base_url, fout)
@@ -101,11 +87,10 @@ MAY BE DEPRECATED: getInteractors, getActions, getAbstracts
   elif args.op == 'getNetworkImage':
     if not ids: parser.error('ID required.')
     if not args.ofile: parser.error('--o OUTFILE required.')
+    # Reopen file binary-mode:
     fout.close()
-    fout = open(args.ofile, "wb+") #binary
-    img = stringdb.GetNetworkImage(ids[0], args.species, args.minscore, args.netflavor, args.imgfmt, base_url)
-    fout.write(img)
-    fout.close()
+    fout = open(args.ofile, "wb+")
+    stringdb.GetNetworkImage(ids[0], args.species, args.minscore, args.netflavor, args.imgfmt, base_url, fout)
 
   else:
     parser.print_help()
