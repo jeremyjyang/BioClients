@@ -18,12 +18,14 @@ if __name__=='__main__':
 	'list_registry', 
 	'list_metaregistry', 
 	'list_contributors', 
+	'get_reference', 
 	]
   parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", help="query IDs (comma-separated)")
   parser.add_argument("--i", dest="ifile", help="input query IDs")
+  parser.add_argument("--ids", help="input query IDs (comma-separated)")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--etype", default="", help="evidence codes (|-separated)")
+  parser.add_argument("--prefix", help="CURIE prefix")
   parser.add_argument("--nchunk", type=int)
   parser.add_argument("--nmax", type=int, default=None)
   parser.add_argument("--skip", type=int, default=0)
@@ -58,9 +60,10 @@ if __name__=='__main__':
     bioregistry.ListEntities("contexts", base_url, fout)
   elif args.op =="list_metaregistry":
     bioregistry.ListEntities("metaregistry", base_url, fout)
-
   elif args.op =="list_registry":
     bioregistry.ListEntities("registry", base_url, fout)
+  elif args.op =="get_reference":
+    bioregistry.GetReference(ids, args.prefix, base_url, fout)
 
   else:
     parser.error("Invalid operation: {0}".format(args.op))
