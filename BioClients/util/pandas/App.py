@@ -22,6 +22,7 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (CSV|TSV)")
   parser.add_argument("--coltags", help="cols specified by tag (comma-separated)")
   parser.add_argument("--cols", help="cols specified by idx (1+) (comma-separated)")
+  parser.add_argument("--noheader", action="store_true", help="default: line-one is header")
   parser.add_argument("--search_qrys", help="qrys (comma-separated, NA|NaN handled specially)")
   parser.add_argument("--search_rels", default="=", help="relationships (=|>|<) (comma-separated)")
   parser.add_argument("--search_typs", default="str", help="types (str|int|float) (comma-separated)")
@@ -70,7 +71,7 @@ if __name__=='__main__':
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
-  df = pd.read_csv(args.ifile, sep=delim, compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
+  df = pd.read_csv(args.ifile, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
@@ -87,7 +88,7 @@ if __name__=='__main__':
     fout.write("coltags: {}\n".format(', '.join([f'"{tag}"' for tag in df.columns])))
 
   elif args.op=='csv2tsv':
-    df.to_csv(fout, '\t', index=False)
+    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
 
   elif args.op=='to_html':
     util_pandas.ToHtml(df, args.html_title, args.html_prettify, fout)
@@ -96,14 +97,14 @@ if __name__=='__main__':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df = df[coltags] if coltags else df.iloc[:, cols]
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, '\t', index=False)
+    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
 
   elif args.op == 'selectcols_deduplicate':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df = df[coltags] if coltags else df.iloc[:, cols]
-    df.drop_duplicates(inplace=True)
+    subset = coltags if coltags else df.columns[cols].to_list() if cols else None
+    df.drop_duplicates(subset=subset, inplace=True)
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, '\t', index=False)
+    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
 
   elif args.op == 'uvalcounts':
     for j,tag in enumerate(df.columns):
@@ -134,7 +135,7 @@ if __name__=='__main__':
 
   elif args.op == 'deduplicate':
     df.drop_duplicates(inplace=True)
-    df.to_csv(fout, '\t', index=False)
+    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
 
   elif args.op == 'searchrows':
     if args.search_qrys is None: 

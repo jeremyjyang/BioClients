@@ -44,7 +44,8 @@ $ python3 -m BioClients.pubchem.Client -h
 
 Generally each module includes command-line app `Client.py` which calls 
 functions in a corresponding `Utils.py`, providing all capabilities
-by import of the module.  Functions can write to an output file
+by import of the module. Command-line apps not API clients are generally 
+named `App.py`.  Functions can write to an output file
 or return a Pandas dataframe (if output file unspecified).
 
 ## Data structures and formats, XML, JSON, and TSV
