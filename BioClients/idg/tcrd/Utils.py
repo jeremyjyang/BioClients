@@ -352,6 +352,7 @@ SELECT
 	disease.name diseaseName,
 	disease.did diseaseId,
 	IF((disease.did REGEXP '^C[0-9]+$'), 'UMLS', SUBSTR(disease.did, 1, LOCATE(':', disease.did)-1)) diseaseOntology,
+	disease.mondoid mondoId,
 	disease.description diseaseDescription,
 	disease.dtype associationType,
 	disease_type.description associationDescription,
@@ -365,6 +366,7 @@ GROUP BY
 	disease_type.description,
 	disease.name,
 	disease.did,
+	disease.mondoid,
 	disease.description,
 	disease.source
 """
@@ -373,6 +375,7 @@ GROUP BY
   logging.info(f"rows: {df.shape[0]}")
   logging.info(f"diseaseIDs: {df.diseaseId.nunique()}")
   logging.info(f"diseaseNames: {df.diseaseName.nunique()}")
+  logging.info(f"mondoIDs: {df.mondoId.nunique()}")
   for ontology in sorted(df.diseaseOntology.unique().astype(str).tolist()):
     if df[df.diseaseOntology==ontology].diseaseId.nunique()>0:
       logging.info(f"[{ontology}] diseaseIDs: {df[df.diseaseOntology==ontology].diseaseId.nunique()}")
@@ -396,6 +399,7 @@ SELECT
 	disease.name diseaseName,
 	disease.did diseaseId,
 	IF((disease.did REGEXP '^C[0-9]+$'), 'UMLS', SUBSTR(disease.did, 1, LOCATE(':', disease.did)-1)) diseaseOntology,
+	disease.mondoid mondoId,
 	disease.description diseaseDescription,
 	disease.dtype associationType,
 	disease_type.description associationDescription,
@@ -423,7 +427,7 @@ WHERE
 #############################################################################
 def GetDiseaseAssociationsPage(dbcon, did, fout=None):
   df = GetDiseaseAssociations(dbcon, [did], None)
-  disease = df[["diseaseName", "diseaseId", "diseaseOntology", "diseaseDescription"]].drop_duplicates().to_dict(orient='records')[0]
+  disease = df[["diseaseName", "diseaseId", "diseaseOntology", "mondoId", "diseaseDescription"]].drop_duplicates().to_dict(orient='records')[0]
   associations = df[["associationType", "associationDescription", "associationSource", "tcrdProteinId", "uniprotId", "tcrdGeneSymbol"]].to_dict(orient='records')
   disease["associations"] = associations
   fout.write(json.dumps(disease, indent=2))
