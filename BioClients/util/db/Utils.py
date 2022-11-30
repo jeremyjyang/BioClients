@@ -7,33 +7,38 @@ import sqlalchemy
 
 ##############################################################################
 def PostgreSqlConnect(dbhost, dbport, dbname, dbusr, dbpw):
-  import psycopg2
-  engine = sqlalchemy.create_engine(f"postgresql+psycopg2://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
+  try:
+    import psycopg2
+    engine = sqlalchemy.create_engine(f"postgresql+psycopg2://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
+  except Exception as e:
+    logging.info(f"{e}")
+    logging.error("Failed to connect.")
+    return None
   return engine.connect()
 
 ##############################################################################
 def MySqlConnect(dbhost, dbport, dbname, dbusr, dbpw):
   try:
-    # pip install MySQL-python
-    # import mysql-python #default
-    engine = sqlalchemy.create_engine(f"mysql://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
-  except:
+    # https://pypi.org/project/mysql-connector-python/
+    # pip install mysql-connector-python
+    import mysql.connector
+    engine = sqlalchemy.create_engine(f"mysql+mysqlconnector://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
+  except Exception as e:
+    logging.info(f"{e}")
     try:
-      # pip install mysql-connector-python
-      # import mysql-connector-python
-      engine = sqlalchemy.create_engine(f"mysql+mysqlconnector://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
-    except:
+      # https://pypi.org/project/PyMySQL/
+      # pip install PyMySQL
+      import pymysql
+      engine = sqlalchemy.create_engine(f"mysql+pymysql://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
+    except Exception as e:
+      logging.info(f"{e}")
       try:
-        # pip install PyMySQL
-        # import pymysql
-        engine = sqlalchemy.create_engine(f"mysql+pymysql://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
-      except:
-        try:
-          # pip install MySQLdb
-          # import MySQLdb
-          engine = sqlalchemy.create_engine(f"mysql+mysqldb://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
-        except:
-          logging.error("Failed to connect.")
-          return None
-
+        # https://mysqlclient.readthedocs.io/
+        # pip install mysqlclient
+        import MySQLdb
+        engine = sqlalchemy.create_engine(f"mysql+mysqldb://{dbusr}:{urllib.parse.quote_plus(dbpw)}@{dbhost}:{dbport}/{dbname}")
+      except Exception as e:
+        logging.info(f"{e}")
+        logging.error("Failed to connect.")
+        return None
   return engine.connect()

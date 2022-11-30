@@ -46,11 +46,11 @@ if __name__=='__main__':
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
   params = util_yaml.ReadParamFile(args.param_file) if os.path.isfile(args.param_file) else {}
-  if args.dbhost: params['DBHOST'] = args.dbhost 
-  if args.dbport: params['DBPORT'] = args.dbport 
-  if args.dbusr: params['DBUSR'] = args.dbusr 
-  if args.dbpw: params['DBPW'] = args.dbpw
-  if args.dbname: params['DBNAME'] = args.dbname 
+  if args.dbhost is not None: params['DBHOST'] = args.dbhost 
+  if args.dbport is not None: params['DBPORT'] = args.dbport 
+  if args.dbusr is not None: params['DBUSR'] = args.dbusr 
+  if args.dbpw is not None: params['DBPW'] = args.dbpw
+  if args.dbname is not None: params['DBNAME'] = args.dbname 
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
@@ -61,27 +61,14 @@ if __name__=='__main__':
       line = fin.readline()
       if not line: break
       ids.append(line.rstrip())
-    logging.info('Input IDs: %d'%(len(ids)))
+    logging.info(f"Input IDs: {len(ids)}")
     fin.close()
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
-#  try:
-#    import mysql.connector as mysql
-#    dbcon = mysql.connect(host=params['DBHOST'], port=params['DBPORT'], user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
-#  except Exception as e:
-#    logging.error(f'{e}')
-#    try:
-#      import MySQLdb as mysql
-#      dbcon = mysql.connect(host=params['DBHOST'], port=int(params['DBPORT']), user=params['DBUSR'], passwd=params['DBPW'], db=params['DBNAME'])
-#    except Exception as e2:
-#      logging.error(f'{e2}')
-#      sys.exit(1)
-
-  try:
-    dbcon = util_db.MySqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
-  except Exception as e:
-    logging.error(f'{e}')
+  dbcon = util_db.MySqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
+  if dbcon is None:
+    logging.error(f"""Failed: MySqlConnect(dbhost="{params['DBHOST']}", dbport={params['DBPORT']}, dbusr="{params['DBUSR']}", dbpw="{params['DBPW']}", dbname="{params['DBNAME']}")""")
     sys.exit(1)
 
   if args.op=='listColumns':
