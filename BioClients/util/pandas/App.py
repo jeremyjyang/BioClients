@@ -12,7 +12,7 @@ from .. import pandas as util_pandas
 if __name__=='__main__':
   verstr = (f'Python: {sys.version.split()[0]}; pandas: {pd.__version__}')
   parser = argparse.ArgumentParser(prog="BioClients.util.pandas.Utils", description='Pandas utilities for simple datafile transformations.', epilog=verstr)
-  ops = ['csv2tsv', 'shape', 'summary', 'showcols', 'list_columns', 'to_html',
+  ops = ['csv2tsv', 'tsv2csv', 'shape', 'summary', 'showcols', 'list_columns', 'to_html',
 	'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
 	'pickle', 'sample', 'set_header', 'remove_header']
@@ -56,7 +56,7 @@ if __name__=='__main__':
   else: compression=None
 
   if args.csv or args.op=='csv2tsv': delim=','
-  elif args.tsv: delim='\t'
+  elif args.tsv or args.op=='tsv2csv': delim='\t'
   elif re.search('\.csv', args.ifile, re.I): delim=','
   elif re.search('\.tsv', args.ifile, re.I) or re.search('\.tab', args.ifile, re.I): delim='\t'
   else: delim='\t'
@@ -89,6 +89,9 @@ if __name__=='__main__':
 
   elif args.op=='csv2tsv':
     df.to_csv(fout, '\t', index=False, header=(not args.noheader))
+
+  elif args.op=='tsv2csv':
+    df.to_csv(fout, ',', index=False, header=(not args.noheader))
 
   elif args.op=='to_html':
     util_pandas.ToHtml(df, args.html_title, args.html_prettify, fout)
