@@ -45,7 +45,7 @@ def ListVocabularies(base_url=API_BASE_URL, fout=None):
 
 ##############################################################################
 def ListSubstances(base_url=API_BASE_URL, fout=None):
-  n_out=0; tags=None; df=None;
+  n_out=0; tags=None; df=None; tq=None;
   size=NCHUNK; skip=0;
   while True:
     url_this = f"{base_url}/substances?skip={skip}&top={size}"
@@ -53,6 +53,7 @@ def ListSubstances(base_url=API_BASE_URL, fout=None):
     logging.debug(response.text)
     if response.status_code!=200: break
     results = response.json()
+    if not tq: tq = tqdm.tqdm(total=results['total'])
     things = results['content']
     if not things: break
     for thing in things:
@@ -66,8 +67,10 @@ def ListSubstances(base_url=API_BASE_URL, fout=None):
       if fout is None: df = pd.concat([df, df_this])
       else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
+    tq.update(n=results['count'])
     if results['count']<NCHUNK: break
     skip+=NCHUNK
+  if tq is not None: tq.close()
   logging.info(f"n_out: {n_out}")
   return df
 

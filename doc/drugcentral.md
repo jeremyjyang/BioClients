@@ -6,15 +6,17 @@
 approved drugs, active pharmaceutical ingredients and clinical products,
 with indications, side effects, molecular mechanism of action targets,
 and much more.  Developed, curated, and maintained by Tudor Oprea, Oleg Ursu,
-Jayme Holmes and coworkers as a key resource for the NIH Illuminating the
+Jayme Holmes, Sorin Avram, and coworkers as a key resource for the NIH Illuminating the
 Druggable Genome (IDG) project.
 
 DrugCentral employs a backend PostgreSql db, freely available at
-<https://drugcentral.org/download>. The BioClients API provides
+<https://drugcentral.org/download>, and containerized via
+[DockerHub](https://hub.docker.com/repository/docker/unmtransinfo/drugcentral_db).
+The BioClients API provides
 programmatic access to an available db instance, which may be deployed
 locally, or may be available publicly with configuration details
-at <https://drugcentral.org> (this service in beta at time of writing, 
-available at: dbhost=unmtid-dbs.net, dbport=5433, dbname=drugcentral,
+at <https://drugcentral.org> (at time of writing:
+dbhost=unmtid-dbs.net, dbport=5433, dbname=drugcentral,
 dbuser=drugman, dbpw=dosage).
 
 Operations include:
@@ -27,13 +29,13 @@ Operations include:
 * __list_indications__ - List all indications.
 * __list_xref_types__ - List all xref types.
 * __list_ddis__ - List all drug-drug interactions.
-* __get_structure__ - Get structure by struct_id.
+* __get_structure__ - Get structure by struct\_id.
 * __get_structure_by_synonym__ - Get structure by synonym.
 * __get_structure_by_xref__ - Get structure by xref ID.
 * __get_structure_xrefs__ - Get all xref IDs for structures.
 * __get_structure_products__ - Get all products for structures.
 * __get_structure_atcs__ - Get all ATC classes for structures.
-* __get_product__ - Get product by product_id.
+* __get_product__ - Get product by product\_id.
 * __get_product_structures__ - Get structures for product.
 * __get_indication_structures__ - Get all structures for indication (OMOP ID).
 * __get_drugpage__ - Get drug (structure), with products, xrefs, etc. as JSON.
