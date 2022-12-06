@@ -15,10 +15,11 @@ if __name__=='__main__':
   ops = ['csv2tsv', 'tsv2csv', 'shape', 'summary', 'showcols', 'list_columns', 'to_html',
 	'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
-	'pickle', 'sample', 'set_header', 'remove_header']
+	'pickle', 'sample', 'set_header', 'remove_header', 'merge']
   compressions=['gzip', 'zip', 'bz2']
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", required=True, help="input (CSV|TSV)")
+  parser.add_argument("--iB", dest="ifileB", help="input (CSV|TSV) for merge operation")
   parser.add_argument("--o", dest="ofile", help="output (CSV|TSV)")
   parser.add_argument("--coltags", help="cols specified by tag (comma-separated)")
   parser.add_argument("--cols", help="cols specified by idx (1+) (comma-separated)")
@@ -29,7 +30,9 @@ if __name__=='__main__':
   parser.add_argument("--compression", choices=compressions)
   parser.add_argument("--csv", action="store_true", help="delimiter is comma")
   parser.add_argument("--tsv", action="store_true", help="delimiter is tab")
+  parser.add_argument("--clean_coltags", action="store_true", help="trim and replace whitespace, punctuation")
   parser.add_argument("--on_bad_lines", choices=["error", "warn", "skip"], default="warn")
+  parser.add_argument("--merge_how", choices=["left", "right", "outer", "inner", "cross"], default="inner")
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--sample_frac", type=float, default=.01, help="sampling probability (0-1)")
@@ -73,6 +76,8 @@ if __name__=='__main__':
 
   df = pd.read_csv(args.ifile, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
+  if args.clean_coltags: util_pandas.CleanColtags(df)
+    
   if args.op == 'showcols':
     for j,tag in enumerate(df.columns):
       fout.write(f'{j+1}. "{tag}"\n')
@@ -163,6 +168,14 @@ if __name__=='__main__':
     fout.close()
     with open(args.ofile, 'wb') as fout:
       pickle.dump(df, fout, pickle.HIGHEST_PROTOCOL)
+
+  elif args.op == 'merge':
+    if not args.ifileB: parser.error(f'{args.op} requires --iB.')
+    if not args.coltags: parser.error(f'{args.op} requires --coltags.')
+    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
+    if args.clean_coltags: util_pandas.CleanColtags(dfB)
+    coltags = [coltag.strip() for coltag in re.split(r',', args.coltags.strip())]
+    util_pandas.Merge(df, dfB, args.merge_how, coltags, delim, fout)
 
   else:
     parser.error(f'Unknown operation: {args.op}')
