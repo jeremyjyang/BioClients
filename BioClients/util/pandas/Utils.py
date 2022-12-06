@@ -8,7 +8,15 @@ import pandas as pd
 
 #############################################################################
 def CleanColtags(df):
-  df.columns = [re.sub(r'[\s,;|\\]+', '_', tag.strip()) for tag in df.columns]
+  oldtags = list(df.columns)[:]
+  newtags=[];
+  for j,tag in enumerate(oldtags):
+    tag = re.sub(r'[\s,;|\\]+', '_', tag.strip())
+    if tag=="": tag = f"Column_{j:02d}"
+    newtags.append(tag)
+  for j in range(len(oldtags)):
+    logging.debug(f"""{j}. "{oldtags[j]}" -> "{newtags[j]}" """)
+  df.columns = newtags
 
 #############################################################################
 def SearchRows(df, cols, coltags, qrys, rels, typs, fout):
@@ -75,5 +83,8 @@ def ToHtml(df, title, prettify, fout):
 def Merge(dfA, dfB, merge_how, coltags, delim, fout):
   df = dfA.merge(dfB, how=merge_how, on=coltags)
   df.to_csv(fout, delim, index=False, header=True)
+  logging.info(f"Rows in A: {dfA.shape[0]}")
+  logging.info(f"Rows in B: {dfB.shape[0]}")
+  logging.info(f"Rows out: {df.shape[0]}")
 
 #############################################################################
