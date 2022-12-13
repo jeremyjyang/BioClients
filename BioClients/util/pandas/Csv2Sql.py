@@ -92,7 +92,7 @@ def Csv2Create(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltype
               logging.error("#colnames)!=#df_this.columns ({len(colnames)}!={len(df_this.columns)})")
               return
           if fixtags:
-            colnames_orig = colnames
+            colnames_orig = colnames[:]
             colnames_clean = CleanNames(colnames, '', keywords)
             colnames = DedupNames(colnames_clean)
             for j in range(len(colnames)):
@@ -123,15 +123,15 @@ def Csv2Insert(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltype
       i_chunk+=1
       logging.debug(f"chunk: {i_chunk}; nrows: {df_this.shape[0]}")
       for i in range(df_this.shape[0]):
-        row = df_this.iloc[i,] #Series
         n_in+=1
         if i_chunk==1:
           if colnames is None:
             if noheader:
               prefix = re.sub(r'\..*$', '', os.path.basename(fin.name))
-              colnames = [f"{prefix}_{j}" for j in range(1, 1+len(row))]
+              colnames = [f"{prefix}_{j}" for j in range(1, 1+df_this.shape[1])]
             else:
               colnames = list(df_this.columns)
+            logging.debug(f"columns: {colnames}")
           else:
             if len(colnames) != len(df_this.columns):
               logging.error("#colnames)!=#df_this.columns ({len(colnames)}!={len(df_this.columns)})")
@@ -143,13 +143,17 @@ def Csv2Insert(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltype
               logging.error(f"#coltypes!=#colnames ({len(coltypes)}!={len(colnames)})")
               return
           if fixtags:
-            colnames_orig = colnames
+            colnames_orig = colnames[:]
             colnames_clean = CleanNames(colnames, '', keywords)
             colnames = DedupNames(colnames_clean)
             for j in range(len(colnames)):
               logging.debug(f"column {j+1}: {colnames_orig[j]:>24}"+(f" -> {colnames[j]}" if colnames[j]!=colnames_orig[j] else ""))
+            logging.debug(f"columns: {colnames}")
         if n_in<=skip: continue
         line = (f"INSERT INTO {tablename} ({','.join(colnames)}) VALUES (") if dbsystem=='mysql' else (f"INSERT INTO {schema}.{tablename} ({','.join(colnames)}) VALUES (")
+        df_this.columns = colnames
+        row = df_this.iloc[i,] #Series
+        logging.debug(f"row.keys(): {row.keys()}")
         for j,colname in enumerate(colnames):
           val = str(row[colname])
           if coltypes[j].upper() in chartypes:
