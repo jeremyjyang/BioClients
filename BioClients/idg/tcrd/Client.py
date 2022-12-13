@@ -66,7 +66,11 @@ if __name__=='__main__':
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
-  dbcon = util_db.MySqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
+  try:
+    dbcon = util_db.MySqlConnect(dbhost=params['DBHOST'], dbport=params['DBPORT'], dbusr=params['DBUSR'], dbpw=params['DBPW'], dbname=params['DBNAME'])
+  except Exception as e:
+    logging.error(f"{e}")
+    dbcon = None
   if dbcon is None:
     logging.error(f"""Failed: MySqlConnect(dbhost="{params['DBHOST']}", dbport={params['DBPORT']}, dbusr="{params['DBUSR']}", dbpw="{params['DBPW']}", dbname="{params['DBNAME']}")""")
     sys.exit(1)
