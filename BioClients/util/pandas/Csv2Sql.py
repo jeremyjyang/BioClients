@@ -74,7 +74,7 @@ def CsvCheck(fin, dbsystem, noheader, maxchar, delim, qc, keywords):
 #############################################################################
 def Csv2Create(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltypes, prefix, noheader, fixtags, delim, qc, keywords):
   n_in=0; n_err=0; i_chunk=0;
-  with pd.read_csv(fin, chunksize=CHUNKSIZE, sep=delim) as reader:
+  with pd.read_csv(fin, chunksize=CHUNKSIZE, sep=delim, dtype=str) as reader:
     for df_this in reader:
       i_chunk+=1
       logging.debug(f"chunk: {i_chunk}; nrows: {df_this.shape[0]}")
@@ -118,7 +118,7 @@ def Csv2Create(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltype
 #############################################################################
 def Csv2Insert(fin, fout, dbsystem, dtypes, schema, tablename, colnames, coltypes, prefix, noheader, nullwords, nullify, fixtags, maxchar, chartypes, numtypes, timetypes, delim, qc, keywords, skip, nmax):
   n_in=0; n_err=0; i_chunk=0; n_out=0;
-  with pd.read_csv(fin, chunksize=CHUNKSIZE, sep=delim) as reader:
+  with pd.read_csv(fin, chunksize=CHUNKSIZE, sep=delim, dtype=str) as reader:
     for df_this in reader:
       i_chunk+=1
       logging.debug(f"chunk: {i_chunk}; nrows: {df_this.shape[0]}")
