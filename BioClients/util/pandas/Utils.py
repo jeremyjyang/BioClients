@@ -80,8 +80,12 @@ def ToHtml(df, title, prettify, fout):
 	show_dimensions=False)
 
 #############################################################################
-def Merge(dfA, dfB, merge_how, coltags, delim, fout):
+def Merge(dfA, dfB, merge_how, merge_type, coltags, delim, fout):
+  for tag in coltags:
+    dfA[tag] = dfA[tag].astype(merge_type)
+    dfB[tag] = dfB[tag].astype(merge_type)
   df = dfA.merge(dfB, how=merge_how, on=coltags)
+  df.drop_duplicates(inplace=True)
   df.to_csv(fout, delim, index=False, header=True)
   logging.info(f"Rows in A: {dfA.shape[0]}")
   logging.info(f"Rows in B: {dfB.shape[0]}")

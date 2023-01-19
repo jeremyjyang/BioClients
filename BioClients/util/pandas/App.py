@@ -33,6 +33,7 @@ if __name__=='__main__':
   parser.add_argument("--clean_coltags", action="store_true", help="trim and replace whitespace, punctuation")
   parser.add_argument("--on_bad_lines", choices=["error", "warn", "skip"], default="warn")
   parser.add_argument("--merge_how", choices=["left", "right", "outer", "inner", "cross"], default="inner")
+  parser.add_argument("--merge_type", choices=[str, int, float], default=str)
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--sample_frac", type=float, default=.01, help="sampling probability (0-1)")
@@ -175,7 +176,7 @@ if __name__=='__main__':
     dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
     if args.clean_coltags: util_pandas.CleanColtags(dfB)
     coltags = [coltag.strip() for coltag in re.split(r',', args.coltags.strip())]
-    util_pandas.Merge(df, dfB, args.merge_how, coltags, delim, fout)
+    util_pandas.Merge(df, dfB, args.merge_how, args.merge_type, coltags, delim, fout)
 
   else:
     parser.error(f'Unknown operation: {args.op}')
