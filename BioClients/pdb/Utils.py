@@ -1,64 +1,42 @@
 #!/usr/bin/env python3
 """
 Utility functions for PDB REST API.
-See: http://www.rcsb.org/pdb/software/rest.do
-API supports CSV output.  So we could use this directly.
+https://www.rcsb.org/docs/programmatic-access/web-services-overview
+https://data.rcsb.org/redoc/
 
-Ligand types:
-    "D-beta-peptide, C-gamma linking",	20,0.010%
-    "D-gamma-peptide, C-delta linking",	39,0.019%
-    "D-peptide NH3 amino terminus",	1,0.000%
-    "D-peptide linking",		1222,0.588%
-    "D-saccharide",			10329,4.967%
-    "D-saccharide 1, 4 and 1, 4 linking",	39,0.019%
-    "DNA OH 3 prime terminus",		20,0.010%
-    "DNA linking",			1847,0.888%
-    "L-DNA linking",			5,0.002%
-    "L-RNA linking",			21,0.010%
-    "L-beta-peptide, C-gamma linking",	44,0.021%
-    "L-gamma-peptide, C-delta linking",	9,0.004%
-    "L-peptide COOH carboxy terminus",	51,0.025%
-    "L-peptide NH3 amino terminus",	24,0.012%
-    "L-peptide linking",		18676,8.981%
-    "L-saccharide",			291,0.140%
-    "L-saccharide 1, 4 and 1, 4 linking",	2,0.001%
-    "RNA OH 3 prime terminus",		8,0.004%
-    "RNA linking",			3538,1.701%
-    "non-polymer",			166510,80.074%
-    "peptide linking",			296,0.142%
-    "peptide-like",			1035,0.498%
-    "saccharide",			3914,1.882%
+Major changes include all JSON output.
 """
 ###
-import sys,os,re,time,logging
-#
-from xml.etree import ElementTree
+import sys,os,re,time,logging,requests
 #
 import rdkit.Chem
 #
-from ..util import rest
-from ..util import xml_utils
+API_HOST='data.rcsb.org'
+API_BASE_PATH='/rest/v1/core'
 #
 #############################################################################
-def GetProteinData(base_url, pid):
-  url = (base_url+'/describePDB?structureId=%s'%pid)
+def GetProteinData(pid, base_url):
+  """E.g. https://data.rcsb.org/rest/v1/core/entry/3ert"""
+  url = f"{base_url}/entry/{pid}"
   logging.debug(url)
-  try:
-    etree = rest.GetURL(url, parse_xml=True)
-  except Exception as e:
-    logging.error('%s'%(e))
+  response = requests.get(url)
+  if response.status_code != 200:
+    logging.error(f"status_code: {response.status_code}")
     return []
-  #proteins = etree.findall('/PDBdescription/PDB')
+  logging.debug(response.content)
+  result = response.json()
+
+  # Fix and update to new JSON and schema.
   proteins = etree.findall('./PDB')
-  logging.debug("Proteins found: %d"%len(proteins))
+  logging.debug(f"Proteins found: {len(proteins)}")
   data = [protein.attrib for protein in proteins]
   return data
 
 #############################################################################
-def GetProteins(base_url, pids, fout):
+def GetProteins(pids, base_url, fout):
   n_out=0; tags=[];
   for pid in pids:
-    data = GetProteinData(base_url, pid)
+    data = GetProteinData(pid, base_url)
     for p in data:
       if n_out==0:
         tags = sorted(p.keys())
@@ -66,19 +44,19 @@ def GetProteins(base_url, pids, fout):
       vals = [(p[tag] if tag in p else '') for tag in tags]
       fout.write('\t'.join(vals)+'\n')
       n_out+=1
-  logging.info('queries: %d ; proteins out: %d'%(len(pids), n_out))
+  logging.info(f"queries: {len(pids)}; proteins out: {n_out}")
 
 #############################################################################
-def GetLigandData(base_url, pid):
-  url = (base_url+'/ligandInfo?structureId=%s'%pid)
+def GetLigandData(pid, base_url):
+  url = (f"{base_url}/ligandInfo?structureId={pid}")
   logging.debug(url)
-  try:
-    etree = rest.GetURL(url, parse_xml=True)
-    #ligands = etree.findall('/structureId/ligandInfo/ligand')
-    ligands = etree.findall('./ligandInfo/ligand')
-  except Exception as e:
-    logging.debug('%s'%(e))
+  response = requests.get(url)
+  if response.status_code != 200:
+    logging.error(f"status_code: {response.status_code}")
     return []
+  etree = ElementTree.fromstring(response.content)
+  #ligands = etree.findall('/structureId/ligandInfo/ligand')
+  ligands = etree.findall('./ligandInfo/ligand')
   data=[];
   for ligand in ligands:
     ligdata = ligand.attrib
@@ -88,7 +66,7 @@ def GetLigandData(base_url, pid):
   return data
 
 #############################################################################
-def GetLigands(base_url, pids, druglike, fout):
+def GetLigands(pids, druglike, base_url, fout):
   n_all=0; n_out=0; n_rejected=0; tags=[];
   for pid in pids:
     data = GetLigandData(base_url, pid)
@@ -103,41 +81,39 @@ def GetLigands(base_url, pids, druglike, fout):
       vals = [(d[tag] if tag in d else '') for tag in tags]
       fout.write('\t'.join([pid]+vals)+'\n')
       n_out+=1
-  logging.info('queries: %d ; ligands: %d ; ligands out: %d ; rejected: %d'%(len(pids), n_all, n_out, n_rejected))
+  logging.info(f"queries: {len(pids)}; ligands: {n_all}; ligands out: {n_out}; rejected: {n_rejected}")
 
 #############################################################################
-def GetLigands_LID2SDF(base_url, lids, fout):
+def GetLigands_LID2SDF(lids, base_url, fout):
   """Note that each LID many SDFs, one for each occurance. Note also
   base_url arg ignored in this function. May be hacky and unsupported API
   functionality."""
-  logging.info('LIDs: %d'%len(lids))
+  logging.info(f"LIDs: {len(lids)}")
   n_lid=0; n_sdf=0; n_lid2sdf=0; n_notfound=0; n_err=0;
   for lid in lids:
     n_lid+=1
-    url = ('https://www.rcsb.org/pdb/download/downloadLigandFiles.do?ligandIdList=%s'%lid)
+    url = (f"https://www.rcsb.org/pdb/download/downloadLigandFiles.do?ligandIdList={lid}")
     logging.debug(url)
-    try:
-      rval = rest.GetURL(url, parse_json=False)
-    except Exception as e:
-      logging.error('%s'%(e))
+    response = requests.get(url)
+    if response.status_code != 200:
+      logging.error(f"status_code: {response.status_code}")
       continue
+    rval = response.content
     if type(rval) is not str:
-      logging.error('ERROR: type(RVAL) NOT STR (%s).'%(url))
-      logging.debug('ERROR: type(RVAL) NOT STR (%s), type=%s:\n%s'%(url,type(rval),str(rval)))
+      logging.error(f"type(RVAL) NOT STR ({url}), type={type(rval)}: {rval}")
     elif re.search(r'^<!DOCTYPE html>.*No files found', rval, re.DOTALL|re.I):
       n_notfound+=1
     elif re.search(r'^<!DOCTYPE html>', rval, re.I):
       n_err+=1
-      logging.error('ERROR: RVAL NOT SDF (%s).'%(url))
-      logging.debug('ERROR: RVAL NOT SDF (%s):\n%s'%(url,rval))
+      logging.error(f"RVAL NOT SDF ({url}): {rval}")
     else:
       fout.write(rval)
       n_sdf_this = len(re.findall(r'\$\$\$\$[\r\n]', rval))
       if n_sdf_this>0: n_lid2sdf+=1
       n_sdf+=n_sdf_this
     if n_lid%1000==0:
-      logging.info('LIDs: %d; LID2SDF: %d; not_found: %d; SDFs out: %d'%(n_lid, n_lid2sdf, n_notfound, n_sdf))
-  logging.info('LIDs: %d; LID2SDF: %d; not_found: %d; SDFs out: %d'%(n_lid, n_lid2sdf, n_notfound, n_sdf)) 
+      logging.info(f"LIDs: {n_lid}; LID2SDF: {n_lid2sdf}; not_found: {n_notfound}; SDFs out: {n_sdf}")
+  logging.info(f"LIDs: {n_lid}; LID2SDF: {n_lid2sdf}; not_found: {n_notfound}; SDFs out: {n_sdf}")
 
 #############################################################################
 def LigandIsDruglike(lig):
@@ -156,145 +132,125 @@ def LigandIsDruglike(lig):
     mol = rdkit.Chem.MolFromSmiles(smi)
     if mol and mol.GetNumAtoms()<8: return False
   except Exception as e:
-    logging.error("smi = \"%s\" (%s)"%(smi, str(e)))
+    logging.error(f"smi = \"{smi}\" ({e})")
     return False
   return True
 
 #############################################################################
-def GetUniprotData(base_url, pid):
+def GetUniprotData(pid, base_url):
   '''API functionality maybe discontinued.'''
-  url = base_url+'/das/pdb_uniprot_mapping/alignment?query=%s'%pid
-  try:
-    etree = rest.GetURL(url, parse_xml=True)
-  except Exception as e:
-    logging.debug('%s'%(e))
-  if not etree:
+  url = f"{base_url}/das/pdb_uniprot_mapping/alignment?query={pid}"
+  response = requests.get(url)
+  if response.status_code != 200:
+    logging.error(f"status_code: {response.status_code}")
     return []
-  #logging.debug('%s'%dom.toprettyxml())
-  data=[];
-  al={}
+  etree = ElementTree.fromstring(response.content)
+  data=[]; al={};
   alignments = etree.findall('/dasalignment/alignment/alignObject')
   for alignment in alignments:
-    if xml_utils.DOM_GetNodeAttr(alignment, 'dbSource')=='UniProt':
+    if util_xml.DOM_GetNodeAttr(alignment, 'dbSource')=='UniProt':
       for i in range(alignment.attributes.length):
         attr = alignment.attributes.item(i)
         al[attr.name]=attr.value
     #for cnode in alignment.childNodes:
     #  if cnode.nodeName =='#text': continue
-    #  al[cnode.nodeName]=xml_utils.DOM_NodeText(cnode)
+    #  al[cnode.nodeName]=util_xml.DOM_NodeText(cnode)
     data.append(al)
   return data
 
 #############################################################################
-def GetUniprots(base_url, pids, fout):
+def GetUniprots(pids, base_url, fout):
   n_out=0; tags=[];
   for pid in pids:
-    data=GetUniprotData(base_url, pid)
+    data=GetUniprotData(pid, base_url)
     for d in data:
       if n_out==0:
         tags=sorted(d.keys())
         fout.write('\t'.join(['queryId']+tags)+'\n')
-        logging.debug('tags = %s'%str(tags))
+        logging.debug(f"tags = {str(tags)}")
       vals=[(d[tag] if tag in d else '') for tag in tags]
       fout.write('\t'.join([pid]+vals)+'\n')
       fout.flush()
       n_out+=1
-  logging.info('queries: %d ; uniprots out: %d'%(len(pids), n_out))
+  logging.info(f"queries: {len(pids)}; uniprots out: {n_out}")
 
 #############################################################################
-#def AllPIDs(base_url):
-#  try:
-#    etree = rest.GetURL(base_url+'/getCurrent', parse_xml=True)
-#  except Exception as e:
-#    logging.error('%s'%(e))
-#    return []
-#  #proteins = etree.findall('/current/PDB')
-#  proteins = etree.findall('./PDB')
-#  pids = [protein.get('structureId') for protein in proteins]
-#  return pids
-#
-#############################################################################
 def AllPIDs(base_url):
-  try:
-    rval = rest.GetURL(base_url+'/getCurrent', parse_json=True)
-  except Exception as e:
-    logging.error('HTTP Error: %s'%(e))
+  response = requests.get(base_url+'/getCurrent')
+  if response.status_code != 200:
+    logging.error(f"status_code: {response.status_code}")
     return []
-  pids = rval['idList']
+  results = response.json()
+  pids = results['idList']
   return pids
 
 #############################################################################
 def ShowCounts(base_url):
   pids = AllPIDs(base_url)
-  logging.info("IDs: %d"%(len(pids)))
+  logging.info(f"IDs: {len(pids)}")
 
 #############################################################################
 def ListProteins(base_url, fout):
   pids = AllPIDs(base_url)
-  logging.info("IDs: %d"%(len(pids)))
-  GetProteins(base_url, pids, fout)
+  logging.info(f"IDs: {len(pids)}")
+  GetProteins(pids, base_url, fout)
 
 #############################################################################
-def ListLigands(base_url, druglike, fout):
+def ListLigands(druglike, base_url, fout):
   pids = AllPIDs(base_url)
-  logging.info("IDs: %d"%(len(pids)))
-  GetLigands(base_url, pids, druglike, fout)
+  logging.info(f"IDs: {len(pids)}")
+  GetLigands(pids, druglike, base_url, fout)
 
 #############################################################################
-def SearchByKeywords(base_url, kwds):
-  query_xml='''\
+def SearchByKeywords(kwds, base_url):
+  query_xml = f'''\
 <?xml version="1.0" encoding="UTF-8"?>
 <orgPdbQuery>
 <queryType>org.pdb.query.simple.AdvancedKeywordQuery</queryType>
-<description>Text Search for: "%(KWDS)s"</description>
-<keywords>%(KWDS)s</keywords>
+<description>Text Search for: "{','.join(kwds)}"</description>
+<keywords>{','.join(kwds)}</keywords>
 </orgPdbQuery>
-'''%{'KWDS':(','.join(kwds))}
-  try:
-    txt = rest.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
-  except Exception as e:
-    logging.error('%s'%(e))
+'''
+  response = requests.post(f"{base_url}/search", data=query_xml)
+  if response.status_code != 200:
+    logging.error(f"status_code: {response.status_code}")
     return []
+  txt = response.content
   pids = [pid.strip() for pid in txt.splitlines()]
   return pids
 
 #############################################################################
-def SearchByUniprot(base_url, uniprots, fout):
+def SearchByUniprot(uniprots, base_url, fout):
   n_out_total=0; n_pids_total=0;
   tags=["structureId", "title", "expMethod", "keywords", "pubmedId", "resolution", "status"]
   fout.write('\t'.join(['uniprot']+tags)+'\n')
 
   for uniprot in uniprots:
-    query_xml='''\
+    query_xml = f'''\
 <?xml version="1.0" encoding="UTF-8"?>
 <orgPdbQuery>
 <queryType>org.pdb.query.simple.UpAccessionIdQuery</queryType>
-<description>Simple query for a list of Uniprot Accession ID: "%(UNIPROT)s"</description>
-<accessionIdList>%(UNIPROT)s</accessionIdList>
+<description>Simple query for a list of Uniprot Accession ID: "{uniprot}"</description>
+<accessionIdList>{uniprot}</accessionIdList>
 </orgPdbQuery>
-'''%{'UNIPROT':uniprot}
-    try:
-      txt=rest.PostURL(base_url+'/search', data=query_xml, parse_xml=False)
-    except Exception as e:
-      logging.error('%s'%(e))
+'''
+    response = requests.post(base_url+'/search', data=query_xml)
+    if response.status_code != 200:
+      logging.error(f"status_code: {response.status_code}")
+    txt = response.content
     pids=[]
     for pid in txt.splitlines():
       if pid: pids.append(pid)
-
     n_out=0;
-    #tags=[];
     for pid in pids:
-      data = GetProteinData(base_url, pid)
+      data = GetProteinData(pid, base_url)
       for p in data:
-        #if n_out==0:
-        #  tags=sorted(p.keys())
-        #  fout.write('\t'.join(['uniprot']+tags)+'\n')
         vals=[(p[tag] if tag in p else '') for tag in tags]
         fout.write('\t'.join([uniprot]+vals)+'\n')
         n_out+=1
-    logging.info('query: %s ; pdbids: %d ; out: %d'%(uniprot, len(pids), n_out))
+    logging.info(f"query: {uniprot}; pdbids: {len(pids)}; out: {n_out}")
     n_out_total+=n_out;
     n_pids_total+=len(pids)
-  logging.info('Total queries: %d ; pdbids: %d ; out: %d'%(len(uniprots), n_pids_total, n_out_total))
+  logging.info(f"Total queries: {len(uniprots)}; pdbids: {n_pids_total}; out: {n_out_total}")
 
 #############################################################################
