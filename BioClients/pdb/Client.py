@@ -12,19 +12,18 @@ from .. import pdb as pdb_utils
 ##############################################################################
 if __name__=='__main__':
   epilog="""
-Example keywords: ACTIN, Example UniProts: P50225'.
-get_uniprots functionality may be discontinued by PDB.
+Example entry IDs: 3ERT, 3TTC
+Example chemical IDs: CFF
 """
   parser = argparse.ArgumentParser(description='PDB REST API client', epilog=epilog)
-  ops = ['show_counts', 'list_proteins', 'list_ligands', 'search',
-    'get_proteins', 'get_ligands', 'get_ligands_LID2SDF',
-    'get_uniprots']
-  parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", dest="ids", help="PDB IDs, comma-separated")
-  parser.add_argument("--i", dest="ifile", help="input file, PDB IDs")
-  parser.add_argument("--druglike", action="store_true", help="druglike ligands only (organic; !polymer; !monoatomic)")
+  ops = ['list_entrys', 
+    'get_entrys', 'get_chemicals', 
+    ]
+  parser.add_argument("op", choices=ops, help='OPERATION')
+  parser.add_argument("--ids", dest="ids", help="PDB entry IDs, comma-separated")
+  parser.add_argument("--i", dest="ifile", help="input file, PDB entry IDs")
+  parser.add_argument("--druglike", action="store_true", help="druglike chemicals only (organic; !polymer; !monoatomic)")
   parser.add_argument("--o", dest="ofile", help="output file (TSV)")
-  parser.add_argument("--qstr", help="search query")
   parser.add_argument("--api_host", default=pdb_utils.API_HOST)
   parser.add_argument("--api_base_path", default=pdb_utils.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -48,35 +47,16 @@ get_uniprots functionality may be discontinued by PDB.
 
   t0=time.time()
 
-  if args.op == "get_proteins":
+  if args.op == "get_entrys":
     if not ids: parser.error('ID[s] required.')
-    pdb_utils.GetProteins(ids, base_url, fout)
+    pdb_utils.GetEntrys(ids, base_url, fout)
 
-  elif args.op == "get_uniprots":
+  elif args.op == "get_chemicals":
     if not ids: parser.error('ID[s] required.')
-    pdb_utils.GetUniprots(ids, base_url, fout)
+    pdb_utils.GetChemicals(ids, args.druglike, base_url, fout)
 
-  elif args.op == "get_ligands":
-    if not ids: parser.error('ID[s] required.')
-    pdb_utils.GetLigands(ids, args.druglike, base_url, fout)
-
-  elif args.op == "get_ligands_LID2SDF":
-    if not ids: parser.error('ID[s] required.')
-    pdb_utils.GetLigands_LID2SDF(ids, base_url, fout)
-
-  elif args.op == "list_proteins":
-    pdb_utils.ListProteins(base_url, fout)
-
-  elif args.op == "list_ligands":
-    pdb_utils.ListLigands(args.druglike, base_url, fout)
-
-  elif args.op == "show_counts":
-    pdb_utils.ShowCounts(base_url)
-
-  elif args.op == "search":
-    ids = pdb_utils.SearchByKeywords(args.qstr, base_url)
-    logging.info(f"protein count: {len(ids)}")
-    pdb_utils.GetProteins(ids, base_url, fout)
+  elif args.op == "list_entrys":
+    pdb_utils.ListEntrys(base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
