@@ -40,6 +40,7 @@ OUTCOME_CODES = {
 #
 API_HOST='pubchem.ncbi.nlm.nih.gov'
 API_BASE_PATH='/rest/pug'
+API_BASE_PATH_VIEW='/rest/pug_view'
 BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
 NCHUNK=100
@@ -826,5 +827,59 @@ def GetCpdAssayData(cid_query, aidset, base_url=BASE_URL, fout=None):
 
   logging.info(f"[CID={cid_query}] records: {n_in}; activities: {n_act}")
   return True
+
+#############################################################################
+def GetCompoundView(ids, base_url=BASE_URL, fout=None):
+  n_out=0; results=[];
+  for i_cid in tqdm.auto.trange(len(ids), desc="CIDs"):
+    id_this = ids[i_cid]
+    response = requests.get(base_url+f"/data/compound/{id_this}/JSON")
+    if response.status_code != 200:
+      logging.info(f"Not found (status_code={response.status_code}): {id_this}")
+      continue
+    result = response.json()
+    if fout is not None:
+      fout.write(json.dumps(result, indent=2))
+    else:
+      results.append(result)
+    n_out+=1
+  logging.info(f"CIDs: {len(ids)}; out: {n_out}")
+  return results
+
+#############################################################################
+def GetSubstanceView(ids, base_url=BASE_URL, fout=None):
+  n_out=0; results=[];
+  for i_sid in tqdm.auto.trange(len(ids), desc="CIDs"):
+    id_this = ids[i_sid]
+    response = requests.get(base_url+f"/data/substance/{id_this}/JSON")
+    if response.status_code != 200:
+      logging.info(f"Not found (status_code={response.status_code}): {id_this}")
+      continue
+    result = response.json()
+    if fout is not None:
+      fout.write(json.dumps(result, indent=2))
+    else:
+      results.append(result)
+    n_out+=1
+  logging.info(f"SIDs: {len(ids)}; out: {n_out}")
+  return results
+
+#############################################################################
+def GetAssayView(ids, base_url=BASE_URL, fout=None):
+  n_out=0; results=[];
+  for i_aid in tqdm.auto.trange(len(ids), desc="CIDs"):
+    id_this = ids[i_aid]
+    response = requests.get(base_url+f"/data/bioassay/{id_this}/JSON")
+    if response.status_code != 200:
+      logging.info(f"Not found (status_code={response.status_code}): {id_this}")
+      continue
+    result = response.json()
+    if fout is not None:
+      fout.write(json.dumps(result, indent=2))
+    else:
+      results.append(result)
+    n_out+=1
+  logging.info(f"AIDs: {len(ids)}; out: {n_out}")
+  return results
 
 #############################################################################

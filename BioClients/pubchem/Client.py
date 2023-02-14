@@ -21,7 +21,8 @@ if __name__=='__main__':
         "get_sid2cid", "get_sid2sdf", "get_sid2assaysummary",
         "get_assayname", "get_assaydescriptions",
 	"get_assaysubstances",
-	"get_assaysubstanceresults",]
+	"get_assaysubstanceresults",
+        "get_compoundview", "get_substanceview", "get_assayview",]
   parser = argparse.ArgumentParser(description="PubChem PUG REST client")
   parser.add_argument("op", choices=OPS, help="OPERATION")
   parser.add_argument("--i", dest="ifile", help="input IDs file (CID|SID|SMILES|name)")
@@ -31,6 +32,7 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (usually TSV)")
   parser.add_argument("--api_host", default=pubchem.API_HOST)
   parser.add_argument("--api_base_path", default=pubchem.API_BASE_PATH)
+  parser.add_argument("--api_base_path_view", default=pubchem.API_BASE_PATH_VIEW)
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=0)
   parser.add_argument("--nmax_per_cid", type=int, default=20)
@@ -103,6 +105,10 @@ if __name__=='__main__':
   elif args.op == 'get_cid2assaysummary':
     pubchem.GetCID2AssaySummary(ids, base_url, fout)
 
+  elif args.op == 'get_compoundview':
+    base_url = f"https://{args.api_host}{args.api_base_path_view}"
+    pubchem.GetCompoundView(ids, base_url, fout)
+
   elif args.op == 'get_sid2cid':
     pubchem.GetSID2CID(ids, base_url, fout)
 
@@ -111,6 +117,9 @@ if __name__=='__main__':
 
   elif args.op == 'get_sid2sdf':
     pubchem.GetSID2SDF(ids, fout, args.skip, args.nmax, base_url)
+
+  elif args.op == 'get_substanceview':
+    pubchem.GetSubstanceView(ids, base_url, fout)
 
   elif args.op == 'get_smi2cid':
     pubchem.GetSmiles2CID(ids, base_url, fout)
@@ -132,6 +141,9 @@ if __name__=='__main__':
 
   elif args.op == 'get_assaysubstances':
     pubchem.Utils.GetAssaySIDs(aids, args.skip, args.nmax, base_url, fout)
+
+  elif args.op == 'get_assayview':
+    pubchem.GetAssayView(aids, base_url, fout)
 
   elif args.op == 'get_assaysubstanceresults':
     if not (aids and ids): parser.error('Input AIDs and SIDs required.')
