@@ -11,7 +11,10 @@ from python_graphql_client import GraphqlClient
 #
 # curl 'https://pharos-api.ncats.io/graphql' -H 'Accept-Encoding: gzip, deflate, br' -H 'Content-Type: application/json' -H 'Accept: application/json' -H 'Connection: keep-alive' -H 'DNT: 1' -H 'Origin: https://pharos-api.ncats.io' --data-binary '{"query":"query targetDetails {\n  target(q: { sym: \"ACE2\" }) {\n    name\n    tdl\n    fam\n    sym\n    description\n    novelty\n  }\n}\n"}' --compressed
 #
-API_ENDPOINT="https://pharos-api.ncats.io/graphql"
+#API_HOST="ncats-ifx.appspot.com"
+API_HOST="pharos-api.ncats.io"
+API_BASE_PATH="/graphql"
+API_BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
 API_HEADERS = { 'Accept-Encoding': 'gzip, deflate, br',
 	'Content-Type': 'application/json', 'Accept': 'application/json',
@@ -30,7 +33,7 @@ IDTYPES_DISEASE = {
 	}
 #
 #############################################################################
-def GetTargets(ids, idtype, ep=API_ENDPOINT, fout=None):
+def GetTargets(ids, idtype, ep=API_BASE_URL, fout=None):
   tags=[]; n_out=0;
   client = GraphqlClient(endpoint=ep, verify=True)
   query = f"""\
@@ -61,7 +64,7 @@ query targetDetails($id: {IDTYPES_TARGET[idtype]['type']}) {{
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}")
 
 #############################################################################
-def GetDiseases(ids, idtype, ep=API_ENDPOINT, fout=None):
+def GetDiseases(ids, idtype, ep=API_BASE_URL, fout=None):
   tags=[]; n_out=0;
   client = GraphqlClient(endpoint=ep, verify=True)
   query = f"""\
@@ -97,7 +100,7 @@ query diseaseDetails($id: String) {{
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}")
 
 #############################################################################
-def Test(ep=API_ENDPOINT, fout=None):
+def Test(ep=API_BASE_URL, fout=None):
   client = GraphqlClient(endpoint=ep, verify=True)
   query = """\
 query diseaseDetails {{

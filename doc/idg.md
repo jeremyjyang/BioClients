@@ -11,25 +11,27 @@ Access the Pharos GraphQL API.
 
 ## Dependencies
 
-  * Python package `python-graphql-client`
+  * Python packages `gql`, `python-graphql-client`
 
 ```
 python3 -m BioClients.idg.pharos.Client -h
-usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE]
-                 [--idtype_target {tcrdid,uniprot,sym}]
-                 [--idtype_disease {cui,doid,name}] [--nmax NMAX]
-                 [--api_endpoint API_ENDPOINT] [-v]
-                 {get_targets,get_diseases,test}
+usage: Client.py [-h] [--i IFILE] [--i_gql IFILE_GQL] [--graphql GRAPHQL] [--ids IDS]
+                 [--o OFILE] [--idtype_target {tcrdid,uniprot,sym}]
+                 [--idtype_disease {cui,doid,name}] [--nmax NMAX] [--api_host API_HOST]
+                 [--api_base_path API_BASE_PATH] [-v]
+                 {get_targets,get_diseases,test,gql_query,gql_demo}
 
 Pharos GraphQL API client
 
 positional arguments:
-  {get_targets,get_diseases,test}
-                        operation
+  {get_targets,get_diseases,test,gql_query,gql_demo}
+                        OPERATION
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --i IFILE             input file, target IDs
+  --i_gql IFILE_GQL     input file, GraphQL
+  --graphql GRAPHQL     input GraphQL
   --ids IDS             IDs, target, comma-separated
   --o OFILE             output (TSV)
   --idtype_target {tcrdid,uniprot,sym}
@@ -37,7 +39,8 @@ optional arguments:
   --idtype_disease {cui,doid,name}
                         disease ID type
   --nmax NMAX           max to return
-  --api_endpoint API_ENDPOINT
+  --api_host API_HOST
+  --api_base_path API_BASE_PATH
   -v, --verbose
 ```
 
