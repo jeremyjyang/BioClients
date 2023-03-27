@@ -39,6 +39,7 @@ Operations include:
 * __get_product_structures__ - Get structures for product.
 * __get_indication_structures__ - Get all structures for indication (OMOP ID).
 * __get_drugpage__ - Get drug (structure), with products, xrefs, etc. as JSON.
+* __get_drugsummary__ - Get drug (structure), with names, xrefs, etc. as TSV.
 * __search_indications__ - Search indications by regular expression.
 * __search_products__ - Search products by regular expression.
 
@@ -52,12 +53,12 @@ $ python3 -m BioClients.drugcentral.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--xref_type XREF_TYPE] [--o OFILE]
                  [--dbhost DBHOST] [--dbport DBPORT] [--dbname DBNAME] [--dbusr DBUSR]
                  [--dbpw DBPW] [--param_file PARAM_FILE] [--dbschema DBSCHEMA] [-v]
-                 {list_tables,list_columns,list_tables_rowCounts,version,get_structure,get_structure_by_synonym,get_structure_by_xref,get_structure_xrefs,get_structure_products,get_structure_orangebook_products,get_structure_atcs,get_structure_synonyms,get_product,get_product_structures,get_indication_structures,get_drugpage,list_products,list_structures,list_structures2smiles,list_structures2molfile,list_active_ingredients,list_indications,list_indication_targets,list_ddis,list_atcs,list_xrefs,list_xref_types,search_indications,search_products,meta_listdbs}
+                 {list_tables,list_columns,list_tables_rowCounts,version,get_structure,get_structure_by_synonym,get_structure_by_xref,get_structure_xrefs,get_structure_products,get_structure_orangebook_products,get_structure_atcs,get_structure_synonyms,get_product,get_product_structures,get_indication_structures,get_drugpage,get_drugsummary,list_products,list_structures,list_structures2smiles,list_structures2molfile,list_active_ingredients,list_indications,list_indication_targets,list_ddis,list_atcs,list_xrefs,list_xref_types,search_indications,search_products,meta_listdbs}
 
 DrugCentral PostgreSql client utility
 
 positional arguments:
-  {list_tables,list_columns,list_tables_rowCounts,version,get_structure,get_structure_by_synonym,get_structure_by_xref,get_structure_xrefs,get_structure_products,get_structure_orangebook_products,get_structure_atcs,get_structure_synonyms,get_product,get_product_structures,get_indication_structures,get_drugpage,list_products,list_structures,list_structures2smiles,list_structures2molfile,list_active_ingredients,list_indications,list_indication_targets,list_ddis,list_atcs,list_xrefs,list_xref_types,search_indications,search_products,meta_listdbs}
+  {list_tables,list_columns,list_tables_rowCounts,version,get_structure,get_structure_by_synonym,get_structure_by_xref,get_structure_xrefs,get_structure_products,get_structure_orangebook_products,get_structure_atcs,get_structure_synonyms,get_product,get_product_structures,get_indication_structures,get_drugpage,get_drugsummary,list_products,list_structures,list_structures2smiles,list_structures2molfile,list_active_ingredients,list_indications,list_indication_targets,list_ddis,list_atcs,list_xrefs,list_xref_types,search_indications,search_products,meta_listdbs}
                         OPERATION (select one)
 
 optional arguments:

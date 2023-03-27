@@ -29,6 +29,7 @@ if __name__=='__main__':
 	"get_product_structures",
 	"get_indication_structures",
 	"get_drugpage",
+	"get_drugsummary",
 	"list_products",
 	"list_structures",
 	"list_structures2smiles",
@@ -195,6 +196,9 @@ if __name__=='__main__':
 
   elif args.op=='get_drugpage':
     drugcentral.GetDrugPage(dbcon, ids[0], fout)
+
+  elif args.op=='get_drugsummary':
+    drugcentral.GetDrugSummary(dbcon, ids, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

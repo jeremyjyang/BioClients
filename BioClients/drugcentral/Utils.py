@@ -418,8 +418,8 @@ def GetStructure(dbcon, ids, fout=None):
   return df
 
 #############################################################################
-def GetDrugPage(dbcon, struct_id, fout):
-  """Structure, with IDs, names, xrefs, and ATCs, plus associated products."""
+def GetDrugPage(dbcon, struct_id, fout=None):
+  """Structure, with IDs, names, xrefs, and ATCs, products; JSON output."""
   df_struct = GetStructure(dbcon, [struct_id], None) # Should return one row.
   if df_struct.empty: return None
   drug = df_struct.to_dict(orient='records')[0]
@@ -452,7 +452,55 @@ def GetDrugPage(dbcon, struct_id, fout):
   if not df_indications.empty:
     drug["indications"] = df_indications[["omop_concept_id","omop_concept_name","umls_cui","umls_semantic_type","snomed_conceptid","snomed_full_name"]].to_dict(orient='records')
  
-  fout.write(json.dumps(drug, indent=2))
+  if fout is not None:
+    fout.write(json.dumps(drug, indent=2))
+  return drug
+
+#############################################################################
+def GetDrugSummary(dbcon, ids, fout):
+  """Structure, with IDs, names, xrefs, and ATCs, products; TSV output."""
+  n_out=0; df=None;
+  for id_this in ids:
+    drug = GetDrugPage(dbcon, id_this)
+    pubchem_cid=None; chembl_id=None; drugbank_id=None;
+    xrefs = drug["xrefs"] if "xrefs" in drug else []
+    for xref in xrefs:
+      if xref["xref_type"] == "PUBCHEM_CID": pubchem_cid = xref["xref"]
+      if xref["xref_type"] == "ChEMBL_ID": chembl_id = xref["xref"]
+      if xref["xref_type"] == "DRUGBANK_ID": drugbank_id = xref["xref"]
+    synonyms_str = ";".join(drug["synonyms"] if "synonyms" in drug else [])
+    atcs = drug["atcs"] if "atcs" in drug else []
+    atc_l3s = set();
+    for j,atc in enumerate(atcs):
+      l3_code = atc["atc_l3_code"] if "atc_l3_code" in atc else ""
+      l3_name = atc["atc_l3_name"] if "atc_l3_name" in atc else ""
+      atc_l3s.add(f"{l3_code}:{l3_name}")
+    atcs_str = ";".join(list(atc_l3s))
+    products = drug["products"] if "products" in drug else []
+    targets = drug["targets"] if "targets" in drug else []
+    indications = drug["indications"] if "indications" in drug else []
+    dcid = drug["id"] if "id" in drug else None
+    df = pd.concat([df, pd.DataFrame({
+	"drugcentral_id":[dcid],
+	"drugcentral_url":[f"https://drugcentral.org/drugcard/{dcid}"],
+	"name":[drug["name"] if "name" in drug else None],
+	"cas_reg_no":[drug["cas_reg_no"] if "cas_reg_no" in drug else None],
+	"smiles":[drug["smiles"] if "smiles" in drug else None],
+	"inchi":[drug["inchi"] if "inchi" in drug else None],
+	"inchikey":[drug["inchikey"] if "inchikey" in drug else None],
+	"formula":[drug["formula"] if "formula" in drug else None],
+	"pubchem_cid":[pubchem_cid],
+	"chembl_id":[chembl_id],
+	"drugbank_id":[drugbank_id],
+	"synonyms":[synonyms_str],
+	"atcs":[atcs_str],
+	"product_count":pd.Series([len(products)]).astype(int),
+	"target_count":pd.Series([len(targets)]).astype(int),
+	"indication_count":pd.Series([len(indications)]).astype(int),
+	})])
+  if fout: df.to_csv(fout, "\t", index=False)
+  logging.info(f"n_out: {df.shape[0]}")
+  return df
 
 #############################################################################
 def GetStructureByXref(dbcon, ids, xref_type=None, fout=None):
