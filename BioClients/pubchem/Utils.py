@@ -23,7 +23,7 @@ Utility functions for the PubChem PUG REST API.
   (name, smiles; inchi by POST only)
 """
 ###
-import sys,os,io,re,csv,json,pandas,math,time,logging,tempfile,tqdm,tqdm.auto
+import sys,os,io,re,csv,json,math,time,logging,tempfile,tqdm,tqdm.auto
 from xml.etree import ElementTree
 import requests
 from requests.adapters import HTTPAdapter
@@ -151,7 +151,7 @@ def GetCID2AssaySummary(ids, base_url=BASE_URL, fout=None):
     id_this = ids[i_cid]
     rval = requests.get(base_url+f"/compound/cid/{id_this}/assaysummary/CSV").text
     if not rval: continue
-    df_this = pandas.read_csv(io.StringIO(rval), sep=',')
+    df_this = pd.read_csv(io.StringIO(rval), sep=',')
     if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += df_this.shape[0]
@@ -165,7 +165,7 @@ def GetSID2AssaySummary(ids, base_url=BASE_URL, fout=None):
     id_this = ids[i_sid]
     rval = requests.get(base_url+f"/substance/sid/{id_this}/assaysummary/CSV").text
     if not rval: continue
-    df_this = pandas.read_csv(io.StringIO(rval), sep=',')
+    df_this = pd.read_csv(io.StringIO(rval), sep=',')
     if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += df_this.shape[0]
@@ -184,7 +184,7 @@ def GetCID2Inchi(ids, base_url=BASE_URL, fout=None):
     ids_this = ids[nskip_this:nskip_this+NCHUNK]
     ids_this_dict = {'cid':(','.join(map(lambda x:str(x), ids_this)))}
     response = requests.post(url, headers=HEADERS, data=ids_this_dict)
-    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    df_this = pd.read_csv(io.StringIO(response.text), sep=',')
     if fout is None: df = pd.concat([df, df_this], axis=0)
     else: df_this.to_csv(fout, sep='\t', index=False, header=bool(nskip_this==0))
     nskip_this+=NCHUNK
@@ -255,7 +255,7 @@ def GetCID2Smiles(ids, base_url=BASE_URL, fout=None):
     n_in+=len(ids_this)
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     response = requests.post(url, data={'cid':idstr})
-    df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+    df_this = pd.read_csv(io.StringIO(response.text), sep=',')
     if fout is not None:
       df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
     else:
@@ -281,7 +281,7 @@ def GetCID2Properties(ids, base_url=BASE_URL, fout=None):
     idstr = (','.join(map(lambda x:str(x), ids_this)))
     response = requests.post(url, headers={'Accept':'text/CSV', 'Content-type':'application/x-www-form-urlencoded'}, data={'cid':idstr})
     try:
-      df_this = pandas.read_csv(io.StringIO(response.text), sep=',')
+      df_this = pd.read_csv(io.StringIO(response.text), sep=',')
     except Exception as e:
       logging.error(f"{e}")
       logging.debug(response.text)
