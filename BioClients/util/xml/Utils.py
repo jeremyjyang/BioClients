@@ -16,6 +16,11 @@ def GetLeafValsByTagName(root, tag):
   return vals
 
 #############################################################################
+def GetFirstLeafValByTagName(root, tag):
+  vals = GetLeafValsByTagName(root, tag)
+  return vals[0] if vals else None
+
+#############################################################################
 def GetAttr(root, tag, attname):
   vals=[]
   for node in root.iter(tag):
@@ -37,22 +42,22 @@ def Describe(fin):
       if elem.tag not in tags:
         tags[elem.tag]=0
       tags[elem.tag]+=1
-    logging.debug('event:{}, elem.tag:{}, elem.text:{}'.format(event, elem.tag, elem.text))
+    logging.debug(f"event:{event}, elem.tag:{elem.tag}, elem.text:{elem.text}")
     for k,v in elem.attrib.items():
-      logging.debug('elem.attrib["{}"]: {}'.format(k, v))
+      logging.debug(f"elem.attrib['{k}']: {v}")
     n_term+=1
-  logging.debug('n_elem: {}; n_term: {}'.format(n_elem, n_term))
+  logging.debug(f"n_elem: {n_elem}; n_term: {n_term}")
   for tag in sorted(tags.keys()):
-    logging.info('{}: {}'.format(tag, tags[tag]))
+    logging.info(f"{tag}: {tags[tag]}")
 
 #############################################################################
 def XML2TSV(xp, ns, fin, fout):
   n_entity=0; tags=[];
   tree = ElementTree.parse(fin)
-  logging.debug('root.tag <{}>'.format(tree.getroot().tag))
+  logging.debug(f"root.tag <{tree.getroot().tag}>")
   itr = tree.iterfind(xp)
   for elem in itr:
-    logging.debug('elem.tag <{}>'.format(elem.tag))
+    logging.debug(f"elem.tag <{elem.tag}>")
     n_entity+=1
     vals={};
     if not tags:
@@ -61,10 +66,10 @@ def XML2TSV(xp, ns, fin, fout):
       fout.write("\t".join(tags)+"\n")
     for subelem in list(elem):
       val = subelem.text.strip() if subelem.text else ""
-      logging.debug('subelem.tag <{}>; text=\"{}\"'.format(subelem.tag, val))
+      logging.debug(f"subelem.tag <{subelem.tag}>; text='{val}'")
       vals[re.sub(r'^{.*}', '', subelem.tag)] = val
     fout.write("\t".join([vals[tag] if tag in vals else "" for tag in tags])+"\n")
-  logging.info('n_entity <{}>: {}'.format(xp, n_entity))
+  logging.info(f"n_entity <{xp}>: {n_entity}")
 
 #############################################################################
 def MatchXPath(xp, ns, fin):
@@ -75,8 +80,8 @@ def MatchXPath(xp, ns, fin):
   for node in itr:
     n_node+=1;
     txt = node.text if node.text else ''
-    fout.write("{}\t{}\n".format(xp, txt))
-  logging.info("matches: {}".format(n_node))
+    fout.write(f"{xp}\t{txt}\n")
+  logging.info(f"matches: {n_node}")
 
 #############################################################################
 if __name__=="__main__":

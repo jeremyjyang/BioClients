@@ -19,14 +19,19 @@ BASE_URL=f"https://{API_HOST}{API_BASE_PATH}"
 
 #############################################################################
 def GetESummary(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  n_out=0; tq=None; tags=None; df=None; i_this=0;
+  n_out=0; n_err=0; tq=None; tags=None; df=None; i_this=0;
   if skip: logging.debug(f"skip: [1-{skip}]")
   for id_this in ids:
     i_this+=1
     if i_this<skip: continue
-    if tq is None: tq = tqdm.tqdm(total=min(len(ids)-skip, nmax if nmax is not None else float("inf")))
+    if tq is None: tq = tqdm.tqdm(total=(len(ids)-skip if nmax is None else nmax))
     url_this = f"{base_url}/esummary.fcgi?db=pubmed&id={id_this}&retmode=json"
-    response = requests.get(url_this)
+    try:
+      response = requests.get(url_this)
+    except Exception as e:
+      logging.error(f"{e}")
+      n_err+=1
+      continue
     if response.status_code!=200:
       logging.debug(f"Status code: {response.status_code}")
       continue
@@ -41,7 +46,7 @@ def GetESummary(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         continue #Error
       if tags is None:
         tags = [tag for tag in pub.keys() if type(pub[tag]) not in (list, dict)]
-      df_this = pd.concat([df, pd.DataFrame({tag:[pub[tag]] for tag in tags})])
+      df_this = pd.DataFrame({tag:[pub[tag]] for tag in tags})
       if fout is not None:
         df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       else:
@@ -50,13 +55,13 @@ def GetESummary(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     tq.update(n=1)
     if nmax is not None and i_this-skip>nmax: break
   tq.close()
-  logging.info(f"n_out: {n_out}")
+  logging.info(f"n_out: {n_out}; n_err: {n_err}")
   return df
 
 #############################################################################
 def GetRecord(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
-  """Must process XML since no retmode=json supported."""
-  n_out=0; tq=None; tags=None; df=None; i_this=0;
+  """Only get title, abstract, journal, year.  Must process XML since no retmode=json supported."""
+  n_out=0; n_err=0; tq=None; tags=None; df=None; i_this=0;
   if skip: logging.debug(f"skip: [1-{skip}]")
   for id_this in ids:
     i_this+=1
@@ -73,12 +78,44 @@ def GetRecord(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
       elt = ElementTree.parse(io.StringIO(pubxml))
     except Exception as e:
       logging.error(f"XML parse error: {e}; xml={pubxml}")
+      n_err+=1
       continue
-
     logging.debug(f"XML parsed ok.")
     articles = elt.iterfind("PubmedArticle")
     for article in articles:
       logging.debug(f"article.tag <{article.tag}>")
-
+      title = util_xml.GetFirstLeafValByTagName(article, "ArticleTitle") 
+      abstracttext = util_xml.GetFirstLeafValByTagName(article, "AbstractText") 
+      journal = util_xml.GetFirstLeafValByTagName(article, "Title") 
+      year = util_xml.GetFirstLeafValByTagName(article, "Year") 
+      pmid = util_xml.GetFirstLeafValByTagName(article, "PMID") 
+      if pmid != id_this:
+        logging.error(f"PMID {pmid} != {id_this}")
+        n_err+=1
+        continue
+      #authorlist = article.find("AuthorList") #Why not working?
+      authorlist = list(article.iter("AuthorList"))[0] #Kludge
+      authors = authorlist.findall("Author")
+      authorlastname=None;
+      for author in authors:
+        authorlastname = util_xml.GetFirstLeafValByTagName(author, "LastName")
+        break
+      df_this = pd.DataFrame({
+	"pmid":[pmid],
+	"title":[title],
+	"abstract":[abstracttext],
+	"author":[authorlastname],
+	"journal":[journal],
+	"year":[year]
+	})
+      if fout is not None:
+        df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else:
+        df = pd.concat([df, df_this])
+      n_out+=df_this.shape[0]
+    tq.update(n=1)
+  tq.close()
+  logging.info(f"n_ids: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
+  return df
 
 #############################################################################
