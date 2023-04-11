@@ -68,7 +68,12 @@ def GetRecord(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     if i_this<skip: continue
     if tq is None: tq = tqdm.tqdm(total=min(len(ids)-skip, nmax if nmax is not None else float("inf")))
     url_this = f"{base_url}/efetch.fcgi?db=pubmed&id={id_this}"
-    response = requests.get(url_this)
+    try:
+      response = requests.get(url_this)
+    except Exception as e:
+      logging.error(f"{e}")
+      n_err+=1
+      continue
     if response.status_code!=200:
       logging.debug(f"Status code: {response.status_code}")
       continue
@@ -93,13 +98,14 @@ def GetRecord(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         logging.error(f"PMID {pmid} != {id_this}")
         n_err+=1
         continue
-      #authorlist = article.find("AuthorList") #Why not working?
-      authorlist = list(article.iter("AuthorList"))[0] #Kludge
-      authors = authorlist.findall("Author")
       authorlastname=None;
-      for author in authors:
-        authorlastname = util_xml.GetFirstLeafValByTagName(author, "LastName")
-        break
+      #authorlist = article.find("AuthorList") #Why not working?
+      if article.iter("AuthorList") is not None and len(list(article.iter("AuthorList")))>0: #Kludge
+        authorlist = list(article.iter("AuthorList"))[0] #Kludge
+        authors = authorlist.findall("Author")
+        for author in authors:
+          authorlastname = util_xml.GetFirstLeafValByTagName(author, "LastName")
+          break
       df_this = pd.DataFrame({
 	"pmid":[pmid],
 	"title":[title],
