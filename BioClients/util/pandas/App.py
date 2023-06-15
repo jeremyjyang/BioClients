@@ -15,7 +15,7 @@ if __name__=='__main__':
   ops = ['csv2tsv', 'tsv2csv', 'shape', 'summary', 'showcols', 'list_columns', 'to_html',
 	'selectcols', 'selectcols_deduplicate', 'uvalcounts',
 	'colvalcounts', 'sortbycols', 'deduplicate', 'colstats', 'searchrows',
-	'pickle', 'sample', 'set_header', 'remove_header', 'merge']
+	'pickle', 'sample', 'set_header', 'remove_header', 'concat', 'merge']
   compressions=['gzip', 'zip', 'bz2']
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", required=True, help="input (CSV|TSV)")
@@ -34,6 +34,7 @@ if __name__=='__main__':
   parser.add_argument("--on_bad_lines", choices=["error", "warn", "skip"], default="warn")
   parser.add_argument("--merge_how", choices=["left", "right", "outer", "inner", "cross"], default="inner")
   parser.add_argument("--merge_type", choices=[str, int, float], default=str)
+  parser.add_argument("--concat_axis", type=int, choices=[0, 1], default=0)
   parser.add_argument("--nrows", type=int)
   parser.add_argument("--skiprows", type=int)
   parser.add_argument("--sample_frac", type=float, default=.01, help="sampling probability (0-1)")
@@ -169,6 +170,11 @@ if __name__=='__main__':
     fout.close()
     with open(args.ofile, 'wb') as fout:
       pickle.dump(df, fout, pickle.HIGHEST_PROTOCOL)
+
+  elif args.op == 'concat':
+    if not args.ifileB: parser.error(f'{args.op} requires --iB.')
+    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
+    util_pandas.Concat(df, dfB, args.concat_axis, delim, fout)
 
   elif args.op == 'merge':
     if not args.ifileB: parser.error(f'{args.op} requires --iB.')

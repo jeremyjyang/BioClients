@@ -491,11 +491,11 @@ See https://documentation.uts.nlm.nih.gov/rest/search/
   tgt = auth.gettgt()
   while True:
     params['pageNumber']=pNum
-    logging.debug(f'params = {str(params)}')
+    logging.debug(f"url: {url}; params: {str(params)}")
     response = UmlsApiGet(url, auth, tgt, params=params)
     response.encoding = 'utf-8'
     items = json.loads(response.text)
-    logging.debug (json.dumps(items, indent=4))
+    #logging.debug(json.dumps(items, indent=4))
     result = items['result']
     classType = result['classType']
     pageSize = items["pageSize"]

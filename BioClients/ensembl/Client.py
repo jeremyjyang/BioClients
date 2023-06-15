@@ -17,6 +17,8 @@ if __name__=='__main__':
   parser.add_argument("--api_host", default=ensembl.API_HOST)
   parser.add_argument("--api_base_path", default=ensembl.API_BASE_PATH)
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
+  parser.add_argument("--skip", type=int, default=0)
+  parser.add_argument("--nmax", type=int)
   parser.add_argument("-v", "--verbose", action="count", default=0)
   parser.add_argument("-q", "--quiet", action="count", default=0)
   args = parser.parse_args()
@@ -52,10 +54,10 @@ if __name__=='__main__':
     ensembl.ListSpecies(base_url, fout)
 
   elif args.op=='get_info':
-    ensembl.GetInfo(ids, base_url, fout)
+    ensembl.GetInfo(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='get_xrefs':
-    ensembl.GetXrefs(ids, base_url, fout)
+    ensembl.GetXrefs(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='show_version':
     ensembl.ShowVersion(base_url, fout)

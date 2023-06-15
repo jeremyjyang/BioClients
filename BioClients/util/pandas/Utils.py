@@ -37,7 +37,7 @@ def SearchRows(df, cols, coltags, qrys, rels, typs, fout):
       df = df[df[tag].astype('float')==float(qrys[jj])]
     else:
       df = df[df[tag].astype('str').str.match('^'+qrys[jj]+'$')]
-  df.to_csv(fout, '\t', index=False)
+  df.to_csv(fout, sep='\t', index=False)
   logging.info(f"Rows found: {df.shape[0]} / {n}")
 
 #############################################################################
@@ -47,12 +47,12 @@ def SampleRows(df, sample_frac, sample_n, fout):
     df = df.sample(n=sample_n)
   else:
     df = df.sample(frac=sample_frac)
-  df.to_csv(fout, '\t', index=False)
+  df.to_csv(fout, sep='\t', index=False)
   logging.info(f"Rows sampled: {df.shape[0]} / {n}")
 
 #############################################################################
 def RemoveHeader(df, delim, fout):
-  df.to_csv(fout, delim, index=False, header=False)
+  df.to_csv(fout, sep=delim, index=False, header=False)
 
 #############################################################################
 def SetHeader(df, coltags, delim, fout):
@@ -61,7 +61,7 @@ def SetHeader(df, coltags, delim, fout):
   elif len(coltags)!=df.shape[1]:
     logging.error(f"len(coltags) != ncol ({len(coltags)} != {df.shape[1]}).")
   else:
-    df.to_csv(fout, delim, index=False, header=coltags)
+    df.to_csv(fout, sep=delim, index=False, header=coltags)
 
 #############################################################################
 def ToHtml(df, title, prettify, fout):
@@ -80,13 +80,21 @@ def ToHtml(df, title, prettify, fout):
 	show_dimensions=False)
 
 #############################################################################
+def Concat(dfA, dfB, concat_axis, delim, fout):
+  for i,df in enumerate([dfA, dfB]):
+    logging.info(f"{i+1}. nrow: {df.shape[0]}; ncol: {df.shape[1]}")
+  df_combo = pd.concat([dfA, dfB], axis=concat_axis, ignore_index=True)
+  df_combo.to_csv(fout, sep=delim)
+  logging.info(f"Output: nrow: {df_combo.shape[0]}; ncol: {df_combo.shape[1]}")
+
+#############################################################################
 def Merge(dfA, dfB, merge_how, merge_type, coltags, delim, fout):
   for tag in coltags:
     dfA[tag] = dfA[tag].astype(merge_type)
     dfB[tag] = dfB[tag].astype(merge_type)
   df = dfA.merge(dfB, how=merge_how, on=coltags)
   df.drop_duplicates(inplace=True)
-  df.to_csv(fout, delim, index=False, header=True)
+  df.to_csv(fout, sep=delim, index=False, header=True)
   logging.info(f"Rows in A: {dfA.shape[0]}")
   logging.info(f"Rows in B: {dfB.shape[0]}")
   logging.info(f"Rows out: {df.shape[0]}")

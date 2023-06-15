@@ -217,7 +217,7 @@ def GetCID2SDF(ids, base_url=BASE_URL, fout=None):
 def GetSID2SDF(ids, skip, nmax, base_url=BASE_URL, fout=None):
   """Faster via POST(?). Request in chunks.  Works for 50, and not
   for 200 (seems to be a limit)."""
-  n_out=0; tq=None; txt_out="";
+  n_out=0; tq=None; txt_out=""; n_sid_in=0;
   if skip: logging.debug(f"skip: [1-{skip}]")
   nskip_this=skip;
   while True:

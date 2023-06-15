@@ -38,14 +38,21 @@ def ListSpecies(base_url=BASE_URL, fout=None):
   return df
 
 ##############################################################################
-def GetInfo(ids, base_url=BASE_URL, fout=None):
+def GetInfo(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; n_err=0; tags=[]; df=None; tq=None;
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
-  for id_this in ids:
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids)-skip)
     if tq is not None: tq.update()
     url_this = base_url+'/lookup/id/'+id_this+'?content-type=application/json&expand=0'
     logging.debug(url_this)
-    rval = requests.get(url_this, headers={"Content-Type":"application/json"})
+    try:
+      rval = requests.get(url_this, headers={"Content-Type":"application/json"})
+    except Exception as e:
+      logging.error(f"{e}")
+      n_err+=1
+      continue
     if not rval.ok:
       logging.error(f'{rval.status_code} : "{id_this}"')
       n_err+=1
@@ -59,16 +66,18 @@ def GetInfo(ids, base_url=BASE_URL, fout=None):
       df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       n_out += 1
     if fout is None: df = pd.concat([df, df_this])
-    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if nmax and i>=(nmax-skip): break
   if tq is not None: tq.close()
   logging.info(f"n_ids: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
   if fout is None: return df
 
 ##############################################################################
-def GetXrefs(ids, base_url=BASE_URL, fout=None):
+def GetXrefs(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   n_out=0; n_err=0; tags=None; dbcounts={}; df=pd.DataFrame(); tq=None;
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
-  for id_this in ids:
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids)-skip)
     if tq is not None: tq.update()
     url_this = base_url+'/xrefs/id/'+id_this
     rval = requests.get(url_this, headers={"Content-Type":"application/json"})
@@ -87,7 +96,7 @@ def GetXrefs(ids, base_url=BASE_URL, fout=None):
       if fout is None: df = pd.concat([df, df_this])
       else: df_this.to_csv(fout, "\t", index=False)
       n_out+=1
-    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids), unit="genes")
+    if nmax and i>=(nmax-skip): break
   if tq is not None: tq.close()
   for key in sorted(dbcounts.keys()):
     logging.info(f"Xref counts, db = {key:12s}: {dbcounts[key]:5d}")
