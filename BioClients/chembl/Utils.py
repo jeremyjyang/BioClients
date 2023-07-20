@@ -364,7 +364,9 @@ def ListProteinClasses(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None
 
 #############################################################################
 def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
-  n_efo=0; n_out=0; tags=None; df=None; tq=None;
+  """From ClinicalTrials.gov, DailyMed, ATC"""
+  n_out=0; tags=None; df=None; tq=None; efos=set(); ref_types=set();
+  tags_ind_ref = ["ref_type", "ref_id", "ref_url"]
   url_next = f"{api_base_path}/drug_indication.json?limit={NCHUNK}&offset={skip}"
   while True:
     response = requests.get(f"https://{api_host}{url_next}")
@@ -378,20 +380,66 @@ def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PA
       if not tags:
         tags = [tag for tag in list(din.keys()) if type(din[tag]) not in (dict, list)]
       logging.debug(json.dumps(din, sort_keys=True, indent=2))
-      if "efo_id" in din and din["efo_id"]: n_efo+=1
-      df_this = pd.DataFrame({tag:[(din[tag] if tag in din else None)] for tag in tags})
-      if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
-      n_out+=df_this.shape[0]
+      ind_refs = din["indication_refs"] if "indication_refs" in din else []
+      if not ind_refs: continue
+      for ind_ref in ind_refs:
+        if "efo_id" in din and din["efo_id"]: efos.add(din["efo_id"])
+        if "ref_type" in ind_ref and ind_ref["ref_type"]: ref_types.add(ind_ref["ref_type"])
+        df_this = pd.concat([
+		pd.DataFrame({tag:[(din[tag] if tag in din else None)] for tag in tags}),
+		pd.DataFrame({tag:[(ind_ref[tag] if tag in ind_ref else None)] for tag in tags_ind_ref}),
+		], axis=1)
+        if fout is None: df = pd.concat([df, df_this])
+        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      n_out+=1
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
     if nmax and n_out>=nmax: break
     total_count = result["page_meta"]["total_count"] if "page_meta" in result and "total_count" in result["page_meta"] else None
-    if not tq: tq = tqdm.tqdm(total=total_count, unit="inds")
+    if not tq: tq = tqdm.tqdm(total=total_count)
     url_next = result["page_meta"]["next"] if "page_meta" in result and "next" in result["page_meta"] else None
     if not url_next: break
   if tq is not None: tq.close()
-  logging.info(f"n_out: {n_out}; n_efo: {n_efo}")
+  logging.info(f"n_out: {n_out}; n_efo: {len(efos)}")
+  logging.info(f"ref_types: {list(ref_types)}")
+  return df
+
+#############################################################################
+def GetDrugIndications(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=None; tq=None; efos=set(); ref_types=set();
+  tags_ind_ref = ["ref_type", "ref_id", "ref_url"]
+  for i,id_this in enumerate(ids):
+    if not tq: tq = tqdm.tqdm(total=len(ids)-skip)
+    if i<skip: continue
+    response = requests.get(f"{base_url}/drug_indication.json?molecule_chembl_id={id_this}")
+    if response.status_code != 200:
+      logging.error(f"status_code: {response.status_code}")
+      break
+    result = response.json()
+    logging.debug(json.dumps(result, sort_keys=True, indent=2))
+    dins = result["drug_indications"] if "drug_indications" in result else []
+    for din in dins:
+      if not tags:
+        tags = [tag for tag in list(din.keys()) if type(din[tag]) not in (dict, list)]
+      logging.debug(json.dumps(din, sort_keys=True, indent=2))
+      ind_refs = din["indication_refs"] if "indication_refs" in din else []
+      if not ind_refs: continue
+      for ind_ref in ind_refs:
+        if "efo_id" in din and din["efo_id"]: efos.add(din["efo_id"])
+        if "ref_type" in ind_ref and ind_ref["ref_type"]: ref_types.add(ind_ref["ref_type"])
+        df_this = pd.concat([
+		pd.DataFrame({tag:[(din[tag] if tag in din else None)] for tag in tags}),
+		pd.DataFrame({tag:[(ind_ref[tag] if tag in ind_ref else None)] for tag in tags_ind_ref}),
+		], axis=1)
+        if fout is None: df = pd.concat([df, df_this])
+        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      n_out+=1
+      if tq is not None: tq.update()
+      if nmax and n_out>=nmax: break
+    if nmax and n_out>=nmax: break
+  if tq is not None: tq.close()
+  logging.info(f"n_out: {n_out}; n_efo: {len(efos)}")
+  logging.info(f"ref_types: {list(ref_types)}")
   return df
 
 #############################################################################

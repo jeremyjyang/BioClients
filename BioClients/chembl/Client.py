@@ -71,6 +71,7 @@ if __name__=='__main__':
 	"get_activity_by_assay",
 	"get_activity_by_target",
 	"get_activity_properties",
+	"get_drug_indications",
 	"get_document"]
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
   parser.add_argument("--ids", help="input IDs (e.g. mol, assay, target, document)")
@@ -168,6 +169,9 @@ if __name__=='__main__':
 
   elif args.op == "get_activity_properties":
     chembl.GetActivityProperties(ids, args.skip, args.nmax, base_url, fout)
+
+  elif args.op == "get_drug_indications":
+    chembl.GetDrugIndications(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == "get_target":
     chembl.GetTarget(ids, base_url, fout)
