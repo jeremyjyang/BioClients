@@ -104,3 +104,43 @@ def GetXrefs(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
   if fout is None: return df
 
 ##############################################################################
+def GetVariantEffectPredictions(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
+  n_out=0; n_err=0; tags=None; tags_tc=None; dbcounts={}; df=pd.DataFrame(); tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  for i,id_this in enumerate(ids):
+    if i<skip: continue
+    if tq is None and not quiet: tq = tqdm.tqdm(total=len(ids)-skip)
+    if tq is not None: tq.update()
+    url_this = base_url+'/vep/human/id/'+id_this
+    rval = requests.get(url_this, headers={"Content-Type":"application/json"})
+    if not rval.ok:
+      logging.error(f'{rval.status_code} : "{id_this}"')
+      n_err+=1
+      continue
+    result = rval.json()
+    if not result or len(result)==0:
+      logging.error(f"No result.")
+      n_err+=1
+      continue
+    vep = result[0]
+    logging.debug(json.dumps(vep, indent=2))
+    if not tags:
+      tags = [tag for tag in vep.keys() if type(vep[tag]) not in (list, dict)] #Only simple metadata.
+    df_this_base = pd.DataFrame({tags[j]:([str(vep[tags[j]])] if tags[j] in vep else ['']) for j in range(len(tags))})
+    transcript_consequences = vep["transcript_consequences"] if "transcript_consequences" in vep else []
+    #colocated_variants = vep["colocated_variants"] if "colocated_variants" in vep else []
+    for tc in transcript_consequences:
+      if not tags_tc:
+        tags_tc = [tag for tag in tc.keys() if type(tc[tag]) not in (list, dict)] #Only simple metadata.
+      logging.debug(f"tags_tc: {tags_tc}")
+      df_this_tc = pd.DataFrame({tag:([str(tc[tag])] if tag in tc else ['']) for tag in tags_tc})
+      df_this = pd.concat([df_this_base, df_this_tc], axis=1)
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, "\t", index=False)
+      n_out+=1
+    if nmax and i>=(nmax-skip): break
+  if tq is not None: tq.close()
+  logging.info(f"n_ids: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
+  if fout is None: return df
+
+##############################################################################

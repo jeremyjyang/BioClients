@@ -2,6 +2,9 @@
 """
 Access to Ensembl REST API.
 http://rest.ensembl.org/documentation/info/lookup
+Mostly by gene, except Variant Effect Predictor (VEP) by SNP.
+https://ensembl.org/info/docs/tools/vep/
+https://rest.ensembl.org/documentation/info/vep_id_get
 """
 import sys,os,re,argparse,time,json,logging
 
@@ -10,10 +13,10 @@ from .. import ensembl
 ##############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(prog=sys.argv[0], description="Ensembl REST API client", epilog="Example IDs: ENSG00000157764, ENSG00000160785")
-  ops = ["list_species", "get_xrefs", "get_info", "show_version"]
+  ops = ["list_species", "get_xrefs", "get_info", "get_vep", "show_version"]
   parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003)")
-  parser.add_argument("--i", dest="ifile", help="input file, Ensembl_IDs")
+  parser.add_argument("--ids", help="Ensembl_IDs, comma-separated (ex:ENSG00000000003), or SNP IDs, comma-separated (ex:rs56116432)")
+  parser.add_argument("--i", dest="ifile", help="input file, Ensembl IDs or SNP IDs")
   parser.add_argument("--api_host", default=ensembl.API_HOST)
   parser.add_argument("--api_base_path", default=ensembl.API_BASE_PATH)
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
@@ -26,7 +29,7 @@ if __name__=='__main__':
   # logging.PROGRESS = 15 (custom)
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>0 else logging.ERROR if args.quiet else 15))
 
-  base_url='http://'+args.api_host+args.api_base_path
+  base_url = 'http://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
@@ -58,6 +61,9 @@ if __name__=='__main__':
 
   elif args.op=='get_xrefs':
     ensembl.GetXrefs(ids, args.skip, args.nmax, base_url, fout)
+
+  elif args.op=='get_vep':
+    ensembl.GetVariantEffectPredictions(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op=='show_version':
     ensembl.ShowVersion(base_url, fout)
