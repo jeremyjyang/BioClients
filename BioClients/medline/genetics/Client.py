@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 ##############################################################################
 ### Medline Plus Genetics
+### (Formerly Genetics Home Reference)
 ### https://medlineplus.gov/about/developers/geneticsdatafilesapi/
 ### https://medlineplus.gov/download/ghr-summaries.xml
 ##############################################################################

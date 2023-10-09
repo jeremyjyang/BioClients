@@ -2,6 +2,9 @@
 
 ## Medline Plus
 
+Note that the Medline Plus Genetics resource has superceded the
+Genetics Home Reference (GHR).
+
 * [Medline Plus](https://medlineplus.gov/) | [Medline Plus Web Services](https://medlineplus.gov/about/developers/webservices/)
 * [Medline Plus Genetics](https://medlineplus.gov/genetics) | [Medline Plus Genetics API](https://medlineplus.gov/about/developers/geneticsdatafilesapi/)
 * [Medline Plus Connect](https://medlineplus.gov/connect/overview.html) | [Medline Plus Connect Web Service](https://medlineplus.gov/connect/service.html)
