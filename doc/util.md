@@ -179,31 +179,53 @@ optional arguments:
 
 ##  `rdf`
 
-RDF and OWL utilities using rdflib and owlready2.
+RDF utilities using rdflib and owlready2.
 
 * <https://github.com/RDFLib/rdflib>
 * <https://rdflib.readthedocs.io/>
-* <https://owlready2.readthedocs.io/>
 
 ```
 $ python3 -m BioClients.util.rdf.App -h
 usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}]
               [--ofmt {text/turtle,application/rdf+xml,text/n3}] [--o OFILE] [-v]
-              {describe_rdf,validate_rdf,convert_rdf,describe_owl,validate_owl}
+              {describe_rdf,validate_rdf,convert_rdf}
 
 RDF utility
 
 positional arguments:
-  {describe_rdf,validate_rdf,convert_rdf,describe_owl,validate_owl}
+  {describe_rdf,validate_rdf,convert_rdf}
                         OPERATION
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
-  --i IFILE             input file (RDF or OWL)
+  --i IFILE             input file (RDF)
   --ifmt {text/turtle,application/rdf+xml,text/n3}
                         input RDF format
   --ofmt {text/turtle,application/rdf+xml,text/n3}
                         output RDF format
+  --o OFILE             output file
+  -v, --verbose
+```
+
+##  `owl`
+
+OWL utilities using owlready2.
+
+* <https://owlready2.readthedocs.io/>
+
+```
+$ python3 -m BioClients.util.owl.App -h
+usage: App.py [-h] [--i IFILE] [--o OFILE] [-v] {describe_owl,validate_owl}
+
+OWL utility
+
+positional arguments:
+  {describe_owl,validate_owl}
+                        OPERATION
+
+options:
+  -h, --help            show this help message and exit
+  --i IFILE             input file (OWL)
   --o OFILE             output file
   -v, --verbose
 ```

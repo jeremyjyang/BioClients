@@ -11,10 +11,10 @@ from .. import rdf as util_rdf
 #############################################################################
 if __name__=="__main__":
   parser = argparse.ArgumentParser(description="RDF utility", epilog="")
-  ops = [ "describe_rdf", "validate_rdf", "convert_rdf", "describe_owl", "validate_owl", ]
+  ops = [ "describe_rdf", "validate_rdf", "convert_rdf", ]
   FORMATS = ["text/turtle", "application/rdf+xml", "text/n3", ]
   parser.add_argument("op", choices=ops, help="OPERATION")
-  parser.add_argument("--i", dest="ifile", help="input file (RDF or OWL)")
+  parser.add_argument("--i", dest="ifile", help="input file (RDF)")
   parser.add_argument("--ifmt", choices=FORMATS, default="text/turtle", help="input RDF format")
   parser.add_argument("--ofmt", choices=FORMATS, default="text/turtle", help="output RDF format")
   parser.add_argument("--o", dest="ofile", help="output file")
@@ -34,12 +34,6 @@ if __name__=="__main__":
 
   elif args.op == "convert_rdf":
     util_rdf.ConvertRdf(fin, args.ifmt, args.ofmt, fout)
-
-  elif args.op == "describe_owl":
-    util_rdf.DescribeOwl(args.ifile)
-
-  elif args.op == "validate_owl":
-    util_rdf.ValidateOwl(args.ifile)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
