@@ -11,7 +11,7 @@ from .. import hugo
 #
 ##############################################################################
 if __name__=='__main__':
-  FTYPES=['SYMBOL', 'ALIAS_SYMBOL', 'HGNC_ID', 'UNIPROT', 'ENTREZ_ID', 'ENSEMBL_GENE_ID', 'VEGA_ID'];
+  FTYPES=['SYMBOL', 'ALIAS_SYMBOL', 'PREV_SYMBOL', 'HGNC_ID', 'UNIPROT', 'ENTREZ_ID', 'ENSEMBL_GENE_ID', 'VEGA_ID'];
   epilog='''\
            SYMBOL: HGNC gene symbol (e.g. ZNF3),
      ALIAS_SYMBOL: synonym gene symbol (e.g. AAA1),
@@ -26,7 +26,7 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--i", dest="ifile", help="query file")
   parser.add_argument("--query", help="gene query")
-  parser.add_argument("--ftypes", default="SYMBOL,ALIAS_SYMBOL", help="comma-separated list")
+  parser.add_argument("--ftypes", default="SYMBOL,ALIAS_SYMBOL,PREV_SYMBOL", help="comma-separated list")
   parser.add_argument("--ftypes_all", action="store_true", help="(could be slow)")
   parser.add_argument("--rawquery", action="store_true")
   parser.add_argument("--nmax", type=int, default=None, help="max records")
