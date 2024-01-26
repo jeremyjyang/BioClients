@@ -628,9 +628,13 @@ SELECT DISTINCT
 	atf.struct_id,
 	atf.target_id,
 	atf.target_name,
+	atf.accession,
+	atf.tdl,
 	atf.gene,
 	atf.action_type,
 	atf.act_source,
+	atf.act_value,
+	atf.act_unit,
 	atf.act_type,
 	atf.act_comment,
 	atf.relation,
@@ -652,7 +656,7 @@ WHERE
     logging.debug(sql.format(id_this))
     df_this = pd.read_sql(sql.format(id_this), dbcon)
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False)
+    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
