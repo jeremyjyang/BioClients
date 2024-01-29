@@ -15,7 +15,7 @@ releases available via `pypi.org`:
 <https://pypi.org/project/BioClients/>
 (`pip3 install BioClients`).
 
-However, current development snapshot recommended.
+However, current development snapshot may included additional functionality.
 
 ___(First download or clone.)___
 ```
@@ -25,7 +25,7 @@ $ python3 setup.py install
 
 ## Dependencies
 
-* Python 3.7+
+* Python 3.8+
 * Python packages: `pandas`, `requests`, `urllib`, `json`, `xml`, `yaml`, `psycopg2`, `tqdm`, etc.
 
 ## Modules
