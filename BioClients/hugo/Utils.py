@@ -3,7 +3,7 @@
 Utility functions for HUGO REST API.
 See: https://www.genenames.org/help/rest-web-service-help
 """
-import sys,os,re,requests,json,time,logging
+import sys,os,re,requests,json,time,logging,tqdm
 import pandas as pd
 
 #
@@ -49,10 +49,12 @@ def ListStoredFields(base_url=BASE_URL, fout=None):
 def GetGenes(qrys, ftypes, skip=0, base_url=BASE_URL, fout=None):
   '''The API can return multiple hits for each query, though should not 
 for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
-  n_in=0; n_found=0; n_notfound=0; n_ambig=0; n_gene=0;
-  tags=[]; df=None;
+  n_in=0; n_found=0; n_notfound=0; n_ambig=0; n_out=0;
+  tags=None; df=None; tq=None;
   logging.debug(f"ftypes[{len(ftypes)}]: {str(ftypes)}")
   for qry in qrys:
+    if not tq: tq = tqdm.tqdm(total=len(qrys)-skip)
+    tq.update()
     n_in+=1
     if n_in<skip: continue
     logging.debug(f"{n_in}. query: {qry}")
@@ -79,20 +81,28 @@ for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
       logging.warning(f"Multiple ({len(genes)}) hits, {ftype_hit} = {qry} (Duplicate may be status=withdrawn.)")
       n_ambig+=1
     for gene in genes:
-      for tag in list(gene.keys())[:]:
+      gene_data = {'query':[qry], 'field':[ftype_hit]}
+      for tag in gene.keys():
         if tag in ("prev_symbol", "prev_name", "alias_symbol"):
-          gene[tag] = [";".join(gene[tag])]
+          gene_data[tag] = [";".join(gene[tag])]
         elif type(gene[tag]) in (list, dict):
-          del gene[tag]
+          continue
+        elif tags is not None and tag not in tags:
+          continue
         else:
-          gene[tag] = [gene[tag]]
-      gene['query'] = [qry]
-      gene['field'] = [ftype_hit]
-      df_this = pd.DataFrame(gene)
-      if fout: df_this.to_csv(fout, "\t", index=False)
+          gene_data[tag] = [gene[tag]]
+      if not tags:
+        tags = gene_data.keys()
+        logging.debug(f"tags: {tags}")
+      for tag in (set(tags) - set(gene_data.keys())):
+        gene_data[tag] = [None] #add missing fields
+      df_this = pd.DataFrame(gene_data)
+      df_this = df_this[tags] #reorder cols
+      if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
       else: df = pd.concat([df, df_this])
-      n_gene+=1
-  logging.info(f"queries: {n_in-skip}; found: {n_found}; not found: {n_notfound}; ambiguous: {n_ambig}; total genes returned: {n_gene}")
+      n_out+=1
+  if tq is not None: tq.close()
+  logging.info(f"queries: {n_in-skip}; n_found: {n_found}; n_notfound: {n_notfound}; n_ambig: {n_ambig}; n_out: {n_out}")
   return df
 
 ##############################################################################

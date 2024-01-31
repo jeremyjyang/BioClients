@@ -26,7 +26,7 @@ $ python3 setup.py install
 ## Dependencies
 
 * Python 3.8+
-* Python packages: `pandas`, `requests`, `urllib`, `json`, `xml`, `yaml`, `psycopg2`, `tqdm`, etc.
+* Python packages: `pandas`, `requests`, `yaml`, `psycopg2`, `tqdm`, etc. (See [conda/environment.yml](conda/environment.yml)).
 
 ## Modules
 
