@@ -161,32 +161,35 @@ def ListTargets(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout
 
 #############################################################################
 def GetTarget(ids, base_url=BASE_URL, fout=None):
-  '''One row per target.  Ignore synonyms. If one-component, single protein, include UniProt accession.'''
+  '''One row per target.  If one-component, single protein, include UniProt accession, and gene symbol.'''
   n_tgt=0; n_cmt=0; n_out=0; tags=None; df=None; tq=None;
+  tags_tgt = ["target_chembl_id", "target_type", "organism", "tax_id", "pref_name", "species_group_flag"]
+  tags_cmt = ["accession", "gene_symbol"]
+      
   for id_this in ids:
     response = requests.get(f"{base_url}/target/{id_this}.json")
     if response.status_code != 200:
       logging.error(f"status_code: {response.status_code}")
       continue
     result = response.json()
+    logging.debug(json.dumps(result, sort_keys=True, indent=2))
     n_tgt+=1
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="tgts")
     tq.update()
-    if n_tgt==1 or not tags:
-      tags = sorted(result.keys())
-      for tag in tags[:]:
-        if type(result[tag]) in (dict, list, tuple):
-          tags.remove(tag)
-          logging.debug(f'Ignoring field ({type(result[tag])}): "{tag}"')
-      tags.extend(["component_count", "accession"])
-      fout.write('\t'.join(tags)+'\n')
-    logging.debug(json.dumps(result,sort_keys=True,indent=2))
-    vals = [str(result[tag]) if tag in result else "" for tag in tags]
+    if n_tgt==1:
+      fout.write('\t'.join(tags_tgt+["accession"]+tags_cmt)+'\n')
+    vals = [str(result[tag]) if tag in result else "" for tag in tags_tgt]
     if "target_components" in result and result["target_components"]:
       cmts = result["target_components"]
       n_cmt+=len(cmts)
       vals.append(f"{len(cmts)}")
       vals.append(str(cmts[0]["accession"]) if len(cmts)==1 else "")
+      gene_symbol = ""
+      if "target_component_synonyms" in cmts[0]:
+        for syn in cmts[0]["target_component_synonyms"]:
+          if syn["syn_type"] == "GENE_SYMBOL":
+            gene_symbol = syn["component_synonym"]
+      vals.append(gene_symbol)
     else:
       logging.debug(f"no-component target: {vals[0]}")
       vals.extend(["", ""])
