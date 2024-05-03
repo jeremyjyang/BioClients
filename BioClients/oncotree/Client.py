@@ -7,7 +7,6 @@ See: https://oncotree.mskcc.org/#/home
 import sys,os,re,argparse,time,json,logging
 import pandas as pd
 #
-from ..util import rest
 from .. import oncotree
 #
 ##############################################################################
