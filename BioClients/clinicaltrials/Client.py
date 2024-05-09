@@ -2,6 +2,8 @@
 """
 ClinicalTrials.gov
 https://clinicaltrials.gov/api/gui/ref/api_urls
+API v2.0: https://clinicaltrials.gov/data-api/api
+https://clinicaltrials.gov/data-api/about-api/csv-download
 """
 ### 
 import sys,os,re,json,argparse,time,logging
@@ -13,10 +15,10 @@ if __name__=='__main__':
   epilog='''\
 '''
   parser = argparse.ArgumentParser(description='ClinicalTrials.gov API client', epilog=epilog)
-  ops = ['listStudyFields',
-	'showDataVersion',
-	'showApiVersion',
-	'searchStudies',
+  ops = [
+	'version',
+          'list_study_fields',
+	'search_studies',
 	]
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", help="Input IDs")
@@ -25,8 +27,6 @@ if __name__=='__main__':
   parser.add_argument("--query", help="Search query")
   parser.add_argument("--api_host", default=clinicaltrials.API_HOST)
   parser.add_argument("--api_base_path", default=clinicaltrials.API_BASE_PATH)
-  parser.add_argument("--min_rnk", type=int, default=1, help="Minimum rank for search results.")
-  parser.add_argument("--max_rnk", type=int, default=12, help="Maximum rank for search results.")
   parser.add_argument("--skip", type=int, help="")
   parser.add_argument("--nmax", type=int, help="")
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -52,17 +52,14 @@ if __name__=='__main__':
   elif args.ids:
     ids = re.split(r'[,\s]+', args.ids)
 
-  if args.op == "showApiVersion":
-    clinicaltrials.ApiVersion(api_base_url, fout)
+  if args.op == "version":
+    clinicaltrials.Version(api_base_url, fout)
 
-  elif args.op == "showDataVersion":
-    clinicaltrials.DataVersion(api_base_url, fout)
-
-  elif args.op == "listStudyFields":
+  elif args.op == "list_study_fields":
     clinicaltrials.ListStudyFields(api_base_url, fout)
 
-  elif args.op == "searchStudies":
-    clinicaltrials.SearchStudies(args.query, args.min_rnk, args.max_rnk, api_base_url, fout)
+  elif args.op == "search_studies":
+    clinicaltrials.SearchStudies(args.query, api_base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
