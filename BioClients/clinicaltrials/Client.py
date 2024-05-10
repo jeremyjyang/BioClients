@@ -13,22 +13,21 @@ from .. import clinicaltrials
 #############################################################################
 if __name__=='__main__':
   epilog='''\
+See:
+https://clinicaltrials.gov/data-api/about-api, 
+https://clinicaltrials.gov/data-api/api, 
+https://clinicaltrials.gov/find-studies/constructing-complex-search-queries
 '''
   parser = argparse.ArgumentParser(description='ClinicalTrials.gov API client', epilog=epilog)
-  ops = [
-	'version',
-          'list_study_fields',
-	'search_studies',
-	]
+  ops = [ 'version', 'list_study_fields', 'list_search_areas', 'search_studies', 'get_studies', ]
   parser.add_argument("op", choices=ops, help='OPERATION')
-  parser.add_argument("--i", dest="ifile", help="Input IDs")
+  parser.add_argument("--i", dest="ifile", help="Input NCT_IDs")
   parser.add_argument("--o", dest="ofile", help="Output (TSV)")
-  parser.add_argument("--ids", help="Input IDs (comma-separated)")
-  parser.add_argument("--query", help="Search query")
+  parser.add_argument("--ids", help="Input NCT_IDs (comma-separated)")
+  parser.add_argument("--query_cond", help="Search query condition")
+  parser.add_argument("--query_term", help="Search query term")
   parser.add_argument("--api_host", default=clinicaltrials.API_HOST)
   parser.add_argument("--api_base_path", default=clinicaltrials.API_BASE_PATH)
-  parser.add_argument("--skip", type=int, help="")
-  parser.add_argument("--nmax", type=int, help="")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -58,8 +57,14 @@ if __name__=='__main__':
   elif args.op == "list_study_fields":
     clinicaltrials.ListStudyFields(api_base_url, fout)
 
+  elif args.op == "list_search_areas":
+    clinicaltrials.ListSearchAreas(api_base_url, fout)
+
   elif args.op == "search_studies":
-    clinicaltrials.SearchStudies(args.query, api_base_url, fout)
+    clinicaltrials.SearchStudies(args.query_cond, args.query_term, api_base_url, fout)
+
+  elif args.op == "get_studies":
+    clinicaltrials.GetStudies(ids, api_base_url, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
