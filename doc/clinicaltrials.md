@@ -19,7 +19,7 @@ usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS]
 ClinicalTrials.gov API client
 
 positional arguments:
-  {version,list_study_fields,list_search_areas,search_studies,get_studies}
+  {version,list_study_fields,list_search_areas,list_enums,search_studies,get_studies}
                         OPERATION
 
 options:

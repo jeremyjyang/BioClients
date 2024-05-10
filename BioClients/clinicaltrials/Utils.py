@@ -57,11 +57,33 @@ def ListSearchAreas(base_url=API_BASE_URL, fout=None):
   return df
 
 ##############################################################################
+def ListEnums(base_url=API_BASE_URL, fout=None):
+  n_out=0; df=None;
+  response = requests.get(f"{base_url}/studies/enums")
+  logging.debug(response.text)
+  result = response.json()
+  enums = result
+  for enum in enums:
+    values = [value["value"] for value in enum["values"]]
+    legacyValues = [value["legacyValue"] for value in enum["values"]]
+    #exceptions = enum["exceptions"] if "exceptions" in enum else None #hash
+    df_this = pd.DataFrame({
+	"type":[enum["type"] for value in values],
+	"value":values,
+	"legacyValue":legacyValues,
+	})
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+    else: pd.concat([df, df_this])
+    n_out+=df_this.shape[0]
+  logging.info(f"n_out: {n_out}")
+  return df
+
+##############################################################################
 def SearchStudies(query_cond, query_term, base_url=API_BASE_URL, fout=None):
   study_tags=None; n_out=0; df=None; nextPageToken=None; totalCount=None; tq=None;
   url_base = f"{base_url}/studies?pageSize={API_PAGE_SIZE}"
-  if query_cond: url_base = f"&query.cond={urllib.parse.quote(query_cond)}"
-  if query_term: url_base = f"&query.term={urllib.parse.quote(query_term)}"
+  if query_cond: url_base += f"&query.cond={urllib.parse.quote(query_cond)}"
+  if query_term: url_base += f"&query.term={urllib.parse.quote(query_term)}"
   while True:
     url = url_base
     if not totalCount: url += "&countTotal=true"

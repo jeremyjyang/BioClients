@@ -19,7 +19,9 @@ https://clinicaltrials.gov/data-api/api,
 https://clinicaltrials.gov/find-studies/constructing-complex-search-queries
 '''
   parser = argparse.ArgumentParser(description='ClinicalTrials.gov API client', epilog=epilog)
-  ops = [ 'version', 'list_study_fields', 'list_search_areas', 'search_studies', 'get_studies', ]
+  ops = [ 'version',
+	'list_study_fields', 'list_search_areas', 'list_enums',
+	'search_studies', 'get_studies', ]
   parser.add_argument("op", choices=ops, help='OPERATION')
   parser.add_argument("--i", dest="ifile", help="Input NCT_IDs")
   parser.add_argument("--o", dest="ofile", help="Output (TSV)")
@@ -59,6 +61,9 @@ https://clinicaltrials.gov/find-studies/constructing-complex-search-queries
 
   elif args.op == "list_search_areas":
     clinicaltrials.ListSearchAreas(api_base_url, fout)
+
+  elif args.op == "list_enums":
+    clinicaltrials.ListEnums(api_base_url, fout)
 
   elif args.op == "search_studies":
     clinicaltrials.SearchStudies(args.query_cond, args.query_term, api_base_url, fout)
