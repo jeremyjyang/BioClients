@@ -36,7 +36,7 @@ def ListVocabularies(base_url=API_BASE_URL, fout=None):
         df_this = pd.DataFrame({tag:[thing[tag] if tag in thing else ''] for tag in tags})
         df_this = pd.concat([df_this, pd.DataFrame({f"term_{tag}":[term[tag] if tag in term else ''] for tag in tags_term})], axis=1)
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out += df_this.shape[0]
     if results['count']<NCHUNK: break
     skip+=NCHUNK
@@ -65,7 +65,7 @@ def ListSubstances(base_url=API_BASE_URL, fout=None):
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[thing[tag] if tag in thing else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     tq.update(n=results['count'])
     if results['count']<NCHUNK: break
@@ -99,7 +99,7 @@ pd.DataFrame({
 	"struct_id":[thing['structure']['id'] if 'structure' in thing and 'id' in thing['structure'] else ''],
 	"struct_smiles":[thing['structure']['smiles'] if 'structure' in thing and 'smiles' in thing['structure'] else '']})], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     if results['count']<NCHUNK: break
     url_this = results['nextPageUri']
@@ -127,7 +127,7 @@ def GetSubstance(ids, base_url=API_BASE_URL, fout=None):
 	"struct_id":[thing['structure']['id'] if 'structure' in thing and 'id' in thing['structure'] else ''],
 	"struct_smiles":[thing['structure']['smiles'] if 'structure' in thing and 'smiles' in thing['structure'] else '']})], axis=1)
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -150,7 +150,7 @@ def GetSubstanceNames(ids, base_url=API_BASE_URL, fout=None):
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[name[tag] if tag in name else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df

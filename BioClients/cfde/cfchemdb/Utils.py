@@ -21,7 +21,7 @@ def Version(dbcon, dbschema="public", fout=None):
   sql = (f"SELECT * FROM {dbschema}.dbversion")
   logging.debug(f"SQL: {sql}")
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -30,7 +30,7 @@ def MetaListdbs(dbcon, fout=None):
   sql = ("SELECT pg_database.datname, pg_shdescription.description FROM pg_database LEFT OUTER JOIN pg_shdescription on pg_shdescription.objoid = pg_database.oid WHERE pg_database.datname ~ '^drug'")
   logging.debug(f"SQL: {sql}")
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -45,7 +45,7 @@ def ListColumns(dbcon, dbschema="public", fout=None):
     df_this["table"] = tname
     df = df_this if df is None else pd.concat([df, df_this])
   df = df[["schema", "table", "column_name", "data_type"]]
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -54,7 +54,7 @@ def ListTables(dbcon, dbschema="public", fout=None):
   '''Listing the tables.'''
   sql = (f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{dbschema}'")
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -71,7 +71,7 @@ def ListTablesRowCounts(dbcon, dbschema="public", fout=None):
     df_this["table"] = tname
     df = df_this if df is None else pd.concat([df, df_this])
   df = df[["schema", "table", "rowcount"]]
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -80,7 +80,7 @@ def ListStructures(dbcon, dbschema="public", fout=None):
   sql = (f"SELECT id,name,cansmi FROM {dbschema}.mols")
   logging.debug(f"SQL: {sql}")
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -89,7 +89,7 @@ def ListStructures2Smiles(dbcon, dbschema="public", fout=None):
   sql = (f"SELECT cansmi, id, name FROM {dbschema}.mols WHERE cansmi IS NOT NULL")
   logging.debug(f"SQL: {sql}")
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -100,10 +100,10 @@ def GetStructure(dbcon, ids, fout=None):
   for id_this in ids:
     logging.debug(sql.format(id_this))
     df_this = pd.read_sql(sql.format(id_this), dbcon)
-    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = df_this if df is None else pd.concat([df, df_this])
     n_out+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {n_out}/{len(ids)}")
   return df
 
@@ -120,7 +120,7 @@ def GetStructureBySmiles(dbcon, smis, fout=None):
     except Exception as e:
       logging.error(f"{e}")
       continue
-    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = df_this if df is None else pd.concat([df, df_this])
     if df_this.shape[0]==0:
       n_not_found+=1

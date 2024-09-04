@@ -33,7 +33,7 @@ def GetEntity(ids, base_url=BASE_URL, fout=None):
       tags = [tag for tag in result.keys() if type(result[tag]) not in (list, dict, collections.OrderedDict)]
     df_this = pd.DataFrame({tag:[result[tag] if tag in result else ''] for tag in tags})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -58,7 +58,7 @@ def GetEntityChildren(ids, base_url=BASE_URL, fout=None):
         tags = [tag for tag in child.keys() if type(child[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tag:[child[tag] if tag in child else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -83,7 +83,7 @@ def GetEntityParents(ids, base_url=BASE_URL, fout=None):
         tags = [tag for tag in parent.keys() if type(parent[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tag:[parent[tag] if tag in parent else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df

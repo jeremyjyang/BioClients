@@ -35,7 +35,7 @@ def ListTargets(base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None #Full URL suboptimal.
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -54,7 +54,7 @@ def SearchTargets(query_term, base_url=BASE_URL, fout=None):
       n_out+=1
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -76,7 +76,7 @@ def ListDiseases(base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -97,7 +97,7 @@ def ListArticles(base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -118,7 +118,7 @@ def ListDTO(base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -133,7 +133,7 @@ def GetDisease(ids, base_url=BASE_URL, fout=None):
     if not tags: tags = list(disease.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
     n_out+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
@@ -150,7 +150,7 @@ def GetDiseaseByDOId(ids, base_url=BASE_URL, fout=None):
       if not tags: tags = list(disease.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
@@ -165,7 +165,7 @@ def GetTarget(ids, base_url=BASE_URL, fout=None):
     if not tags: tags = list(target.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
     n_out+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
 
@@ -182,7 +182,7 @@ def GetTargetByUniprot(ids, base_url=BASE_URL, fout=None):
       if not tags: tags = list(target.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
       n_out+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_in: {}; n_out: {}".format(n_in, n_out))
   return(df)
 
@@ -215,7 +215,7 @@ def GetTargetDiseases(ids, base_url=BASE_URL, fout=None):
       if not url_next: break
       if n_out>=rval["count"]: break #url_next may be wrong.
       offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_in: {n_in}; n_out: {n_out}")
   return(df)
 
@@ -249,7 +249,7 @@ def GetDiseaseTargets(ids, base_url=BASE_URL, fout=None):
       if not url_next: break
       if n_out>=rval["count"]: break #url_next may be wrong.
       offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_in: {n_in}; n_out: {n_out}")
   return(df)
 
@@ -273,7 +273,7 @@ def GetDiseaseTargetArticles(disease_ids, ids, base_url=BASE_URL, fout=None):
         if not url_next: break
         if n_out>=rval["count"]: break #url_next may be wrong.
         offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -293,7 +293,7 @@ def SearchDiseases(query_term, base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -313,7 +313,7 @@ def SearchTargets(query_term, base_url=BASE_URL, fout=None):
     url_next = rval["next"] if "next" in rval else None
     if not url_next: break
     offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 
@@ -334,7 +334,7 @@ def SearchArticles(terms, base_url=BASE_URL, fout=None):
       url_next = rval["next"] if "next" in rval else None
       if not url_next: break
       offset += NCHUNK
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(n_out))
   return(df)
 

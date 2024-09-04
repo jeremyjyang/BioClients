@@ -21,7 +21,7 @@ def Info(api_key, base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame({"field":result.keys(), "value":result.values()})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################
@@ -31,7 +31,7 @@ def ListSABs(api_key, base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame(result)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"SABs: {df.shape[0]}")
   return df
 
@@ -42,7 +42,7 @@ def ListNodeTypes(api_key, base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame(result)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Node-types: {df.shape[0]}")
   return df
 
@@ -59,7 +59,7 @@ def ListNodeTypeCounts(api_key, base_url=BASE_URL, fout=None):
     df_this = pd.DataFrame(result)
     df_this.insert(loc=0, column='node_type', value=node_type)
     df_this = df_this[["node_type", "total_count"]]
-    if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += 1
   return df
@@ -71,7 +71,7 @@ def ListRelationshipTypes(api_key, base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame(result)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Relationship-types: {df.shape[0]}")
   return df
 
@@ -82,7 +82,7 @@ def ListPropertyTypes(api_key, base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame(result)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Property-types: {df.shape[0]}")
   return df
 
@@ -94,7 +94,7 @@ def ListSemanticTypes(api_key, base_url=BASE_URL, fout=None):
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   semantic_types = result["semantic_types"]
   df = pd.DataFrame.from_records(semantic_types)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Semantic-types: {df_this.shape[0]}")
   return df
 
@@ -112,7 +112,7 @@ def GetConcept2Codes(ids, api_key, base_url=BASE_URL, fout=None):
     codes = result
     if not codes or len(codes)==0: continue
     df_this = pd.DataFrame({"concept":[id_this for i in range(len(codes))], "code":codes})
-    if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += 1
     n_code += len(codes)
@@ -135,7 +135,7 @@ def GetConcept2Concepts(ids, api_key, base_url=BASE_URL, fout=None):
     df_this = pd.DataFrame.from_records(concepts)
     df_this.columns = ["conceptB", "preftermB", "relationship", "sabB"]
     df_this.insert(loc=0, column='conceptA', value=id_this)
-    if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += 1
     n_concept += len(concepts)
@@ -158,7 +158,7 @@ def GetConcept2Definitions(ids, api_key, base_url=BASE_URL, fout=None):
     df_this = pd.DataFrame.from_records(defs)
     df_this = df_this[["sab", "definition"]]
     df_this.insert(loc=0, column='concept', value=id_this)
-    if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += 1
     n_def += len(defs)
@@ -213,7 +213,7 @@ def GetTerm2Concepts(term, api_key, base_url=BASE_URL, fout=None):
     logging.info(f"Not found: {term}")
     return
   df = pd.DataFrame({"term":[term for i in range(len(concepts))], "concept":concepts})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Concepts out: {df.shape[0]}")
   return df
 

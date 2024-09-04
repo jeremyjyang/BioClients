@@ -28,7 +28,7 @@ def GetDiseaseGenes(channel, ids, nmax, base_url=BASE_URL, fout=None):
       logging.debug(json.dumps(gene, indent=2))
       if not tags: tags = list(gene.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(df.shape[0]))
   return df
 
@@ -46,7 +46,7 @@ def GetPubmedComentionGenes(ids, base_url=BASE_URL, fout=None):
       logging.debug(json.dumps(gene, indent=2))
       if not tags: tags = list(gene.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(df.shape[0]))
   return df
 

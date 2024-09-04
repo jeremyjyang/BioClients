@@ -32,7 +32,7 @@ def ListSearchableFields(base_url=BASE_URL, fout=None):
   fields = result['searchableFields'] if 'searchableFields' in result else None
   fields.sort()
   df = pd.DataFrame({'fields':fields})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################
@@ -42,7 +42,7 @@ def ListStoredFields(base_url=BASE_URL, fout=None):
   fields = result['storedFields'] if 'storedFields' in result else None
   fields.sort()
   df = pd.DataFrame({'fields':fields})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################
@@ -98,7 +98,7 @@ for exact SYMBOL fetch.  One case is for RPS15P5, status "Entry Withdrawn".'''
         gene_data[tag] = [None] #add missing fields
       df_this = pd.DataFrame(gene_data)
       df_this = df_this[tags] #reorder cols
-      if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       else: df = pd.concat([df, df_this])
       n_out+=1
   if tq is not None: tq.close()
@@ -127,7 +127,7 @@ def SearchGenes(qrys, ftypes, base_url=BASE_URL, fout=None):
         data_this.update({tags[j]:[doc[tags[j]]] for j in range(len(tags))})
         df = pd.concat([df, pd.DataFrame(data_this)])
     if found_this: n_found+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"queries: {n_in}; found: {n_found}")
   return df
 

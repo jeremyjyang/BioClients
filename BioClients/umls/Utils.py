@@ -328,7 +328,7 @@ def GetCodes(cuis, srcs, auth, ver=API_VERSION, base_url=API_BASE_URL, fout=None
       for atom in atoms:
         df_this = pd.DataFrame({'CUI':[cui], 'src':[src], 'atom_code':atom.code, 'atom_name':atom.name})
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out+=1
   logging.info(f'n_cui: {len(cuis)}')
   logging.info(f'n_out: {n_out}')
@@ -410,7 +410,7 @@ def GetAtoms(cuis, skip, nmax, srcs, auth, ver=API_VERSION, base_url=API_BASE_UR
             if tag in atom and atom[tag]!='NONE': atom[tag] = '*'
         df_this = pd.DataFrame({tag:[atom[tag] if tag in atom else ''] for tag in tags})
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out+=1
       pageSize = items["pageSize"]
       pageNumber = items["pageNumber"]
@@ -461,7 +461,7 @@ def GetRelations(cuis, skip, nmax, srcs, auth, ver=API_VERSION, base_url=API_BAS
         df_this = pd.DataFrame({tag:[rel[tag] if tag in rel else ''] for tag in tags})
         df_this["cui"] = [cui]
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out+=1
       pageSize = items["pageSize"]
       pageNumber = items["pageNumber"]
@@ -520,7 +520,7 @@ See https://documentation.uts.nlm.nih.gov/rest/search/
         src_counts[item['rootSource']]+=1
       df_this = pd.DataFrame({tag:[item[tag] if tag in item else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=1
     pNum+=1
   logging.info(f'n_item: {n_item}')

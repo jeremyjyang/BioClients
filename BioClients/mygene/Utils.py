@@ -20,7 +20,7 @@ def GetGenes(ids, fields=FIELDS, fout=None):
   mgi = mg.MyGeneInfo()
   while ichunk*NCHUNK<len(ids):
     df_this = mgi.getgenes(ids[ichunk*NCHUNK:((ichunk+1)*NCHUNK)], fields, as_dataframe=True)
-    if fout is not None: df.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out+=df_this.shape[0]
     ichunk+=1
@@ -33,7 +33,7 @@ def SearchGenes(queries, species, fout=None):
   mgi = mg.MyGeneInfo()
   for qry in queries:
     df_this = mgi.query(qry, species=species, as_dataframe=True)
-    if fout is not None: df.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out+=df_this.shape[0]
     ichunk+=1

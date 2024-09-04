@@ -20,7 +20,7 @@ def Status(base_url=BASE_URL, fout=None):
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   df = pd.DataFrame({tag:(result[tag] if tag in result else "") for tag in result.keys()})
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -85,7 +85,7 @@ def GetActivity(ids, resource, pmin, skip=0, nmax=None, api_host=API_HOST, api_b
             logging.debug(f"[{n_act}] pVal missing.")
         if pval_ok:
           if fout is None: df = pd.concat([df, df_this])
-          else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+          else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
           n_out+=df_this.shape[0]
       total_count = result["page_meta"]["total_count"] if "page_meta" in result and "total_count" in result["page_meta"] else None
       url_next = result["page_meta"]["next"] if "page_meta" in result and "next" in result["page_meta"] else None
@@ -228,7 +228,7 @@ def GetTargetComponents(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
 	pd.DataFrame({tag:[(cmt[tag] if tag in cmt else None)] for tag in cmt_tags})],
 	axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
     if nmax and i>=(nmax-skip): break
   if tq is not None: tq.close()
@@ -258,7 +258,7 @@ def GetDocument(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
     if "doi" in tags and result["doi"]: n_doi+=1
     df_this = pd.DataFrame({tag:[(result[tag] if tag in result else None)] for tag in tags})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out+=df_this.shape[0]
   if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_pmid: {n_pmid}; n_doi: {n_doi}; n_out: {n_out}")
@@ -281,7 +281,7 @@ def ListSources(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
       logging.debug(json.dumps(source, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(source[tag] if tag in source else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
     url_next = result["page_meta"]["next"] if "page_meta" in result and "next" in result["page_meta"] else None
     if not url_next: break
@@ -306,7 +306,7 @@ def ListCellLines(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
       logging.debug(json.dumps(cell, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(cell[tag] if tag in cell else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if "clo_id" in cell and cell["clo_id"]: n_clo+=1
       if "efo_id" in cell and cell["efo_id"]: n_efo+=1
@@ -333,7 +333,7 @@ def ListOrganisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
       logging.debug(json.dumps(org, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(org[tag] if tag in org else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
     url_next = result["page_meta"]["next"] if "page_meta" in result and "next" in result["page_meta"] else None
     if not url_next: break
@@ -358,7 +358,7 @@ def ListProteinClasses(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None
       logging.debug(json.dumps(pcl, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(pcl[tag] if tag in pcl else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
     url_next = result["page_meta"]["next"] if "page_meta" in result and "next" in result["page_meta"] else None
     if not url_next: break
@@ -393,7 +393,7 @@ def ListDrugIndications(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PA
 		pd.DataFrame({tag:[(ind_ref[tag] if tag in ind_ref else None)] for tag in tags_ind_ref}),
 		], axis=1)
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=1
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
@@ -435,7 +435,7 @@ def GetDrugIndications(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
 		pd.DataFrame({tag:[(ind_ref[tag] if tag in ind_ref else None)] for tag in tags_ind_ref}),
 		], axis=1)
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=1
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
@@ -463,7 +463,7 @@ def ListTissues(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
       logging.debug(json.dumps(tissue, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(tissue[tag] if tag in tissue else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if "bto_id" in tissue and tissue["bto_id"]: n_bto+=1
       if "efo_id" in tissue and tissue["efo_id"]: n_efo+=1
@@ -496,7 +496,7 @@ def ListMechanisms(api_host=API_HOST, api_base_path=API_BASE_PATH, fout=None):
       logging.debug(json.dumps(mech, sort_keys=True, indent=2))
       df_this = pd.DataFrame({tag:[(mech[tag] if tag in mech else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if tq is not None: tq.update()
     total_count = result["page_meta"]["total_count"] if "page_meta" in result and "total_count" in result["page_meta"] else None
@@ -527,7 +527,7 @@ def ListDocuments(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fo
       if "doi" in tags and doc["doi"]: n_doi+=1
       df_this = pd.DataFrame({tag:[(doc[tag] if tag in doc else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
@@ -553,7 +553,7 @@ def GetAssay(ids, base_url=BASE_URL, fout=None):
       tags = [tag for tag in list(result.keys()) if type(result[tag]) not in (dict, list)]
     df_this = pd.DataFrame({tag:[(result[tag] if tag in result else None)] for tag in tags})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out+=df_this.shape[0]
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}")
   return df
@@ -576,7 +576,7 @@ def ListAssays(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=
         tags = [tag for tag in list(assay.keys()) if type(assay[tag]) not in (dict, list)]
       df_this = pd.DataFrame({tag:[(assay[tag] if tag in assay else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
@@ -610,7 +610,7 @@ def SearchAssays(asrc, atype, skip, nmax, api_host=API_HOST, api_base_path=API_B
         tags = [tag for tag in list(assay.keys()) if type(assay[tag]) not in (dict, list)]
       df_this = pd.DataFrame({tag:[(assay[tag] if tag in assay else None)] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if tq is not None: tq.update()
       if nmax and n_out>=nmax: break
@@ -650,7 +650,7 @@ def GetMolecule(ids, base_url=BASE_URL, fout=None):
 	pd.DataFrame({tag:[(mol["molecule_properties"][tag] if tag in mol["molecule_properties"] else None)] for tag in prop_tags}),
 	pd.DataFrame({"parent_chembl_id":[parent_chembl_id]})], axis=1)
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out+=df_this.shape[0]
   if tq is not None: tq.close()
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}")
@@ -687,7 +687,7 @@ def ListMolecules(dev_phase, skip, nmax, api_host=API_HOST, api_base_path=API_BA
 	pd.DataFrame({tag:[(mol["molecule_properties"][tag] if tag in mol["molecule_properties"] else None)] for tag in prop_tags}),
 	pd.DataFrame({"parent_chembl_id":[parent_chembl_id]})], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if nmax and n_mol>=nmax: break
     if nmax and n_mol>=nmax: break
@@ -727,7 +727,7 @@ def ListDrugs(skip, nmax, api_host=API_HOST, api_base_path=API_BASE_PATH, fout=N
 	pd.DataFrame({tag:[(mol["molecule_properties"][tag] if tag in mol["molecule_properties"] else None)] for tag in prop_tags}),
 	pd.DataFrame({"parent_chembl_id":[parent_chembl_id]})], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
       if tq is not None: tq.update()
       if nmax and n_mol>=nmax: break
@@ -768,7 +768,7 @@ def SearchMoleculeByName(ids, base_url=BASE_URL, fout=None):
 	pd.DataFrame({"molecule_chembl_id":[molecule_chembl_id]}),
 	pd.DataFrame({tag:[(synonum[tag] if tag in synonum else None)] for tag in synonym_tags})], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out+=df_this.shape[0]
   logging.info(f"n_in: {len(ids)}; n_found: {len(ids)-n_notfound}; n_out: {n_out}")
   return df
@@ -798,7 +798,7 @@ def GetMoleculeByInchikey(ids, base_url=BASE_URL, fout=None):
 	pd.DataFrame({tag:[(struct[tag] if tag in struct else None)] for tag in struct_tags})],
 	axis=1)
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out+=df_this.shape[0]
   if tq is not None: tq.close()
   logging.info(f"n_qry: {len(ids)}; n_out: {n_out}; n_not_found: {len(ids)-n_out}")

@@ -22,7 +22,7 @@ def Info(dbcon, fout=None):
   df = df.transpose()
   df.reset_index(drop=False, inplace=True)
   df.columns = ["count", "N"]
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -43,7 +43,7 @@ JOIN
 	;
 """
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_genes: {df.shape[0]}")
   return df
 
@@ -61,7 +61,7 @@ FROM
 	;
 """
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_traits: {df.shape[0]}")
   return df
 
@@ -101,7 +101,7 @@ JOIN
       df_this = pd.read_sql(sql_this, dbcon)
       if fout is None:
         df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   elif traitIds is None:
     for geneId in geneIds:
@@ -109,7 +109,7 @@ JOIN
       df_this = pd.read_sql(sql_this, dbcon)
       if fout is None:
         df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   else:
     for geneId in geneIds:
@@ -118,7 +118,7 @@ JOIN
         df_this = pd.read_sql(sql_this, dbcon)
         if fout is None:
           df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None:
@@ -152,7 +152,7 @@ WHERE
       df_this = pd.read_sql(sql_this, dbcon)
       if fout is None:
         df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None:

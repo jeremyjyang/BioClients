@@ -32,7 +32,7 @@ cited_by) reported as counts."""
     for pub in pubs:
       if not tags: tags = list(pub.keys())
       df_this = pd.DataFrame({tags[j]:[pub[tags[j]]] for j in range(len(tags))})
-      if fout: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      if fout: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       df = pd.concat([df, df_this])
       n_out+=1
     if not quiet:
@@ -55,7 +55,7 @@ def GetStats_single(pmids, base_url=BASE_URL, fout=None):
     pub = response.json()
     if not tags: tags = list(pub.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[pub[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_in: {len(pmids)}; n_out: {df.shape[0]}")
   return df
 

@@ -27,7 +27,7 @@ def GetGene(ids, base_url=BASE_URL, fout=None):
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
     gene = rval
     df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   return df
 
@@ -43,7 +43,7 @@ def GetDataset(ids, base_url=BASE_URL, fout=None):
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
     dset = rval
     df = pd.concat([df, pd.DataFrame({tag:[dset[tag]] for tag in tags})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   return df
 
@@ -64,7 +64,7 @@ def GetCompound(ids, base_url=BASE_URL, fout=None):
           logging.info(f"Ignoring tag \"{tag}\"")
     df_this = pd.DataFrame({tag:[compound[tag]] for tag in tags})
     if fout is not None:
-      df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else:
       df = pd.concat([df, df_this])
     n_out+=1
@@ -96,7 +96,7 @@ def ListCompounds(base_url=BASE_URL, fout=None):
             tags.remove(tag)
             logging.info(f"Ignoring tag \"{tag}\"")
       df_this = pd.DataFrame({tag:[compound[tag]] for tag in tags})
-      if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       else: df = pd.concat([df, df_this])
       n_out+=1
       tq.update(n=1)
@@ -120,7 +120,7 @@ def SearchDataset(searchTerm, lincs, base_url=BASE_URL, fout=None):
     if not tags:
       tags = [tag for tag in dset.keys() if type(dset[tag]) not in (list, dict)]
     df_this = pd.DataFrame({tag:[dset[tag]] for tag in tags})
-    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out+=1
   logging.info(f"n_out: {n_out}")
@@ -141,7 +141,7 @@ def SearchSignature(ids, lincs, base_url=BASE_URL, fout=None):
       if not tags:
         tags = [tag for tag in sig.keys() if type(sig[tag]) not in (list, dict)]
       df_this = pd.DataFrame({tag:[sig[tag]] for tag in tags})
-      if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       else: df = pd.concat([df, df_this])
       n_out+=1
   logging.info(f"IDs: {len(ids)}; n_sig: {df.shape[0]}")
@@ -161,7 +161,7 @@ def GetSignature(ids, ngene, base_url=BASE_URL, fout=None):
     if not tags:
       tags = [tag for tag in gene.keys() if type(gene[tag]) not in (list, dict)]
     df_this = pd.concat([df, pd.DataFrame({tag:[gene[tag]] for tag in tags})])
-    if fout is not None: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out+=1
   logging.info(f"IDs: {len(ids)}; n_out: {n_out}")

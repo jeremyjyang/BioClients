@@ -137,7 +137,7 @@ def GetSmiles2CID(smis, base_url=BASE_URL, fout=None):
       logging.warning(f"CID not found for SMI: \"{smi}\"")
       continue
     df_this = pd.DataFrame({"CID":cids, "SMILES":smi, "Name":name})
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     n_out+=len(cids)
   logging.info(f"SMIs: {len(smis)}; CIDs out: {n_out}")
@@ -314,7 +314,7 @@ def GetCID2Descriptions(ids, base_url=BASE_URL, fout=None):
         tags = list(info)
       df_this = pd.DataFrame({tag:([info[tag]] if tag in info else ['']) for tag in tags})
 
-      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
       else: df = pd.concat([df, df_this])
       n_out+=df_this.shape[0]
   logging.info(f"Input IDs: {len(ids)}; Output records: {n_out}")
@@ -342,7 +342,7 @@ def Inchi2CID(inchis, base_url=BASE_URL, fout=None):
         cid = line.strip()
         cids_this.add(cid)
     df_this = pd.DataFrame({"InChI":inchi, "CID":list(cids_this)})
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out += len(cids_this)
     tq.update(n=1)
@@ -358,7 +358,7 @@ def GetAssayName(aids, base_url=BASE_URL, fout=None):
     xmlstr = requests.get(base_url+f"/assay/aid/{aid}/description/XML").text
     name, source = AssayXML2NameAndSource(xmlstr)
     df_this = pd.DataFrame({"AID":[aid], "Name":[name], "Source":[source]})
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0))
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0))
     else: df = pd.concat([df, df_this])
     n_out+=1
     tq.update(n=1)
@@ -404,7 +404,7 @@ def GetAssayDescriptions(ids, skip, nmax, base_url=BASE_URL, fout=None):
 	"description":[description],
 	"comment":[comment]
 	})
-      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
       else: df = pd.concat([df, df_this])
       n_out+=1
     tq.update(n=1)
@@ -452,7 +452,7 @@ def GetAssaySIDs(aids, skip, nmax, base_url=BASE_URL, fout=None):
   logging.info(f"AIDs: {df.AID.nunique()}; SIDs: {df.SID.nunique()}; CIDs: {df.CID.nunique()}")
   df.drop_duplicates(inplace=True)
   df.sort_values(by=["AID", "SID"], inplace=True)
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -498,7 +498,7 @@ for each AID, then iterate through SIDs and use local hash.
     logging.info(f'Bioactivity_Outcome = {key:>12}: {val:6d}')
   df.drop_duplicates(inplace=True)
   df.sort_values(by=["AID", "SID"], inplace=True)
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
@@ -539,7 +539,7 @@ def GetSID2Synonyms(ids, base_url=BASE_URL, fout=None):
     for info in infos:
       synonyms_this = info['Synonym'] if 'Synonym' in info else []
       df_this = pd.DataFrame({"SID":id_this, "Synonym":synonyms_this})
-      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
       else: df = pd.concat([df, df_this])
       n_out+=len(synonyms_this)
   return df
@@ -566,7 +566,7 @@ def GetCID2Synonyms(ids, skip, nmax, nmax_per_cid, base_url=BASE_URL, fout=None)
       df_this = df_this[:nmax_per_cid]
       logging.debug(f"{i_cid+1}. CID={id_this}: synonyms out+truncated=all: {nmax_per_cid}+{len(synonyms_this_cid_nice)-nmax_per_cid}={len(synonyms_this_cid_nice)}")
     if fout is not None:
-      df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+      df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
       fout.flush()
     else: df = pd.concat([df, df_this])
     n_out+=len(synonyms_this_cid_nice)
@@ -589,7 +589,7 @@ def GetName2SID(names, skip, nmax, base_url=BASE_URL, fout=None):
     sids_this = rval['IdentifierList']['SID'] if 'IdentifierList' in rval and 'SID' in rval['IdentifierList'] else []
     for sid in sids_this:
       df_this = pd.DataFrame({"Name":[name], "SID":[sid]})
-      if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_sid==0), index=False)
+      if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_sid==0), index=False)
       else: df = pd.concat([df, df_this])
       n_sid+=1
     sids_all |= set(sids_this)
@@ -612,7 +612,7 @@ def GetName2CID(names, skip, nmax, base_url=BASE_URL, fout=None):
       cids_this = list(set(GetSID2CID([sid], base_url)) )
       for cid in cids_this:
         df_this = pd.DataFrame({"Name":[name], "SID":[sid], "CID":[cid]})
-        if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_cid==0), index=False)
+        if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_cid==0), index=False)
         else: df = pd.concat([df, df_this])
         n_cid+=1
       cids_all |= set(cids_this)

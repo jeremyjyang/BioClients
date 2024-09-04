@@ -27,7 +27,7 @@ def ListVersions(base_url=BASE_URL, fout=None):
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   versions = result
   df = pd.DataFrame.from_records(versions)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Versions: {len(versions)}")
   return df
 
@@ -39,7 +39,7 @@ def ListMainTypes(base_url=BASE_URL, fout=None):
   maintypes = result
   maintypes.sort()
   df = pd.DataFrame({"main_types": maintypes})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Main types: {len(maintypes)}")
   return df
 
@@ -50,7 +50,7 @@ def ListTumorTypes(base_url=BASE_URL, fout=None):
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   tumortypes = result
   df = pd.DataFrame.from_records(tumortypes)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Tumor types: {len(tumortypes)}")
   return df
 
@@ -61,7 +61,7 @@ def SearchTumorTypes(qry, qtype, exact, levels, base_url=BASE_URL, fout=None):
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
   tumortypes = result
   df = pd.DataFrame.from_records(tumortypes)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Tumor types: {len(tumortypes)}")
   return df
 

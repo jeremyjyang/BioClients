@@ -20,7 +20,7 @@ def ListOrganisms(params, base_url=API_BASE_URL, fout=None):
   df = pd.DataFrame.from_dict(organisms, orient="index")
   df.reset_index(drop=False, inplace=True)
   df.columns = ["organism_id", "organism"]
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -32,7 +32,7 @@ def ListIdTypes(params, base_url=API_BASE_URL, fout=None):
   logging.debug(json.dumps(idtypes, indent=2))
   df = pd.DataFrame.from_dict(idtypes, orient="index")
   df.reset_index(drop=False, inplace=True)
-  if fout is not None: df.to_csv(fout, "\t", index=False, header=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False, header=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -53,7 +53,7 @@ def GetInteractions(params, ids, base_url=API_BASE_URL, fout=None):
           tags.remove(tag)
     df_this = pd.DataFrame({tag:[intr[tag]] for tag in tags})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -92,7 +92,7 @@ def SearchInteractions(params, ids, search_params, base_url=API_BASE_URL, fout=N
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[intr[tag]] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     skip+=chunk
   logging.info(f"n_out: {n_out}")

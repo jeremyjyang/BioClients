@@ -27,7 +27,7 @@ def ListEntities(etype, base_url=API_BASE_URL, fout=None):
     data.update({tag:[thing[tag] if tag in thing else None] for tag in tags})
     df_this = pd.DataFrame(data)
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out ({etype}): {n_out}")
   return df
@@ -43,7 +43,7 @@ def GetReference(ids, prefix, base_url=API_BASE_URL, fout=None):
     for provider,url_this in providers.items():
       df_this = pd.DataFrame({"prefix":[prefix], "id":[id_this], "provider_name":[provider], "provider_url":[url_this]})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df

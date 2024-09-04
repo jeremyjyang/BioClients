@@ -23,7 +23,7 @@ def GetResources(ids, base_url=BASE_URL, fout=None):
       tags = [tag for tag in rval.keys() if type(rval[tag]) not in (list, dict)]
     res = rval
     df = pd.concat([df, pd.DataFrame({tags[j]:[res[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   return df
 

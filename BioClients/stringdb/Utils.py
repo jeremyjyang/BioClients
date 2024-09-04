@@ -36,7 +36,7 @@ def GetIds(ids, base_url=BASE_URL, fout=None):
       logging.debug(result)
       if not tags: tags = list(result.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"queries: {len(ids)}; results: {df.shape[0]}")
   return df
 
@@ -55,7 +55,7 @@ def GetInteractionPartners(ids, species, limit, minscore, base_url=BASE_URL, fou
       logging.debug(result)
       if not tags: tags = list(result.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"queries: {len(ids)}; interaction partners: {df.shape[0]}")
   return df
 
@@ -72,7 +72,7 @@ def GetEnrichment(ids, species, minscore, base_url=BASE_URL, fout=None):
     logging.debug(result)
     if not tags: tags = list(result.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"queries: {len(ids)}; enrichment results: {df.shape[0]}")
   return df
 
@@ -89,7 +89,7 @@ def GetPPIEnrichment(ids, species, minscore, base_url=BASE_URL, fout=None):
     logging.debug(result)
     if not tags: tags = list(result.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"queries: {len(ids)}; enrichment results: {df.shape[0]}")
   return df
 
@@ -107,7 +107,7 @@ def GetNetwork(nid, species, minscore, netflavor, base_url=BASE_URL, fout=None):
     logging.debug(edge)
     if not tags: tags = list(edge.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[edge[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"edges: {df.shape[0]}")
   return df
 

@@ -48,7 +48,7 @@ def GetESummary(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         tags = [tag for tag in pub.keys() if type(pub[tag]) not in (list, dict)]
       df_this = pd.DataFrame({tag:[pub[tag]] for tag in tags})
       if fout is not None:
-        df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       else:
         df = pd.concat([df, df_this])
     n_out+=1
@@ -115,7 +115,7 @@ def GetRecord(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
 	"year":[year]
 	})
       if fout is not None:
-        df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       else:
         df = pd.concat([df, df_this])
       n_out+=df_this.shape[0]

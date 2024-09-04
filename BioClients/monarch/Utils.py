@@ -66,7 +66,7 @@ def GetDisease(ids, base_url=BASE_URL, fout=None):
         tags.remove(tag)
     df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] for j in range(len(tags))})])
   logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 ##############################################################################
@@ -87,7 +87,7 @@ def GetDiseaseRelationships(ids, base_url=BASE_URL, fout=None):
         pd.DataFrame({tags_rel[j]:[rel[tags_rel[j]]] for j in range(len(tags_rel))}) ], axis=1)
       df = pd.concat([df, df_this], axis=0)
   logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 ##############################################################################
@@ -103,7 +103,7 @@ def GetGene(ids, base_url=BASE_URL, fout=None):
     if not tags: tags = list(gene.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
   logging.info(f"IDs in: {len(ids)}; n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 ##############################################################################
@@ -167,7 +167,7 @@ def ComparePhenotypes(idAs, idBs, base_url=BASE_URL, fout=None):
   logging.info(f"n_comparison = {len(idAs)*len(idBs)} ({len(idAs)}x{len(idBs)})")
   #logging.info("n_match = {n_match}; n_out = {n_out}")
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 ##############################################################################

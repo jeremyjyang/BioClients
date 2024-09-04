@@ -26,7 +26,7 @@ def DBInfo(base_url=BASE_URL, fout=None):
   name = rest.GetURL(base_url+'/data/database/name')
   version = rest.GetURL(base_url+'/data/database/version')
   df = pd.DataFrame({'param':['name', 'version'], 'value':[name, version]});
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################
@@ -36,7 +36,7 @@ def ListToplevelPathways(base_url=BASE_URL, fout=None):
   for pathway in pathways:
     if not tags: tags = list(pathway.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[pathway[tags[j]]] if tags[j] in pathway else [''] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('Top-level pathways: {}'.format(df.shape[0]))
   return df
 
@@ -48,7 +48,7 @@ def ListDiseases(base_url=BASE_URL, fout=None):
   for disease in diseases:
     if not tags: tags = list(disease.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[disease[tags[j]]] if tags[j] in disease else [''] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_diseases: {}'.format(df.shape[0]))
   return df
 
@@ -63,7 +63,7 @@ def QueryEntry(ids, base_url=BASE_URL, fout=None):
     if not tags: tags = list(ent.keys())
     if 'className' in ent: classNames.add(ent['className'])
     df = pd.concat([df, pd.DataFrame({tags[j]:[ent[tags[j]]] if tags[j] in ent else [''] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_out {}: {}'.format((list(classNames)), df.shape[0]))
   return df
 
@@ -81,7 +81,7 @@ def GetInteractors(ids, base_url=BASE_URL, fout=None):
         if not tags: tags = list(intr.keys())
         if 'className' in intr: classNames.add(intr['className'])
         df = pd.concat([df, pd.DataFrame({tags[j]:[intr[tags[j]]] if tags[j] in intr else [''] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_out {}: {}'.format((list(classNames)), df.shape[0]))
   return df
 
@@ -94,7 +94,7 @@ def ListCompounds(base_url=BASE_URL, fout=None):
   for mol in mols:
     if not tags: tags = list(mol.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[mol[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_mols: {}'.format(df.shape[0]))
   return df
 
@@ -109,7 +109,7 @@ def GetPathwaysForEntities(ids, base_url=BASE_URL, fout=None):
   for pathway in pathways:
     if not tags: tags = list(set(pathway.keys()))
     df = pd.concat([df, pd.DataFrame({tags[j]:[pathway[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_in: {}; n_out: {}'.format(len(ids), df.shape[0]))
   return df
 
@@ -124,7 +124,7 @@ def GetPathwaysForGenes(ids, base_url=BASE_URL, fout=None):
   for pathway in pathways:
     if not tags: tags = list(set(pathway.keys()))
     df = pd.concat([df, pd.DataFrame({tags[j]:[pathway[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_in: {}; n_out: {}'.format(len(ids), df.shape[0]))
   return df
 
@@ -138,7 +138,7 @@ def GetPathwayParticipants(id_query, base_url=BASE_URL, fout=None):
   for part in parts:
     if not tags: tags = list(set(part.keys()))
     df = pd.concat([df, pd.DataFrame({tags[j]:[part[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info('n_in: {}; n_out: {}'.format(len(ids), df.shape[0]))
   return df
 

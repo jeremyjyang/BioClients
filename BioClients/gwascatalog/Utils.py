@@ -57,7 +57,7 @@ def ListStudies(base_url=BASE_URL, fout=None):
             tags.remove(tag)
             logging.info(f"Ignoring tag: {tag}")
       df_this = pd.DataFrame({tag:[str(study[tag]) if tag in study else ''] for tag in tags})
-      if fout is not None: df_this.to_csv(fout, "\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
+      if fout is not None: df_this.to_csv(fout, sep="\t", index=False, header=(n_study==0), mode=('w' if n_study==0 else 'a'))
       else: df = pd.concat([df, df_this])
       n_study+=1
     if 'next' not in rval['_links']: break
@@ -125,7 +125,7 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
         for sra in locus['strongestRiskAlleles']:
           snp_href = sra['_links']['snp']['href'] if '_links' in sra and 'snp' in sra['_links'] and 'href' in sra['_links']['snp'] else ''
           if snp_href: n_snp+=1
-    if fout: df_this.to_csv(fout, "\t", index=False, header=(n_id==0), mode=('w' if n_id==0 else 'a'))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=(n_id==0), mode=('w' if n_id==0 else 'a'))
     if fout is None: df = pd.concat([df, df_this], axis=0)
     n_id+=1
     if n_id==nmax:
@@ -201,7 +201,7 @@ gc = genomicContext
       df_this = pd.concat([df_this, df_snp], axis=0)
       n_gene+=1
     if tq is not None: tq.close()
-    if fout: df_this.to_csv(fout, "\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
     if fout is None: df = pd.concat([df, df_this], axis=0)
     n_snp+=1
     if n_snp==nmax:
@@ -245,7 +245,7 @@ def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
       n_study+=1
       df_this = pd.DataFrame({tag:[str(study[tag]) if tag in study else ''] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False)
+      else: df_this.to_csv(fout, sep="\t", index=False)
     logging.debug(json.dumps(rval, sort_keys=True, indent=2))
   logging.info(f"n_study: {n_study}")
   if fout is None: return(df)

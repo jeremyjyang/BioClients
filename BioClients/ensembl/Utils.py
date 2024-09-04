@@ -21,7 +21,7 @@ def ShowVersion(base_url=BASE_URL, fout=None):
           requests.get(base_url+'/info/software?content-type=application/json').json()['release'],
           requests.get(base_url+'/info/eg_version?content-type=application/json').json()['version']
           ]})
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -33,7 +33,7 @@ def ListSpecies(base_url=BASE_URL, fout=None):
   for spec in specs:
     if not tags: tags = list(spec.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[spec[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_out: {df.shape[0]}")
   return df
 
@@ -63,7 +63,7 @@ def GetInfo(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
         if type(gene[tag]) not in (list, dict): tags.append(tag) #Only simple metadata.
     df_this = pd.DataFrame({tags[j]:([str(gene[tags[j]])] if tags[j] in gene else ['']) for j in range(len(tags))})
     if fout is not None:
-      df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += 1
     if fout is None: df = pd.concat([df, df_this])
     if nmax and i>=(nmax-skip): break
@@ -94,7 +94,7 @@ def GetXrefs(ids, skip=0, nmax=None, base_url=BASE_URL, fout=None):
       if not tags: tags = list(xref.keys())
       df_this =  pd.DataFrame({tags[j]:([str(xref[tags[j]])] if tags[j] in xref else ['']) for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False)
+      else: df_this.to_csv(fout, sep="\t", index=False)
       n_out+=1
     if nmax and i>=(nmax-skip): break
   if tq is not None: tq.close()
@@ -136,7 +136,7 @@ def GetVariantEffectPredictions(ids, skip=0, nmax=None, base_url=BASE_URL, fout=
       df_this_tc = pd.DataFrame({tag:([str(tc[tag])] if tag in tc else ['']) for tag in tags_tc})
       df_this = pd.concat([df_this_base, df_this_tc], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False)
+      else: df_this.to_csv(fout, sep="\t", index=False)
       n_out+=1
     if nmax and i>=(nmax-skip): break
   if tq is not None: tq.close()

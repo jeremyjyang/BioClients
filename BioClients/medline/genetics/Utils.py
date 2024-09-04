@@ -40,7 +40,7 @@ def Search(ids, base_url=API_BASE_URL, fout=None):
       if not tags: tags = list(result.keys())
       df_this = pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
@@ -57,7 +57,7 @@ def ListConditions(summary_url=SUMMARY_URL, fout=None):
       if not tags: tags = [tag for tag in summary.keys() if type(summary[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tags[j]:[summary[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
@@ -74,7 +74,7 @@ def ListGenes(summary_url=SUMMARY_URL, fout=None):
       if not tags: tags = [tag for tag in summary.keys() if type(summary[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tags[j]:[summary[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -118,7 +118,7 @@ GTR = Genetics Testing Registry, but the IDs are UMLS CUIs.
       df_this = pd.concat([df_condition, df_gene], axis=1)
 
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
 
   logging.info(f"n_out: {n_out}; n_err: {n_err}")

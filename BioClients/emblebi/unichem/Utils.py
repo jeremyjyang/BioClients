@@ -29,7 +29,7 @@ def ListSources(base_url=API_BASE_URL, fout=None):
           tags.remove(tag)
     df_this = pd.DataFrame({tag:[source[tag]] for tag in tags})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -77,7 +77,7 @@ def GetFromSourceId(ids, src_id_in, src_id_out=None, skip=None, nmax=None, base_
         df_this = pd.concat([df_this, pd.DataFrame({f"compound_{tag}":[compound[tag]] for tag in compound_tags})], axis=1)
         df_this = pd.concat([df_this, pd.DataFrame({f"source_{tag}":[source[tag]] for tag in source_tags})], axis=1)
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out += df_this.shape[0]
     if nmax is not None:
       if i>=(nmax if skip is None else nmax+skip): break
@@ -122,7 +122,7 @@ def GetFromInchi(ids, inchi_rep, search_components=False, src_id_in=None, src_id
       df_this = pd.DataFrame({f"searchedCompound_{tag}":[compound[tag]] for tag in compound_tags})
       df_this = pd.concat([df_this, pd.DataFrame({f"source_{tag}":[source[tag]] for tag in source_tags})], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     if nmax is not None:
       if i>=(nmax if skip is None else nmax+skip): break

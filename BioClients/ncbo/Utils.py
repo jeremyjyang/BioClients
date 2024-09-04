@@ -42,7 +42,7 @@ def RecommendOntologies(base_url, api_key, texts, fout):
         tags = list(result.keys())
         df_this = pd.DataFrame({tags[j]:([str(result[tags[j]])] if tags[j] in result else ['']) for j in range(len(tags))})
         df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_texts: {len(texts)}; n_out: {df.shape[0]}; n_err: {n_err}")
   return df
 

@@ -28,7 +28,7 @@ def ListDatasets(base_url=BASE_URL, fout=None):
     if not tags: tags = [tag for tag in dataset.keys() if type(dataset[tag]) not in (list, dict, collections.OrderedDict)]
     df_this = pd.DataFrame({tags[j]:[dataset[tags[j]]] for j in range(len(tags))})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -45,7 +45,7 @@ def ListSubjects(datasetId, base_url=BASE_URL, fout=None):
       if not tags: tags = [tag for tag in subject.keys() if type(subject[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tags[j]:[subject[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     if "numPages" in result and result["numPages"]-1>page:
       page+=1
@@ -66,7 +66,7 @@ def ListSamples(datasetId, subjectId, base_url=BASE_URL, fout=None):
       if not tags: tags = [tag for tag in sample.keys() if type(sample[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tags[j]:[sample[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     if "numPages" in result and result["numPages"]-1>page:
       page+=1
@@ -89,7 +89,7 @@ def GetGeneExpression(ids, datasetId, skip, base_url=BASE_URL, fout=None):
       if not tags: tags = [tag for tag in gex.keys() if type(gex[tag]) not in (list, dict, collections.OrderedDict)]
       df_this = pd.DataFrame({tags[j]:[gex[tags[j]]] for j in range(len(tags))})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df

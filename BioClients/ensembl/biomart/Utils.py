@@ -63,8 +63,8 @@ def XMLQuery(xmltxt, base_url=BASE_URL, fout=None):
     logging.error(f"{rval.status_code}")
     logging.debug(rval.text)
     return None
-  df = pd.read_table(io.StringIO(rval.text), "\t")
-  if fout: df.to_csv(fout, "\t", index=False)
+  df = pd.read_table(io.StringIO(rval.text), sep="\t")
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Output rows: {df.shape[0]}; cols: {df.shape[1]} ({str(df.columns.tolist())})")
   return df
 

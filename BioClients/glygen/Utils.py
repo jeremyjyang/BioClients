@@ -27,7 +27,7 @@ def GetGlycans(ids, skip, base_url=BASE_URL, fout=None):
     if not tags: tags = [tag for tag in result.keys() if type(result[tag]) not in (list, dict, collections.OrderedDict)]
     df_this = pd.DataFrame({tags[j]:[result[tags[j]]] for j in range(len(tags))})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -68,7 +68,7 @@ def ListGlycans(skip, base_url=BASE_URL, fout=None):
 	pd.DataFrame({"inchi_key":[inchi_key], "glytoucan_id":[glytoucan_id], "pubchem_cid":[pubchem_cid], "pubchem_sid":[pubchem_sid], "chebi_id":[chebi_id]})
 	], axis=1)
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
       tq.update(n=df_this.shape[0])
     skip += NCHUNK

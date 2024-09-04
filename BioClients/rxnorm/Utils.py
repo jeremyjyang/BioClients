@@ -22,7 +22,7 @@ def List_IDTypes(base_url=BASE_URL, fout=None):
   logging.debug(json.dumps(rval, indent=2))
   df = pd.DataFrame({"idTypeList":rval['idTypeList']['idName']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -30,7 +30,7 @@ def List_SourceTypes(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/sourcetypes.json', parse_json=True)
   df = pd.DataFrame({"sourceType":rval['sourceTypeList']['sourceName']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -38,7 +38,7 @@ def List_RelationTypes(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/relatypes.json', parse_json=True)
   df = pd.DataFrame({"relationType":rval['relationTypeList']['relationType']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -46,7 +46,7 @@ def List_TermTypes(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/termtypes.json', parse_json=True)
   df = pd.DataFrame({"termType":rval['termTypeList']['termType']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -54,7 +54,7 @@ def List_PropNames(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/propnames.json', parse_json=True)
   df = pd.DataFrame({"propName":rval['propNameList']['propName']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -62,7 +62,7 @@ def List_PropCategories(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/propCategories.json', parse_json=True)
   df = pd.DataFrame({"propCategory":rval['propCategoryList']['propCategory']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -70,7 +70,7 @@ def List_ClassTypes(base_url=BASE_URL, fout=None):
   rval = rest.GetURL(base_url+'/rxclass/classTypes.json', parse_json=True)
   df = pd.DataFrame({"classType":rval['classTypeList']['classTypeName']})
   logging.info(f"n_out: {df.shape[0]}")
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   else: return df
 
 #############################################################################
@@ -87,7 +87,7 @@ def List_Classes(class_types, base_url=BASE_URL, fout=None):
     if not tags: tags = list(cls.keys())
     df_this = pd.DataFrame({tags[j]:[cls[tags[j]]] for j in range(len(tags))})
     if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
     n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
@@ -103,7 +103,7 @@ def Get_Name2RxCUI(names, base_url=BASE_URL, fout=None):
     for rxnormId in rxnormIds:
       df_this = pd.DataFrame({"name":[idGroup["name"]], "rxnormId":rxnormId})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
@@ -122,7 +122,7 @@ def Get_Name(names, base_url=BASE_URL, fout=None):
         if not tags: tags = list(cprop.keys())
         df_this = pd.DataFrame({tags[j]:[cprop[tags[j]]] for j in range(len(tags))})
         if fout is None: df = pd.concat([df, df_this])
-        else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+        else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
         n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df
@@ -137,7 +137,7 @@ def Get_ID2RxCUI(ids, idtype, base_url=BASE_URL, fout=None):
     for rxcui in rval['idGroup']['rxnormId']:
       df_this = pd.DataFrame({"idtype":idtype, "id":[id_this], "rxnormId":rxcui})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   if fout is None: return df

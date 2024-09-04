@@ -33,6 +33,6 @@ def ListSamples(f, fout):
       df[col] = df[col].str.decode('utf-8').fillna(df[col]) 
 
   logging.info(f"Output rows: {df.shape[0]}; columns: {df.shape[1]}")
-  df.to_csv(fout, "\t", index=False)
+  df.to_csv(fout, sep="\t", index=False)
 
 #############################################################################

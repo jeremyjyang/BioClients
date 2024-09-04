@@ -32,7 +32,7 @@ def Resolve(ids, base_url=RESOLVER_API_BASE_URL, fout=None):
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[resource[tag]] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
   logging.info(f"n_out: {n_out}")
   return df
@@ -58,7 +58,7 @@ def ListEntities(entityname, base_url=REGISTRY_API_BASE_URL, fout=None):
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[thing[tag]] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     page+=1
   logging.info(f"n_out: {n_out}")
@@ -96,7 +96,7 @@ def SearchEntities(query, search_logic, entityname, base_url=REGISTRY_API_BASE_U
             tags.remove(tag)
       df_this = pd.DataFrame({tag:[thing[tag]] for tag in tags})
       if fout is None: df = pd.concat([df, df_this])
-      else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
       n_out += df_this.shape[0]
     page+=1
   logging.info(f"n_out: {n_out}")

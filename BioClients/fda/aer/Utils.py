@@ -226,7 +226,7 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
 
           rxns.add(reaction['reactionmeddrapt'])
           if fout is None: df = pd.concat([df, df_this])
-          else: df_this.to_csv(fout, "\t", index=False, header=bool(n_out==0))
+          else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
           n_out += df_this.shape[0]
       logging.debug(f"{n_report}. Report: {result['safetyreportid']} [{result['receiptdate']}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
       uniis_all |= uniis

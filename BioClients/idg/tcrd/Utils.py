@@ -13,14 +13,14 @@ NCHUNK=100;
 def Info(dbcon, fout=None):
   sql = 'SELECT * FROM dbinfo'
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
 def ListTables(dbcon, fout=None):
   sql = 'SHOW TABLES'
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_table: {df.shape[0]}")
   return df
 
@@ -28,7 +28,7 @@ def ListTables(dbcon, fout=None):
 def ListDatasets(dbcon, fout=None):
   sql = 'SELECT * FROM dataset'
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_table: {df.shape[0]}")
   return df
 
@@ -47,7 +47,7 @@ def ListColumns(dbcon, fout=None):
     df_this['table'] = table
     df_this = df_this[['table']+cols]
     df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_columns: {df.shape[0]}; n_tables: {df.table.nunique()}")
   return df
 
@@ -62,7 +62,7 @@ def TableRowCounts(dbcon, fout=None):
     df_this['table'] = table
     df_this = df_this[['table']+cols]
     df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_table: {df.shape[0]}")
   return df
 
@@ -70,28 +70,28 @@ def TableRowCounts(dbcon, fout=None):
 def TDLCounts(dbcon, fout=None):
   sql="SELECT tdl, COUNT(id) AS target_count FROM target GROUP BY tdl"
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
 def AttributeCounts(dbcon, fout=None):
   sql='SELECT ga.type, COUNT(ga.id) FROM gene_attribute ga GROUP BY ga.type'
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
 def XrefCounts(dbcon, fout=None):
   sql = ('SELECT xtype, COUNT(DISTINCT value) FROM xref GROUP BY xtype ORDER BY xtype')
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 #############################################################################
 def ListXrefTypes(dbcon, fout=None):
   sql='SELECT DISTINCT xtype FROM xref ORDER BY xtype'
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_xreftypes: {df.shape[0]}")
   return df
 
@@ -105,7 +105,7 @@ def ListXrefs(dbcon, xreftypes, fout=None):
     sql += f""" WHERE xtype IN ({("'"+("','".join(xreftypes)+"'"))})"""
   logging.debug(f'SQL: "{sql}"')
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"Target count: {df.target_id.nunique()}")
   logging.info(f"Protein count: {df.protein_id.nunique()}")
   logging.info(f"XrefType count: {df.xtype.nunique()}")
@@ -116,7 +116,7 @@ def ListXrefs(dbcon, xreftypes, fout=None):
 def ListTargetFamilies(dbcon, fout=None):
   sql="SELECT DISTINCT fam TargetFamily FROM target ORDER BY fam"
   df = pd.read_sql(sql, dbcon)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_tfams: {df.shape[0]}")
   return df
 
@@ -160,7 +160,7 @@ LEFT OUTER JOIN
   df = pd.read_sql(sql, dbcon)
   if tdls: logging.info(f"""TDLs: {",".join(tdls)}""")
   if tfams: logging.info(f"""TargetFamilies: {",".join(tfams)}""")
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   logging.info(f"Target count: {df.tcrdTargetId.nunique()}")
   logging.info(f"Protein count: {df.tcrdProteinId.nunique()}")
@@ -195,7 +195,7 @@ ORDER BY
 """
   logging.debug(sql)
   df = pd.read_sql(sql, dbcon, coerce_float=False)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   logging.info(f"Target count: {df.tcrdTargetId.nunique()}")
   logging.info(f"Protein count: {df.tcrdProteinId.nunique()}")
@@ -269,7 +269,7 @@ LEFT OUTER JOIN
     df_this = pd.read_sql(sql_this, dbcon)
     if df_this.shape[0]>0: n_hit+=1
     df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_id: {n_id}; n_hit: {n_hit}")
   return df
 
@@ -318,7 +318,7 @@ JOIN
     if df_this.shape[0]>0:
       n_hit+=1
     df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_id: {n_id}; n_hit: {n_hit}")
   return df
 
@@ -340,7 +340,7 @@ def GetPathways(dbcon, ids, fout=None):
     df_this = pd.read_sql(sql_this, dbcon)
     if df_this.shape[0]>0: n_hit+=1
     df = pd.concat([df, df_this])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_query: {n_query}; n_hit: {n_hit}")
   return df
 
@@ -371,7 +371,7 @@ GROUP BY
 	disease.source
 """
   df = pd.read_sql(sql, dbcon)
-  if fout is not None: df.to_csv(fout, "\t", index=False)
+  if fout is not None: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   logging.info(f"diseaseIDs: {df.diseaseId.nunique()}")
   logging.info(f"diseaseNames: {df.diseaseName.nunique()}")
@@ -387,7 +387,7 @@ def ListDiseaseTypes(dbcon, fout=None):
   df = df[["associationType", "associationDescription", "nTargetAssociations"]]
   df = df.groupby(["associationType", "associationDescription"]).sum()
   df.reset_index(drop=False, inplace=True)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   return df
 
@@ -419,7 +419,7 @@ WHERE
     sql_this = sql.format(id_this)
     df_this = pd.read_sql(sql_this, dbcon)
     if df_this.shape[0]>0: n_hit+=1
-    if fout is not None: df_this.to_csv(fout, "\t", index=False)
+    if fout is not None: df_this.to_csv(fout, sep="\t", index=False)
     else: df = pd.concat([df, df_this])
   logging.info(f"n_id: {n_id}; n_hit: {n_hit}")
   if fout is None: return df
@@ -456,7 +456,7 @@ GROUP BY
 """
   df = pd.read_sql(sql, dbcon)
   df.loc[((df['ptype']=='OMIM') & ((df['ptype_ontology']=='')|(df['ptype_ontology'].isna()))),'ptype_ontology'] = 'OMIM' # Kludge
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   for ptype in df.ptype.unique().tolist():
     logging.info(f"[{ptype}] phenotype_IDs: {df[df.ptype==ptype].p_identifier.nunique()}")
@@ -468,7 +468,7 @@ def ListPhenotypeTypes(dbcon, fout=None):
   df = df[["ptype", "ptype_ontology", "n_target_associations"]]
   df = df.groupby(["ptype", "ptype_ontology"]).sum()
   df.reset_index(drop=False, inplace=True)
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"rows: {df.shape[0]}")
   return df
 
@@ -492,7 +492,7 @@ FROM
   df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
   for df_this in df_itr:
     if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     if tq is not None: tq.update(df_this.shape[0])
     n_out += df_this.shape[0]
@@ -519,7 +519,7 @@ GROUP BY
   df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
   for df_this in df_itr:
     if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     if tq is not None: tq.update(df_this.shape[0])
     n_out += df_this.shape[0]
@@ -549,7 +549,7 @@ GROUP BY
   df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
   for df_this in df_itr:
     if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
-    if fout is not None: df_this.to_csv(fout, "\t", header=bool(n_out==0), index=False)
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
     else: df = pd.concat([df, df_this])
     if tq is not None: tq.update(df_this.shape[0])
     n_out += df_this.shape[0]

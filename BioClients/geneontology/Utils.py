@@ -22,7 +22,7 @@ def GetEntities(ids, base_url=BASE_URL, fout=None):
     if not tags: tags = ent.keys()
     df = pd.concat([df, pd.DataFrame({tags[j]:[ent[tags[j]]] for j in range(len(tags))})])
   logging.info('n_ent: {}'.format(df.shape[0]))
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################
@@ -36,7 +36,7 @@ def GetGeneTerms(ids, base_url=BASE_URL, fout=None):
       if not tags: tags = assn.keys()
       df = pd.concat([df, pd.DataFrame({tags[j]:[assn[tags[j]]] for j in range(len(tags))})])
   logging.info('n_gene: {}; n_assn: {}'.format(len(ids), df.shape[0]))
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   return df
 
 ##############################################################################

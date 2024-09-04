@@ -39,7 +39,7 @@ def ListDatatypes(params, base_url=BASE_URL, fout=None):
     if not tags:
       tags = [tag for tag in dt.keys() if type(dt[tag]) not in (list, dict)]
     df = pd.concat([df, pd.DataFrame({tags[j]:[dt[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_datatype: {df.shape[0]}")
   return df
 
@@ -55,7 +55,7 @@ def ListDatasets(params, base_url=BASE_URL, fout=None):
     if not tags:
       tags = [tag for tag in dset.keys() if type(dset[tag]) not in (list, dict)]
     df = pd.concat([df, pd.DataFrame({tags[j]:[dset[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_dataset: {df.shape[0]}")
   return df
 
@@ -68,7 +68,7 @@ def ListPerturbagenClasses(params, base_url=BASE_URL, fout=None):
   for pcl in pcls:
     if not tags: tags = list(pcl.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[pcl[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"n_pertclasses: {df.shape[0]}")
   return df
 
@@ -88,7 +88,7 @@ def GetGenes(params, ids, id_type, base_url=BASE_URL, fout=None):
         if not tags: tags = list(gene.keys())
         df = pd.concat([df, pd.DataFrame({tags[j]:[gene[tags[j]]] for j in range(len(tags))})])
       i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_gene: {df.shape[0]}")
   return df
@@ -126,7 +126,7 @@ def GetPerturbagens(params, ids, id_type, base_url=BASE_URL, fout=None):
         if not tags: tags = list(pert.keys())
         df = pd.concat([df, pd.DataFrame({tags[j]:[pert[tags[j]]] for j in range(len(tags))})])
       i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_pert: {df.shape[0]}")
   return df
@@ -151,7 +151,7 @@ def ListDrugs(params, base_url=BASE_URL, fout=None):
       if not tags: tags = list(drug.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[drug[tags[j]]] for j in range(len(tags))})])
     i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_drug: {df.shape[0]}")
   return df
@@ -175,7 +175,7 @@ def GetCells(params, ids, id_type, base_url=BASE_URL, fout=None):
         if not tags: tags = list(cell.keys())
         df = pd.concat([df, pd.DataFrame({tags[j]:[cell[tags[j]]] for j in range(len(tags))})])
       i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_cell: {df.shape[0]}")
   return df
@@ -195,7 +195,7 @@ def ListCells(params, base_url=BASE_URL, fout=None):
       if not tags: tags = list(cell.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[cell[tags[j]]] for j in range(len(tags))})])
     i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_cell: {df.shape[0]}")
   return df
@@ -209,7 +209,7 @@ def CountSignatures(params, args, base_url=BASE_URL, fout=None):
   for sig in sigs:
     if not tags: tags = list(sig.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[sig[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_sig: {df.shape[0]}")
   return df
@@ -231,7 +231,7 @@ def GetSignatures(params, args, base_url=BASE_URL, fout=None):
       if not tags: tags = list(sig.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[sig[tags[j]]] for j in range(len(tags))})])
     i_chunk+=1
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info(f"IDs: {len(ids)}")
   logging.info(f"n_sig: {df.shape[0]}")
   return df

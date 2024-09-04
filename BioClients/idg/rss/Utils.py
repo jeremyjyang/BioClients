@@ -24,7 +24,7 @@ def ListTargets(base_url=BASE_URL, fout=None):
     logging.debug(json.dumps(target, sort_keys=True, indent=2))
     if not tags: tags = list(target.keys())
     df = pd.concat([df, pd.DataFrame({tags[j]:[target[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(df.shape[0]))
   return(df)
 
@@ -39,7 +39,7 @@ def GetTargetResources(ids, base_url=BASE_URL, fout=None):
       logging.debug(json.dumps(resource, sort_keys=True, indent=2))
       if not tags: tags = list(resource.keys())
       df = pd.concat([df, pd.DataFrame({tags[j]:[resource[tags[j]]] for j in range(len(tags))})])
-  if fout: df.to_csv(fout, "\t", index=False)
+  if fout: df.to_csv(fout, sep="\t", index=False)
   logging.info("n_out: {}".format(df.shape[0]))
   return(df)
 
