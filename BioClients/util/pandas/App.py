@@ -95,10 +95,10 @@ if __name__=='__main__':
     fout.write("coltags: {}\n".format(', '.join([f'"{tag}"' for tag in df.columns])))
 
   elif args.op=='csv2tsv':
-    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
 
   elif args.op=='tsv2csv':
-    df.to_csv(fout, ',', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep=',', index=False, header=(not args.noheader))
 
   elif args.op=='to_html':
     util_pandas.ToHtml(df, args.html_title, args.html_prettify, fout)
@@ -107,14 +107,14 @@ if __name__=='__main__':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df = df[coltags] if coltags else df.iloc[:, cols]
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
 
   elif args.op == 'selectcols_deduplicate':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     subset = coltags if coltags else df.columns[cols].to_list() if cols else None
     df.drop_duplicates(subset=subset, inplace=True)
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
 
   elif args.op == 'uvalcounts':
     for j,tag in enumerate(df.columns):
@@ -145,7 +145,7 @@ if __name__=='__main__':
 
   elif args.op == 'deduplicate':
     df.drop_duplicates(inplace=True)
-    df.to_csv(fout, '\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
 
   elif args.op == 'searchrows':
     if args.search_qrys is None: 

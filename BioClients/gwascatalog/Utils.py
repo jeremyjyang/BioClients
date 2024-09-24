@@ -23,9 +23,11 @@ def ListStudies(base_url=BASE_URL, fout=None):
 
   retry_strategy = Retry(
 	total=10,
+	status=4,
 	backoff_factor=2,
 	status_forcelist=[413, 429, 500, 502, 503, 504],
-	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
+    allowed_methods=Retry.DEFAULT_ALLOWED_METHODS
+    #method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"] #DEPRECATED: method_whitelist deprecated and removed from urllib3==1.26.0 onwards, as per https://github.com/urllib3/urllib3/blob/main/CHANGES.rst#1260-2020-11-10
 	)
   adapter = HTTPAdapter(max_retries=retry_strategy)
   session = requests.Session()
@@ -149,9 +151,11 @@ gc = genomicContext
 
   retry_strategy = Retry(
 	total=10,
+	status=4,
 	backoff_factor=2,
 	status_forcelist=[413, 429, 502, 503, 504], #Not 500
-	method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
+    allowed_methods=Retry.DEFAULT_ALLOWED_METHODS
+    #method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"] #DEPRECATED: method_whitelist deprecated and removed from urllib3==1.26.0 onwards, as per https://github.com/urllib3/urllib3/blob/main/CHANGES.rst#1260-2020-11-10
 	)
   adapter = HTTPAdapter(max_retries=retry_strategy)
   session = requests.Session()
