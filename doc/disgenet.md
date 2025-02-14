@@ -2,5 +2,8 @@
 
 ## DisGeNet
 
-* <https://www.disgenet.org/api/>
-* <https://www.disgenet.org/dbinfo>
+* <https://www.disgenet.com/>
+* <https://www.disgenet.com/Profile-area>
+* <https://www.disgenet.com/Profile-area#console>
+* <https://www.disgenet.com/Profile-area#howtouse>
+* <https://www.disgenet.com/Profile-area#examples>

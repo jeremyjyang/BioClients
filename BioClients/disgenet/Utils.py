@@ -3,38 +3,13 @@
  https://www.disgenet.org/api/
  https://www.disgenet.org/dbinfo
  DisGeNET Disease Types : disease, phenotype, group
- DisGeNET Metrics:
-   GDA Score
-   VDA Score
-   Disease Specificity Index (DSI)
-   Disease Pleiotropy Index (DPI)
-   Evidence Level (EL)
-   Evidence Index (EI)
- GNOMAD pLI (Loss-of-function Intolerant)
-
- DisGeNET Association Types:
-   Therapeutic
-   Biomarker
-   Genomic Alterations
-   GeneticVariation
-   Causal Mutation
-   Germline Causal Mutation
-   Somatic Causal Mutation
-   Chromosomal Rearrangement
-   Fusion Gene
-   Susceptibility Mutation
-   Modifying Mutation
-   Germline Modifying Mutation
-   Somatic Modifying Mutation
-   AlteredExpression
-   Post-translational Modification
 """
 ###
 import sys,os,io,re,time,requests,json,logging
 import pandas as pd
 #
-API_HOST='www.disgenet.org'
-API_BASE_PATH='/api'
+API_HOST='api.disgenet.com'
+API_BASE_PATH='/api/v1'
 BASE_URL='https://'+API_HOST+API_BASE_PATH
 #
 SOURCES = [
@@ -91,6 +66,7 @@ DISEASE_CLASSES = [ # MeSH Disease classes:
  "F02", # Psychological Phenomena
  "F03", # Mental Disorders
 	]
+GENEID_TYPES = ["ncbi", "ensembl", "symbol", "uniprot"]
 #
 ##############################################################################
 def GetApiKey(session, user_email, user_password, base_url=BASE_URL):
@@ -112,28 +88,105 @@ def GetApiKey(session, user_email, user_password, base_url=BASE_URL):
   return api_key
 
 ##############################################################################
-def GetVersion(user_email, user_password, base_url=BASE_URL, fout=None):
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
-  url = f"{base_url}/version/"
-  response = session.get(url, params={'format':'tsv'})
-  df = pd.read_csv(io.StringIO(response.text), sep='\t')
+def GetVersion(api_key, base_url=BASE_URL, fout=None):
+  headers={'Authorization': api_key, 'Accept': 'application/json'}
+  url = f"{base_url}/public/version"
+  response = requests.get(url, headers=headers)
+  #logging.debug(response.text)
+  results = response.json()["payload"]
+  logging.debug(json.dumps(results, indent=2))
+  df = pd.DataFrame(results, index=[0])
   if fout is not None: df.to_csv(fout, sep='\t', index=False)
   return df
 
 ##############################################################################
-def GetGeneGDAs(ids, source, user_email, user_password, base_url=BASE_URL, fout=None):
-  '''NCBI Entrez Identifier or HGNC Symbol'''
+def GetDiseaseGDAs(ids, source, api_key, base_url=BASE_URL, fout=None):
   tags=[]; n_out=0; df=None;
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
+  headers={'Authorization': api_key, 'Accept': 'application/json'}
+  url = f"{base_url}/gda/summary"
   params = {'source': source}
   for id_this in ids:
-    url = f"{base_url}/gda/gene/{id_this}"
-    response = session.get(url, params=params)
-    gdas = response.json()
+    params['disease'] = f"{id_this}"
+    response = requests.get(url, params=params, headers=headers)
+    results = response.json()
+    logging.debug(json.dumps(results, indent=2))
+    gdas = results["payload"]
+    for gda in gdas:
+      if not tags:
+        tags = [tag for tag in gda.keys() if type(gda[tag]) not in (list,dict)]
+      df_this = pd.DataFrame({tag:[gda[tag] if tag in gda else ""] for tag in tags})
+      if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
+      else: df = pd.concat([df, df_this])
+      n_out+=1
+  logging.info(f"IDs: {len(ids)}; GDAs: {n_out}")
+  return df
+
+##############################################################################
+def GetDiseases(ids, dtype, dclasses, nmax, api_key, base_url=BASE_URL, fout=None):
+  n_out=0; df=None;
+  tags = ["name", "type", "diseaseClasses_MSH", "diseaseClasses_UMLS_ST", "diseaseClasses_DO", "diseaseClasses_HPO", "diseaseCodes", "synonyms"];
+  headers={'Authorization': api_key, 'Accept': 'application/json'}
+  url = f"{base_url}/entity/disease"
+  params = {}
+  for id_this in ids:
+    params['disease'] = f"{id_this}"
+    if dtype is not None: params['type'] = dtype
+    if dclasses is not None: params['dis_class_list'] = dclasses
+    response = requests.get(url, params=params, headers=headers)
+    if not response.ok:
+      if response.status_code == 429:
+        while response.ok is False:
+          logging.info("Query limit reached; waiting {}s...".format(response.headers['x-rate-limit-retry-after-seconds']))
+          time.sleep(int(response.headers['x-rate-limit-retry-after-seconds']))
+          response = requests.get(url, params=params, headers=headers)
+          if response.ok is True:
+            break
+          else:
+            continue
+    results = response.json()
+    logging.debug(json.dumps(results, indent=2))
+    diseases = results["payload"]
+    for disease in diseases:
+      d={}
+      for tag in tags:
+        if tag not in disease:
+          d[tag] = None
+        elif tag == "diseaseCodes":
+            d[tag] = ";".join([f"{s['vocabulary']}:{s['code']}" for s in disease[tag]])
+        elif tag == "synonyms":
+          d[tag] = ";".join([s["name"] for s in disease[tag]])
+        elif type(disease[tag]) not in (list,dict):
+          d[tag] = disease[tag]
+        elif type(disease[tag]) is list:
+          d[tag] = ";".join([str(x) for x in disease[tag]])
+      df_this = pd.DataFrame(d, index=[0])
+      if df_this is None: continue
+      if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
+      else: df = pd.concat([df, df_this])
+      n_out+=df_this.shape[0]
+  logging.info(f"Diseases: {n_out}")
+  return df
+
+##############################################################################
+def GetGeneGDAs(ids, geneid_type, source, api_key, base_url=BASE_URL, fout=None):
+  '''NCBI Entrez Identifier or HGNC Symbol'''
+  tags=[]; n_out=0; df=None;
+  headers={'Authorization': api_key, 'Accept': 'application/json'}
+  url = f"{base_url}/gda/summary"
+  params = {'source': source}
+  for id_this in ids:
+    if geneid_type == "ncbi":
+      params["gene_ncbi_id"] = id_this
+    elif geneid_type == "ensembl":
+      params["gene_ensembl_id"] = id_this
+    elif geneid_type == "uniprot":
+      params["uniprot_id"] = id_this
+    else:
+      params["gene_symbol"] = id_this
+    response = requests.get(url, params=params, headers=headers)
+    results = response.json()
+    logging.debug(json.dumps(results, indent=2))
+    gdas = results["payload"]
     for gda in gdas:
       if not tags:
         tags = list(gda.keys())
@@ -145,88 +198,7 @@ def GetGeneGDAs(ids, source, user_email, user_password, base_url=BASE_URL, fout=
       if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
       else: df = pd.concat([df, df_this])
       n_out+=1
-  session.close()
   logging.info(f"IDs: {len(ids)}; GDAs: {n_out}")
   return df
-
-##############################################################################
-def GetDiseaseGDAs(ids, source, user_email, user_password, base_url=BASE_URL, fout=None):
-  tags=[]; n_out=0; df=None;
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
-  logging.debug(f"HEADERS: {session.headers}")
-  params = {'source': source}
-  for id_this in ids:
-    url = f"{base_url}/gda/disease/{id_this}"
-    response = session.get(url, params=params)
-    gdas = response.json()
-    for gda in gdas:
-      if not tags:
-        tags = [tag for tag in gda.keys() if type(gda[tag]) not in (list,dict)]
-      df_this = pd.DataFrame({tag:[gda[tag] if tag in gda else ""] for tag in tags})
-      if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
-      else: df = pd.concat([df, df_this])
-      n_out+=1
-  logging.info(f"IDs: {len(ids)}; GDAs: {n_out}")
-  return df
-
-##############################################################################
-def GetProteinGDAs(ids, source, user_email, user_password, base_url=BASE_URL, fout=None):
-  """Uniprot protein accession."""
-  tags=[]; n_out=0; df=None;
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
-  for id_this in ids:
-    url = f"{base_url}/gda/uniprot/{id_this}?source={source}"
-    response = requests.get(url, headers=headers)
-    gdas = response.json()
-    for gda in gdas:
-      if not tags:
-        tags = [tag for tag in gda.keys() if type(gda[tag]) not in (list,dict)]
-      df_this = pd.DataFrame({tag:[gda[tag] if tag in gda else ""] for tag in tags})
-      if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
-      else: df = pd.concat([df, df_this])
-      n_out+=1
-  logging.info(f"IDs: {len(ids)}; GDAs: {n_out}")
-  return df
-
-##############################################################################
-def ListDiseases(user_email, user_password, base_url=BASE_URL, fout=None):
-  tags=[]; n_out=0; df=None;
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
-  for source in SOURCES:
-    url = f"{base_url}/disease/source/{source}"
-    params = {'format':'tsv'}
-    response = session.get(url, params=params)
-    if (response.status_code!=200):
-      logging.error(f"(status_code={response.status_code}): source: {source}")
-      continue
-    df_this = pd.read_csv(io.StringIO(response.text), sep='\t')
-    if fout is not None: df_this.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
-    else: df = pd.concat([df, df_this])
-    n_out+=df_this.shape[0]
-  logging.info(f"Diseases: {n_out}")
-
-##############################################################################
-def GetDiseases(source, dtype, dclass, nmax, user_email, user_password, base_url=BASE_URL, fout=None):
-  tags=[]; n_out=0; df=None;
-  session = requests.Session()
-  api_key = GetApiKey(session, user_email, user_password, base_url)
-  if api_key is None: return
-  url = f"{base_url}/disease/source/{source}"
-  params = {'format':'tsv'}
-  if dtype is not None: params['type'] = dtype
-  if dclass is not None: params['disease_class'] = dclass
-  if nmax is not None: params['limit'] = nmax
-  response = session.get(url, params=params)
-  #logging.debug(response.text)
-  df = pd.read_csv(io.StringIO(response.text), sep='\t')
-  if fout is not None: df.to_csv(fout, sep='\t', index=False, header=bool(n_out==0))
-  n_out+=df.shape[0]
-  logging.info(f"Diseases: {n_out}")
 
 ##############################################################################
