@@ -11,16 +11,17 @@ and transforms into usable formats, often TSV.
 ## Availability and installation
 
 Source at <https://github.com/jeremyjyang/BioClients>;
-releases available via `pypi.org`:
-<https://pypi.org/project/BioClients/>
-(`pip3 install BioClients`).
+releases available via <https://pypi.org/project/BioClients/>.
 
+```
+pip3 install BioClients
+```
 However, current development snapshot may included additional functionality.
 
 ___(First download or clone.)___
 ```
-$ cd BioClients
-$ python3 setup.py install
+cd BioClients
+python3 setup.py install
 ```
 
 ## Dependencies
@@ -37,7 +38,7 @@ Miscellaneous utilities: [__UTIL__](doc/util.md)
 ## Usage Example
 
 ```
-$ python3 -m BioClients.pubchem.Client -h
+python3 -m BioClients.pubchem.Client -h
 ```
 
 ## Design pattern
@@ -59,3 +60,15 @@ rows and columns, related by common keys, reflecting the development
 of SQL and relational databases. Transforming JSON to TSV, as these
 clients generally do, projects data objects to tables useful for many
 applications (e.g. machine learning).
+
+## Conda environment
+
+BioClients depends on numerous Python packages.  (See [conda/environment.yml](conda/environment.yml)).
+The following commands create and activate a Conda environment `bioclients`:
+
+```
+conda env create -f conda/environment.yml
+conda activate bioclients
+```
+
+
