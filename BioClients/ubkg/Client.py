@@ -7,11 +7,12 @@ import sys,os,re,argparse,time,json,logging
 import pandas as pd
 #
 from .. import ubkg
+from .. import umls
 #
 ##############################################################################
 if __name__=='__main__':
   epilog='''\
-The Data Distillery Knowledge Graph (DDKG) is an extension and instance of the Unified Biomedical Knowledge Graph (UBKG), developed by the University of Pittsburgh, Children's Hospital of Philadelphia, and the Common Fund Data Ecosystem (CFDE) Data Distillery Partnership Project.
+The Data Distillery Knowledge Graph (DDKG) is a context (extension) of the Unified Biomedical Knowledge Graph (UBKG), developed by the University of Pittsburgh, Children's Hospital of Philadelphia, and the Common Fund Data Ecosystem (CFDE) Data Distillery Partnership Project.
 '''
   parser = argparse.ArgumentParser(description='UBKG REST API client', epilog=epilog)
   ops = ['search',
@@ -21,6 +22,7 @@ The Data Distillery Knowledge Graph (DDKG) is an extension and instance of the U
           'list_node_type_counts',
           'list_property_types',
           'list_sabs',
+          'list_sources',
           'list_semantic_types',
           'get_concept2codes',
           'get_concept2concepts',
@@ -34,15 +36,17 @@ The Data Distillery Knowledge Graph (DDKG) is an extension and instance of the U
   parser.add_argument("--i", dest="ifile", help="UMLS CUI ID file")
   parser.add_argument("--ids", help="UMLS CUI IDs, comma-separated")
   parser.add_argument("--term", help="UMLS term, e.g. 'Asthma'")
-  parser.add_argument("--sab", default="SNOWMEDCT_US", help="Standard abbreviation type")
+  parser.add_argument("--sab", help="Standard abbreviation type")
   parser.add_argument("--relationship", default="isa", help="Relationship type")
+  parser.add_argument("--context", choices=ubkg.CONTEXTS, default="base_context")
   parser.add_argument("--mindepth", type=int, default=1, help="min path depth")
   parser.add_argument("--maxdepth", type=int, default=3, help="max path depth")
   parser.add_argument("--nmax", type=int, default=None, help="max records")
   parser.add_argument("--skip", type=int, default=0, help="skip 1st SKIP queries")
   parser.add_argument("--api_host", default=ubkg.API_HOST)
   parser.add_argument("--api_base_path", default=ubkg.API_BASE_PATH)
-  parser.add_argument("--api_key")
+  parser.add_argument("--api_key", help="UMLS API Key")
+  parser.add_argument("--param_file", default=os.environ['HOME']+"/.umls.yaml")
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -51,6 +55,11 @@ The Data Distillery Knowledge Graph (DDKG) is an extension and instance of the U
   BASE_URL='https://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile,"w") if args.ofile else sys.stdout
+
+  params = umls.ReadParamFile(args.param_file)
+  if args.api_key: params['API_KEY'] = args.api_key
+  if not params['API_KEY']:
+    parser.error('Please specify valid UMLS API_KEY via --api_key or --param_file')
 
   t0=time.time()
 
@@ -84,6 +93,9 @@ The Data Distillery Knowledge Graph (DDKG) is an extension and instance of the U
 
   elif args.op == "list_sabs":
     ubkg.ListSABs(args.api_key, BASE_URL, fout)
+
+  elif args.op == "list_sources":
+    ubkg.ListSources(args.context, args.sab, args.api_key, BASE_URL, fout)
 
   elif args.op == "get_concept2codes":
     ubkg.GetConcept2Codes(ids, args.api_key, BASE_URL, fout)

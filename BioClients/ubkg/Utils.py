@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 """
 Utility functions for UBKG REST API.
-See: https://smart-api.info/ui/55be2831c69b17f6bc975ddb58cabb5e
+See: https://smart-api.info/ui/96e5b5c0b0efeef5b93ea98ac2794837 (includes DDKG context)
 C0006142,C0678222
 """
 import sys,os,re,requests,urllib,json,time,logging,tqdm
 import pandas as pd
 
 #
-API_HOST="datadistillery.api.sennetconsortium.org"
+#API_HOST="datadistillery.api.sennetconsortium.org"
+API_HOST="ubkg.api.xconsortia.org"
 API_BASE_PATH=""
 BASE_URL="https://"+API_HOST+API_BASE_PATH
+#
+CONTEXTS = ["base_context", "data_distillery_context", "hubmap_sennet_context"]
 #
 HEADERS={"Accept":"application/json"}
 #
 ##############################################################################
 def Info(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/database/server", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
@@ -26,18 +29,50 @@ def Info(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def ListSABs(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/sabs", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
-  df = pd.DataFrame(result)
+  df = pd.DataFrame({"sabs":result["sabs"]})
   if fout: df.to_csv(fout, sep="\t", index=False)
-  logging.info(f"SABs: {df.shape[0]}")
+  return df
+
+##############################################################################
+def ListSources(context, sab, api_key, base_url=BASE_URL, fout=None):
+  n_out=0; df=None; tags=None;
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
+  response = requests.get(base_url+f"/sources?context={context}", headers=headers)
+  result = response.json()
+  logging.debug(json.dumps(result, sort_keys=True, indent=2))
+  sources = result["sources"]
+  for source in sources:
+    if not tags:
+      tags = list(source.keys())
+    for tag in tags:
+      if type(source[tag]) in (dict, list, tuple):
+        if len(source[tag])>0:
+          if tag=="citations":
+            source[tag] = ";".join([v["url"] for v in source[tag]])
+          elif tag=="contexts":
+            source[tag] = ";".join(source[tag])
+          elif tag=="home_urls":
+            source[tag] = ";".join(source[tag])
+          elif tag=="licenses":
+            source[tag] = ";".join(["{}:{}:{}".format(v["type"], v["subtype"], v["version"]) for v in source[tag]])
+          else:
+            source[tag] = ";".join([str(v) for v in source[tag]])
+        else:
+          source[tag] = str(source[tag])
+      df_this = pd.DataFrame({tag:[(source[tag] if tag in source else None)] for tag in tags})
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+      n_out+=df_this.shape[0]
+  logging.info(f"Sources: {n_out}")
   return df
 
 ##############################################################################
 def ListNodeTypes(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/node-types", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
@@ -48,7 +83,7 @@ def ListNodeTypes(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def ListNodeTypeCounts(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   node_types = ListNodeTypes(api_key, base_url)["node_types"]
   n_type=0; n_out=0; df=None;
   for node_type in node_types:
@@ -66,7 +101,7 @@ def ListNodeTypeCounts(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def ListRelationshipTypes(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/relationship-types", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
@@ -77,7 +112,7 @@ def ListRelationshipTypes(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def ListPropertyTypes(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/property-types", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
@@ -88,7 +123,7 @@ def ListPropertyTypes(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def ListSemanticTypes(api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get(base_url+"/semantics/semantic-types", headers=headers)
   result = response.json()
   logging.debug(json.dumps(result, sort_keys=True, indent=2))
@@ -100,7 +135,7 @@ def ListSemanticTypes(api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def GetConcept2Codes(ids, api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   n_in=0; n_out=0; n_code=0; df=None;
   for id_this in ids:
     n_in += 1
@@ -121,7 +156,7 @@ def GetConcept2Codes(ids, api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def GetConcept2Concepts(ids, api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   n_in=0; n_out=0; n_concept=0; df=None;
   for id_this in ids:
     n_in += 1
@@ -144,7 +179,7 @@ def GetConcept2Concepts(ids, api_key, base_url=BASE_URL, fout=None):
 
 ##############################################################################
 def GetConcept2Definitions(ids, api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   n_in=0; n_out=0; n_def=0; df=None;
   for id_this in ids:
     n_in += 1
@@ -168,7 +203,7 @@ def GetConcept2Definitions(ids, api_key, base_url=BASE_URL, fout=None):
 ##############################################################################
 def GetConcept2Paths(ids, sab, rel, mindepth, maxdepth, api_key, base_url=BASE_URL, fout=None):
   '''JSON output'''
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   n_in=0; n_node_out=0; n_edge_out=0;
   for id_this in ids:
     n_in += 1
@@ -185,7 +220,7 @@ def GetConcept2Paths(ids, sab, rel, mindepth, maxdepth, api_key, base_url=BASE_U
 ##############################################################################
 def GetConcept2Trees(ids, sab, rel, mindepth, maxdepth, api_key, base_url=BASE_URL, fout=None):
   '''JSON output'''
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   n_in=0; n_node_out=0; n_edge_out=0;
   for id_this in ids:
     n_in += 1
@@ -201,7 +236,7 @@ def GetConcept2Trees(ids, sab, rel, mindepth, maxdepth, api_key, base_url=BASE_U
 
 ##############################################################################
 def GetTerm2Concepts(term, api_key, base_url=BASE_URL, fout=None):
-  headers = {**HEADERS, **{"X-API-KEY": api_key}}
+  headers = {**HEADERS, **{"UMLS-Key": api_key}}
   response = requests.get("{}/terms/{}/concepts".format(base_url, urllib.parse.quote(term)), headers=headers)
   if not response:
     logging.info(f"Not found: {term}")
