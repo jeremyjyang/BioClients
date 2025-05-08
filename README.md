@@ -67,8 +67,21 @@ BioClients depends on numerous Python packages.  (See [conda/environment.yml](co
 The following commands create and activate a Conda environment `bioclients`:
 
 ```
-conda env create -f conda/environment.yml
-conda activate bioclients
+$ conda env create -f conda/environment.yml
+```
+If that fails, try:
+```
+$ conda create -n bioclients -c conda-forge pandas readline requests pyyaml tqdm psycopg2 numpy scipy scikit-learn matplotlib bioclients
+```
+then:
+```
+$ conda activate bioclients
+```
+and install additional packages as needed via `pip`, e.g.:
+```
+(bioclients) $ pip install sqlalchemy
+(bioclients) $ pip install pyquery
+(bioclients) $ pip install mygene
 ```
 
 
