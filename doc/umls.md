@@ -168,6 +168,8 @@ All get* operations require --idsrc CUI, CUIs as inputs; CUI = Concept Unique
 Identifier.
 ```
 
+Lookup concept terms and sources by UMLS CUI:
+
 ```
 python3 -m BioClients.umls.Client getCodes --id C0018787
 CUI	src	atom_code	atom_name
@@ -190,7 +192,15 @@ INFO:n_out: 11
 python3 -m BioClients.umls.Client getAtoms --id C0018787
 ```
 
+Search by text query:
+
 ```
 python3 -m BioClients.umls.Client search --searchType words --searchQuery "Parkinson"
 python3 -m BioClients.umls.Client search --searchType leftTruncation --searchQuery "Alzheimer"
+```
+
+Lookup concepts by Xref source and ID:
+
+```
+python3 -m BioClients.umls.Client xrefConcept --idsrc CPT --ids "0032U,0291U"
 ```

@@ -299,3 +299,21 @@ Example using [KGAP LINCS+IDG](https://github.com/IUIDSL/kgap_lincs-idg):
 ```
 $ python3 -m BioClients.util.neo4j.App --dbhost localhost --dbport 11006  query --cql "MATCH (d:Drug)--(s:Signature)--(g:Gene) WHERE d.name = 'tamoxifen' RETURN d.name,g.name" 
 ```
+
+##  `PDF`
+
+Processing PDF files, using the [PyMuPDF](https://pymupdf.readthedocs.io/) package.
+
+```
+$ python3 -m BioClients.util.pdf.PDF2Txt --help
+Usage: python -m BioClients.util.pdf.PDF2Txt [OPTIONS]
+
+Options:
+  --input_file FILE   Input PDF file.  [required]
+  --output_file FILE  Output TXT file.
+  --encoding TEXT     Text encoding.
+  --table_delim TEXT  Table column delimiter.
+  --paginate          Write page delimiters.
+  --extract_tables
+  --help              Show this message and exit.
+```

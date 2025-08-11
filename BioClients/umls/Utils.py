@@ -271,7 +271,7 @@ def XrefConcept(src, ids, skip, nmax, auth, ver=API_VERSION, base_url=API_BASE_U
       logging.debug(f'response.text="{response.text}"')
       continue
     logging.debug(json.dumps(items, indent=4))
-    result = items["result"]
+    result = items["result"] if "result" in items else {}
     for key in UMLS_COMMON_FIELDS+UMLS_OPTIONAL_FIELDS:
       logging.info(f"""{key:14s}: {(result[key] if key in result else '')}""") 
     if 'semanticTypes' in result:
@@ -279,13 +279,13 @@ def XrefConcept(src, ids, skip, nmax, auth, ver=API_VERSION, base_url=API_BASE_U
         for key in styp.keys():
           logging.info(f'Semantic type {i+1}. {key}: {styp[key]}')
     if n_out==0 or not result_tags:
-      result_tags = result.keys()
+      result_tags = list(result.keys())
       id_tag = (f'{src}_id' if src else 'CUI')
       fout.write('\t'.join([id_tag]+result_tags)+'\n')
     vals = [id_query]
     for tag in result_tags:
       val = (result[tag] if tag in result else '')
-      if tag == 'concepts':
+      if tag == 'concepts' and "concepts" in result:
         url2 = result['concepts']
         response2 = UmlsApiGet(url2, auth, tgt)
         response2.encoding = 'utf-8'
