@@ -10,18 +10,33 @@ and transforms into usable formats, often TSV.
 
 ## Availability and installation
 
-Source at <https://github.com/jeremyjyang/BioClients>;
-releases available via <https://pypi.org/project/BioClients/>.
+### Installing from PyPI
+
+Releases at <https://pypi.org/project/BioClients/>.
 
 ```
 pip3 install BioClients
 ```
 However, current development snapshot may included additional functionality.
 
+### Installing from source
+
+Source at <https://github.com/jeremyjyang/BioClients>
+
 ___(First download or clone.)___
+
+
+Install `build` package.
+
+```
+python3 -m pip install --upgrade build
+```
+
+Install using `build`.  This supercedes the deprecated `setup.py install` and `easy_install` methods.
+
 ```
 cd BioClients
-python3 setup.py install
+python3 -m build
 ```
 
 ## Dependencies
@@ -84,4 +99,6 @@ and install additional packages as needed via `pip`, e.g.:
 (bioclients) $ pip install mygene
 ```
 
+## Venv, etc.
 
+It may not be necessary or advantageous to configure an environment for all of BioClients functionality. Specific modules may be supported with `venv` environments with required dependencies. Module documentation should indicate needed package dependencies.
