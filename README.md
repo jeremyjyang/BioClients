@@ -86,17 +86,21 @@ $ conda env create -f conda/environment.yml
 ```
 If that fails, try:
 ```
-$ conda create -n bioclients -c conda-forge pandas readline requests pyyaml tqdm psycopg2 numpy scipy scikit-learn matplotlib bioclients
+$ conda create -n bioclients -c conda-forge pandas readline requests pyyaml tqdm psycopg2 numpy scipy scikit-learn matplotlib
 ```
 then:
 ```
 $ conda activate bioclients
+(bioclients) $ pip install BioClients
 ```
 and install additional packages as needed via `pip`, e.g.:
 ```
 (bioclients) $ pip install sqlalchemy
 (bioclients) $ pip install pyquery
 (bioclients) $ pip install mygene
+(bioclients) $ pip install click
+(bioclients) $ pip install PyMuPDF
+(bioclients) $ pip install py2neo
 ```
 
 ## Venv, etc.
