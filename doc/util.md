@@ -309,11 +309,16 @@ $ python3 -m BioClients.util.pdf.PDF2Txt --help
 Usage: python -m BioClients.util.pdf.PDF2Txt [OPTIONS]
 
 Options:
-  --input_file FILE   Input PDF file.  [required]
-  --output_file FILE  Output TXT file.
-  --encoding TEXT     Text encoding.
-  --table_delim TEXT  Table column delimiter.
-  --paginate          Write page delimiters.
+  --input_file FILE               Input PDF file.  [required]
+  --output_file FILE              Output TXT file.
+  --encoding TEXT                 Text encoding.
+  --table_delim TEXT              Table column delimiter.
+  --paginate                      Write page delimiters.
+  --pages_selected TEXT           Extract only pages specified (comma-
+                                  separated list)
   --extract_tables
-  --help              Show this message and exit.
+  --extract_tables_selected TEXT  Extract only tables specified (comma-
+                                  separated list)
+  --debug
+  --help                          Show this message and exit.
 ```
