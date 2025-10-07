@@ -27,8 +27,8 @@ cited_by) reported as counts."""
       break
     result = response.json()
     logging.debug(json.dumps(result, indent=2))
-    url_self = result['links']['self']
-    pubs = result['data']
+    #url_self = result['links']['self']
+    pubs = result['data'] if 'data' in result else []
     for pub in pubs:
       if not tags: tags = list(pub.keys())
       df_this = pd.DataFrame({tags[j]:[pub[tags[j]]] for j in range(len(tags))})
