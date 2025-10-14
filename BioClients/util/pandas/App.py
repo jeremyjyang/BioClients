@@ -46,8 +46,12 @@ if __name__=='__main__':
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  if args.op in ('selectcols', 'uvalcounts', 'colvalcounts', 'sortbycols'):
-    if not (args.cols or args.coltags): 
+  if args.op in ('selectcols', 'selectcols_deduplicate', 'uvalcounts', 'colvalcounts', 'sortbycols'):
+    if args.cols:
+      logging.info(f"Cols selected: {args.cols}")
+    elif args.coltags: 
+      logging.info(f"Coltags selected: {args.coltags}")
+    else:
       parser.error(f'{args.op} requires --cols or --coltags.')
 
   logging.info(verstr)
@@ -69,8 +73,10 @@ if __name__=='__main__':
   cols=None; coltags=None;
   if args.cols:
     cols = [(int(col.strip())-1) for col in re.split(r',', args.cols.strip())]
+    logging.info(f"Cols selected: {str(cols)}")
   elif args.coltags:
     coltags = [coltag.strip() for coltag in re.split(r',', args.coltags.strip())]
+    logging.info(f"Coltags selected: {','.join(coltags)}")
 
   search_qrys = [qry.strip() for qry in re.split(r',', args.search_qrys.strip())] if (args.search_qrys is not None) else None
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
@@ -113,6 +119,7 @@ if __name__=='__main__':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     subset = coltags if coltags else df.columns[cols].to_list() if cols else None
     df.drop_duplicates(subset=subset, inplace=True)
+    df = df[coltags] if coltags else df.iloc[:, cols]
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
 

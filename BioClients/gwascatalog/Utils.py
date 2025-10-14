@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-https://www.ebi.ac.uk/gwas/rest/docs/api
+V1:
+ - https://www.ebi.ac.uk/gwas/rest/docs/api
+
+V2:
+ - https://www.ebi.ac.uk/gwas/rest/api/v2/docs
+ - "GWAS RESTful API V2 has been released with various enhancements & improvements over GWAS RESTful API V1. V1 is deprecated and will be retired no later than May 2026."
+ - https://www.ebi.ac.uk/gwas/rest/api/v2/docs/reference
 """
 ###
 import sys,os,re,json,time,logging,tqdm
@@ -12,7 +18,9 @@ import pandas as pd
 #
 API_HOST='www.ebi.ac.uk'
 API_BASE_PATH='/gwas/rest/api'
+API_BASE_PATH_V2='/gwas/rest/api/v2'
 BASE_URL='https://'+API_HOST+API_BASE_PATH
+BASE_URL_V2='https://'+API_HOST+API_BASE_PATH_V2
 #
 NCHUNK=100;
 #
@@ -55,7 +63,13 @@ def ListStudies(base_url=BASE_URL, fout=None):
       if not tags:
         tags = list(study.keys())
         for tag in tags[:]:
-          if type(study[tag]) in (list, dict) and tag!="diseaseTrait":
+          if type(study[tag]) in (list, dict) and tag not in (
+                  "diseaseTrait", #V1
+                  "disease_trait", #V2
+                  "efo_traits", #V2
+                  "genotyping_technologies", #V2
+                  "discovery_ancestry" #V2
+                  ):
             tags.remove(tag)
             logging.info(f"Ignoring tag: {tag}")
       df_this = pd.DataFrame({tag:[str(study[tag]) if tag in study else ''] for tag in tags})
@@ -136,6 +150,77 @@ https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001430/associations?projection=a
   if tq is not None: tq.close()
   n_gcst = len(gcsts)
   logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sra} ; snps: {n_snp}")
+  if fout is None: return(df)
+
+##############################################################################
+def GetStudyAssociationsV2(ids, skip=0, nmax=None, base_url=BASE_URL_V2, fout=None):
+  """
+https://www.ebi.ac.uk/gwas/rest/api/v2/associations?accession_id=GCST000854&page=0&size=20
+sea = SNP effect allele
+  """
+  n_id=0; n_assn=0; df=None; tq=None;
+  tags_assn=[];
+  gcsts=set([]); snps=set([]); loci=set([]); seas=set([]); 
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
+  for id_this in ids[skip:]:
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip)
+    if tq is not None: tq.update()
+    url_this = base_url+f'/associations?accession_id={id_this}'
+    response = requests.get(url_this)
+    if (response.status_code!=200):
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      continue
+    rval = response.json()
+    if not rval: continue
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+    if '_embedded' in rval and 'associations' in rval['_embedded']:
+      assns = rval['_embedded']['associations']
+    else:
+      logging.error(f'No associations for study: {id_this}')
+      continue
+    df_this=None;
+    for assn in assns:
+      n_assn+=1
+      if n_assn==1:
+        for key,val in assn.items():
+          if type(val) not in (list, dict):
+            tags_assn.append(key)
+      df_assn = pd.DataFrame({tag_assn:[assn[tag_assn]] for tag_assn in tags_assn})
+      if 'accession_id' in assn: gcsts.add(assn['accession_id'])
+      links = assn['_links'] if '_links' in assn else {}
+      loci_this = links['loci']['href'] if 'loci' in links and 'href' in links['loci'] else {}
+      snps_this = links['snp']['href'] if 'snp' in links and 'href' in links['snp'] else {}
+      if loci_this:
+        loci.add(loci_this)
+        df_assn['loci'] = [str(loci_this)]
+      else:
+        df_assn['loci'] = []
+      if snps_this:
+        snps.add(snps_this)
+        df_assn['snps'] = [str(snps_this)]
+      else:
+        df_assn['snps'] = []
+      seas_this = assn['snp_effect_allele'] if 'snp_effect_allele' in assn else []
+      if seas_this:
+        df_assn['seas'] = [str(seas_this)]
+      else:
+        df_assn['seas'] = []
+      for sea in seas_this:
+        seas.add(sea)
+      df_this = pd.concat([df_this, df_assn], axis=0)
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=(n_id==0), mode=('w' if n_id==0 else 'a'))
+    if fout is None: df = pd.concat([df, df_this], axis=0)
+    n_id+=1
+    if n_id==nmax:
+      logging.info(f"NMAX IDs reached: {nmax}")
+      break
+  if tq is not None: tq.close()
+  n_gcst = len(gcsts)
+  n_loci = len(loci)
+  n_snp = len(snps)
+  n_sea = len(seas)
+  logging.info(f"INPUT RCSTs: {n_id}; OUTPUT RCSTs: {n_gcst} ; assns: {n_assn} ; loci: {n_loci} ; alleles: {n_sea} ; snps: {n_snp}")
   if fout is None: return(df)
 
 ##############################################################################
