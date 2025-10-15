@@ -29,6 +29,7 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
   parser = argparse.ArgumentParser(description='GWAS Catalog REST API (V1|V2) client', epilog=epilog)
   searchtypes=['pubmedmid', 'gcst', 'efotrait', 'efouri', 'accessionid', 'rs']
   ops = [
+          'get_metadata_v2',
           'list_studies',
           'list_studies_v2',
           'get_studyAssociations',
@@ -73,7 +74,10 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
     ids = re.split(r'\s*,\s*', args.ids.strip())
   if ids: logging.info(f"Input IDs: {len(ids)}")
 
-  if args.op == 'list_studies':
+  if args.op == 'get_metadata_v2':
+    gwascatalog.GetMetadataV2(base_url, fout)
+
+  elif args.op == 'list_studies':
     gwascatalog.ListStudies(base_url, fout)
 
   elif args.op == 'list_studies_v2':
@@ -89,13 +93,10 @@ Example SNPIDs: rs6085920, rs2273833, rs6684514, rs144991356
     gwascatalog.GetSnps(ids, args.skip, args.nmax, base_url, fout)
 
   elif args.op == 'get_snps_v2':
-    gwascatalog.GetSnps(ids, args.skip, args.nmax, base_url_v2, fout)
+    gwascatalog.GetSnpsV2(ids, args.skip, args.nmax, base_url_v2, fout)
 
   elif args.op == 'search_studies':
     gwascatalog.SearchStudies(ids, args.searchtype, base_url, fout)
-
-  elif args.op == 'search_studies_v2':
-    gwascatalog.SearchStudies(ids, args.searchtype, base_url_v2, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")

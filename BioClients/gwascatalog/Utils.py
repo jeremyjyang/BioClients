@@ -25,23 +25,47 @@ BASE_URL_V2='https://'+API_HOST+API_BASE_PATH_V2
 NCHUNK=100;
 #
 ##############################################################################
-def ListStudies(base_url=BASE_URL, fout=None):
-  """Only simple metadata."""
-  tags=[]; n_study=0; rval=None; df=None; tq=None;
-
+def InitiateSession():
   retry_strategy = Retry(
 	total=10,
 	status=4,
 	backoff_factor=2,
 	status_forcelist=[413, 429, 500, 502, 503, 504],
     allowed_methods=Retry.DEFAULT_ALLOWED_METHODS
-    #method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"] #DEPRECATED: method_whitelist deprecated and removed from urllib3==1.26.0 onwards, as per https://github.com/urllib3/urllib3/blob/main/CHANGES.rst#1260-2020-11-10
 	)
   adapter = HTTPAdapter(max_retries=retry_strategy)
   session = requests.Session()
   session.mount("https://", adapter)
   session.mount("http://", adapter)
+  return session
 
+##############################################################################
+def GetMetadataV2(base_url=BASE_URL_V2, fout=None):
+  session = InitiateSession()
+  url_this = base_url+f'/metadata'
+  response = session.get(url_this)
+  if (response.status_code!=200):
+    logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+    return
+  try:
+    rval = response.json()
+  except Exception as e:
+    logging.error(f"{str(e)}; response.text: {response.text}")
+    return
+  logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+  metadata = rval['_embedded']['mappingMetadatas'][0]
+  for key in metadata.keys():
+    metadata[key] = [metadata[key]]
+  df_this = pd.DataFrame.from_dict(metadata)
+  if fout is not None:
+    df_this.to_csv(fout, sep="\t", index=False, header=True)
+  return df_this
+
+##############################################################################
+def ListStudies(base_url=BASE_URL, fout=None):
+  """Only simple metadata."""
+  tags=[]; n_study=0; rval=None; df=None; tq=None;
+  session = InitiateSession()
   url_this = base_url+f'/studies?size={NCHUNK}'
   while True:
     logging.debug(url_this)
@@ -233,20 +257,7 @@ gc = genomicContext
   n_snp=0; n_gene=0; n_loc=0; df=None; tq=None;
   tags_snp=[]; tags_loc=[]; tags_gc=[]; tags_gcloc=[];  tags_gene=[]; 
   quiet = bool(logging.getLogger().getEffectiveLevel()>15)
-
-  retry_strategy = Retry(
-	total=10,
-	status=4,
-	backoff_factor=2,
-	status_forcelist=[413, 429, 502, 503, 504], #Not 500
-    allowed_methods=Retry.DEFAULT_ALLOWED_METHODS
-    #method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"] #DEPRECATED: method_whitelist deprecated and removed from urllib3==1.26.0 onwards, as per https://github.com/urllib3/urllib3/blob/main/CHANGES.rst#1260-2020-11-10
-	)
-  adapter = HTTPAdapter(max_retries=retry_strategy)
-  session = requests.Session()
-  session.mount("https://", adapter)
-  session.mount("http://", adapter)
-
+  session = InitiateSession()
   url = base_url+'/singleNucleotidePolymorphisms'
   if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
   for id_this in ids[skip:]:
@@ -298,6 +309,100 @@ gc = genomicContext
       break
   logging.info(f"SNPs: {n_snp}; genes: {n_gene}")
   if fout is None: return(df)
+
+##############################################################################
+def GetSnpsV2(ids, skip=0, nmax=None, base_url=BASE_URL_V2, fout=None):
+  """
+Input: rs_id, e.g. rs7329174
+https://www.ebi.ac.uk/gwas/rest/api/v2/single-nucleotide-polymorphisms?rs_id=rs7329174&page=0&size=20
+To do(?): Include genomic contexts
+  """
+  n_snp=0; n_gene=0; n_loc=0; n_gc=0; df=None; tq=None;
+  tags_snp=[]; tags_gc=[];
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  session = InitiateSession()
+  url = base_url+'/single-nucleotide-polymorphisms'
+  if skip>0: logging.info(f"SKIP IDs skipped: {skip}")
+  for id_this in ids[skip:]:
+    if not quiet and tq is None: tq = tqdm.tqdm(total=len(ids)-skip)
+    if tq is not None: tq.update()
+    url_this = url+f"?rs_id={id_this}"
+    try:
+      response = session.get(url_this)
+    except Exception as e:
+      logging.error(f"Failed for SNP:{id_this}; URL:{url_this}; {str(e)}")
+      continue
+    if response.status_code!=200:
+      logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+      continue
+
+    rval = response.json()
+    logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+    snps = rval['_embedded']['snps'] if '_embedded' in rval and 'snps' in rval['_embedded'] else []
+    df_this=None;
+    for snp in snps:
+      if not tags_snp:
+        for key,val in snp.items():
+          if type(val) not in (list, dict): tags_snp.append(key)
+      df_snp = pd.DataFrame({tag_snp:[snp[tag_snp]] for tag_snp in tags_snp})
+      if 'mapped_genes' in snp:
+        df_snp['mapped_genes'] = [','.join(snp['mapped_genes'])]
+        n_gene += len(snp['mapped_genes'])
+      links = snp['_links'] if '_links' in snp else {}
+      gcs_url = links['genomic_contexts']['href'] if 'genomic_contexts' in links and 'href' in links['genomic_contexts'] else None
+      df_snp['genomic_contexts_url'] = [gcs_url]
+
+      locs = snp['locations'] if 'locations' in snp else []
+      locs_strs = []
+      for loc in locs:
+        cn = loc['chromosome_name'] if 'chromosome_name' in loc else ''
+        cp = loc['chromosome_position'] if 'chromosome_position' in loc else ''
+        cr = loc['region']['name'] if 'region' in loc and 'name' in loc['region'] else ''
+        locs_strs.append(f"{cn}|{cp}|{cr}")
+      df_snp['locations'] = [','.join(locs_strs)]
+      n_loc += len(locs)
+
+      rs_id = snp['rs_id'] if 'rs_id' in snp else None
+      gcs = GetGenomicContextsV2(rs_id, session)
+      df_gc = None
+      for gc in gcs:
+        if not tags_gc:
+          for key,val in gc.items():
+            if type(val) not in (list, dict): tags_gc.append(key)
+        df_gc = pd.concat([df_gc, pd.DataFrame({tag_gc:[gc[tag_gc]] for tag_gc in tags_gc})])
+      n_gc += len(gcs)
+      df_snp = pd.concat([df_snp, df_gc], axis=1)
+      df_this = pd.concat([df_this, df_snp], axis=0)
+
+    if fout: df_this.to_csv(fout, sep="\t", index=False, header=(n_snp==0), mode=('w' if n_snp==0 else 'a'))
+    if fout is None: df = pd.concat([df, df_this], axis=0)
+    n_snp+=1
+    if n_snp==nmax:
+      logging.info(f"NMAX IDs reached: {nmax}")
+      break
+  if tq is not None: tq.close()
+  logging.info(f"SNPs: {n_snp}; mapped_genes: {n_gene}; locations: {n_loc}; genomic_contexts: {n_gc}")
+  if fout is None: return(df)
+
+##############################################################################
+def GetGenomicContextsV2(rs_id, session):
+  """
+https://www.ebi.ac.uk/gwas/rest/api/v2/single-nucleotide-polymorphisms/rs7329174/genomic-contexts?sort=distance&direction=asc
+  """
+  if not rs_id: return []
+  url_this = f"https://www.ebi.ac.uk/gwas/rest/api/v2/single-nucleotide-polymorphisms/{rs_id}/genomic-contexts?sort=distance&direction=asc"
+  try:
+    response = session.get(url_this)
+  except Exception as e:
+    logging.error(f"Failed for SNP:{rs_id}; URL:{url_this}; {str(e)}")
+    return []
+  if response.status_code!=200:
+    logging.error(f"(status_code={response.status_code}): url_this: {url_this}")
+    return []
+  rval = response.json()
+  logging.debug(json.dumps(rval, sort_keys=True, indent=2))
+  gcs = rval['_embedded']['genomic_contexts'] if '_embedded' in rval and 'genomic_contexts' in rval['_embedded'] else []
+  return gcs
 
 ##############################################################################
 def SearchStudies(ids, searchtype, base_url=BASE_URL, fout=None):
