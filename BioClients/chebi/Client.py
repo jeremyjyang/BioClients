@@ -19,11 +19,13 @@ if __name__=='__main__':
 	"list_sources",
 	"get_entity",
 	"get_entity_names",
-	"get_entity_chemical_data",
 	"get_entity_secondary_ids",
+	"get_entity_database_accessions",
 	"get_entity_children",
 	"get_entity_parents",
 	"get_entity_origins",
+	"get_entity_citations",
+	"get_compound_data",
 	"search"
 	]
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
@@ -67,6 +69,18 @@ if __name__=='__main__':
 
   elif args.op == "get_entity_children":
     chebi.GetEntity(ids, False, True, base_url, fout)
+
+  elif args.op == "get_entity_database_accessions":
+    chebi.GetEntityDatabaseAccessions(ids, base_url, fout)
+
+  elif args.op == "get_entity_citations":
+    chebi.GetEntityCitations(ids, base_url, fout)
+
+  elif args.op == "get_entity_names":
+    chebi.GetEntityNames(ids, base_url, fout)
+
+  elif args.op == "get_compound_data":
+    chebi.GetCompoundData(ids, base_url, fout)
 
   elif args.op == "list_sources":
     chebi.ListSources(base_url, fout)
