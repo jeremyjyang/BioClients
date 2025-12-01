@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Utility for ChEBI SOAP API.
+Utility for ChEBI REST API.
 
-* https://www.ebi.ac.uk/chebi/webServices.do
+* https://www.ebi.ac.uk/chebi/
+* https://www.ebi.ac.uk/chebi/backend/api/docs/
 """
 ###
 import sys,os,re,json,argparse,time,logging
@@ -12,12 +13,17 @@ from .. import chebi
 #
 ##############################################################################
 if __name__=='__main__':
-  epilog="Example entity IDs: 30273,33246,24433"
-  parser = argparse.ArgumentParser(description='ChEBI SOAP API client', epilog=epilog)
+  epilog="Example entity IDs: 16737, 30273,33246,24433"
+  parser = argparse.ArgumentParser(description='ChEBI REST API client', epilog=epilog)
   ops = [ 
+	"list_sources",
 	"get_entity",
+	"get_entity_names",
+	"get_entity_chemical_data",
+	"get_entity_secondary_ids",
 	"get_entity_children",
 	"get_entity_parents",
+	"get_entity_origins",
 	"search"
 	]
   parser.add_argument("op", choices=ops, help='OPERATION (select one)')
@@ -54,13 +60,16 @@ if __name__=='__main__':
     parser.error(f"--i or --ids required for operation {args.op}.")
 
   if args.op == "get_entity":
-    chebi.GetEntity(ids, base_url, fout)
-
-  elif args.op == "get_entity_children":
-    chebi.GetEntityChildren(ids, base_url, fout)
+    chebi.GetEntity(ids, False, False, base_url, fout)
 
   elif args.op == "get_entity_parents":
-    chebi.GetEntityParents(ids, base_url, fout)
+    chebi.GetEntity(ids, True, False, base_url, fout)
+
+  elif args.op == "get_entity_children":
+    chebi.GetEntity(ids, False, True, base_url, fout)
+
+  elif args.op == "list_sources":
+    chebi.ListSources(base_url, fout)
 
   elif args.op == "search":
     parser.error(f'Not yet implemented: {args.op}')
