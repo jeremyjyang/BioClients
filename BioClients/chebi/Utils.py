@@ -11,6 +11,24 @@ API_HOST="www.ebi.ac.uk"
 API_BASE_PATH="/chebi/backend/api/public"
 BASE_URL="https://"+API_HOST+API_BASE_PATH
 #
+NCHUNK=100
+#
+##############################################################################
+def ListSources(base_url=BASE_URL, fout=None):
+  n_out=0; tags=None; df=None;
+  response = requests.get(f"{base_url}/advanced_search/sources_list", headers={"Accept":"application/json"})
+  result = response.json()
+  logging.debug(json.dumps(result, indent=2))
+  for source in result:
+    if not tags:
+      tags = [tag for tag in source.keys() if type(source[tag]) not in (list, dict, collections.OrderedDict)]
+    df_this = pd.DataFrame({tag:[source[tag] if tag in source else ''] for tag in tags})
+    if fout is None: df = pd.concat([df, df_this])
+    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+    n_out += df_this.shape[0]
+  logging.info(f"n_out: {n_out}")
+  return df
+
 ##############################################################################
 def GetEntity(ids, include_parents=False, include_children=False, base_url=BASE_URL, fout=None):
   n_out=0; tags=None; df=None;
@@ -76,8 +94,9 @@ def GetEntityDatabaseAccessions(ids, base_url=BASE_URL, fout=None):
     xrefs = database_accessions["MANUAL_X_REF"] if "MANUAL_X_REF" in database_accessions else []
     cas_rns = database_accessions["CAS"] if "CAS" in database_accessions else []
     rns = database_accessions["REGISTRY_NUMBER"] if "REGISTRY_NUMBER" in database_accessions else []
+    citations = database_accessions["CITATION"] if "CITATION" in database_accessions else []
 
-    for acc in xrefs+cas_rns+rns:
+    for acc in xrefs+cas_rns+rns+citations:
       df_this_acc = pd.DataFrame({tag:[acc[tag] if tag in acc else ''] for tag in tags_dbacc})
       if "id" in df_this_acc:
         df_this_acc["accession_id"] = df_this_acc.pop("id")
@@ -124,18 +143,27 @@ def GetCompoundData(ids, base_url=BASE_URL, fout=None):
   return df
 
 ##############################################################################
-def ListSources(base_url=BASE_URL, fout=None):
-  n_out=0; tags=None; df=None;
-  response = requests.get(f"{base_url}/advanced_search/sources_list", headers={"Accept":"application/json"})
-  result = response.json()
-  logging.debug(json.dumps(result, indent=2))
-  for source in result:
-    if not tags:
-      tags = [tag for tag in source.keys() if type(source[tag]) not in (list, dict, collections.OrderedDict)]
-    df_this = pd.DataFrame({tag:[source[tag] if tag in source else ''] for tag in tags})
-    if fout is None: df = pd.concat([df, df_this])
-    else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
-    n_out += df_this.shape[0]
+def Search(query, base_url=BASE_URL, fout=None):
+  n_out=0; df=None;
+  tags_source=[ "chebi_accession", "name", "ascii_name", "stars", "default_structure", "definition", "monoisotopicmass", "charge", "formula", "smiles", "mass", "structures", ];
+  url = f"{base_url}/es_search/?term={query}&size={NCHUNK}"
+  i_page=1;
+  while True:
+    url_this = f"{url}&page={i_page}"
+    response = requests.get(url_this, headers={"Accept":"application/json"})
+    rval = response.json()
+    logging.debug(json.dumps(rval, indent=2))
+    results = rval["results"] 
+    n_total = rval["total"] if "total" in rval else 0
+    n_pages = rval["number_pages"] if "number_pages" in rval else 0
+    for result in results:
+      source_data = result["_source"] if "_source" in result else {}
+      df_this = pd.DataFrame({tag:[source_data[tag] if tag in source_data else ''] for tag in tags_source})
+      if fout is None: df = pd.concat([df, df_this])
+      else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+      n_out += df_this.shape[0]
+    if n_out >= n_total: break
+    i_page+=1
   logging.info(f"n_out: {n_out}")
   return df
 

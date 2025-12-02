@@ -13,7 +13,10 @@ from .. import chebi
 #
 ##############################################################################
 if __name__=='__main__':
-  epilog="Example entity IDs: 16737, 30273,33246,24433"
+  epilog="""\
+Note that database accessions include citations.
+Example entity IDs: 16737, 30273,33246,24433\
+"""
   parser = argparse.ArgumentParser(description='ChEBI REST API client', epilog=epilog)
   ops = [ 
 	"list_sources",
@@ -24,7 +27,6 @@ if __name__=='__main__':
 	"get_entity_children",
 	"get_entity_parents",
 	"get_entity_origins",
-	"get_entity_citations",
 	"get_compound_data",
 	"search"
 	]
@@ -32,7 +34,7 @@ if __name__=='__main__':
   parser.add_argument("--ids", help="input IDs")
   parser.add_argument("--i", dest="ifile", help="input file, IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--query", help="search query (SMILES)")
+  parser.add_argument("--query", help="search query (Elastic search)")
   parser.add_argument("--skip", type=int, default=0)
   parser.add_argument("--nmax", type=int, default=None)
   parser.add_argument("--api_host", default=chebi.API_HOST)
@@ -73,9 +75,6 @@ if __name__=='__main__':
   elif args.op == "get_entity_database_accessions":
     chebi.GetEntityDatabaseAccessions(ids, base_url, fout)
 
-  elif args.op == "get_entity_citations":
-    chebi.GetEntityCitations(ids, base_url, fout)
-
   elif args.op == "get_entity_names":
     chebi.GetEntityNames(ids, base_url, fout)
 
@@ -86,8 +85,10 @@ if __name__=='__main__':
     chebi.ListSources(base_url, fout)
 
   elif args.op == "search":
-    parser.error(f'Not yet implemented: {args.op}')
-    #chebi.Search(args.query, base_url, fout)
+    if not args.query:
+      parser.error(f'--query QUERY required for operation: {args.op}')
+    #parser.error(f'Not yet implemented: {args.op}')
+    chebi.Search(args.query, base_url, fout)
 
   else:
     parser.error(f'Invalid operation: {args.op}')
