@@ -635,19 +635,29 @@ def GetMolecule(ids, base_url=BASE_URL, fout=None):
     mol = response.json()
     if not tq: tq = tqdm.tqdm(total=len(ids), unit="mols")
     tq.update()
+    logging.debug(json.dumps(mol, sort_keys=True, indent=2))
     if not mol_tags:
       mol_tags = [tag for tag in sorted(list(mol.keys())) if type(mol[tag]) not in (dict, list)]
     if not struct_tags:
-      struct_tags = sorted(mol["molecule_structures"].keys())
-      struct_tags.remove("molfile")
+      molecule_structures = mol["molecule_structures"]
+      if type(molecule_structures) is dict:
+        struct_tags = sorted(molecule_structures.keys())
+        struct_tags.remove("molfile")
+      else:
+        molecule_structures = {}
+        struct_tags = {}
     if not prop_tags:
-      prop_tags = sorted(mol["molecule_properties"].keys())
-    logging.debug(json.dumps(mol, sort_keys=True, indent=2))
+      molecule_properties = mol["molecule_properties"]
+      if type(molecule_properties) is dict:
+        prop_tags = sorted(molecule_properties.keys())
+      else:
+        molecule_properties = {}
+        prop_tags = {}
     parent_chembl_id = mol["molecule_hierarchy"]["parent_chembl_id"] if "molecule_hierarchy" in mol and "parent_chembl_id" in mol["molecule_hierarchy"] else ""
     df_this = pd.concat([
 	pd.DataFrame({tag:[(mol[tag] if tag in mol else None)] for tag in mol_tags}),
-	pd.DataFrame({tag:[(mol["molecule_structures"][tag] if tag in mol["molecule_structures"] else None)] for tag in struct_tags}),
-	pd.DataFrame({tag:[(mol["molecule_properties"][tag] if tag in mol["molecule_properties"] else None)] for tag in prop_tags}),
+	pd.DataFrame({tag:[(molecule_structures[tag] if tag in molecule_structures else None)] for tag in struct_tags}),
+	pd.DataFrame({tag:[(molecule_properties[tag] if tag in molecule_properties else None)] for tag in prop_tags}),
 	pd.DataFrame({"parent_chembl_id":[parent_chembl_id]})], axis=1)
     if fout is None: df = pd.concat([df, df_this])
     else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
