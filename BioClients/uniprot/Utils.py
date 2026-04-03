@@ -1,15 +1,38 @@
 #!/usr/bin/env python3
 ##############################################################################
-### uniprot_utils.py - utility functions for access to Uniprot REST API.
+### Utility functions for access to Uniprot REST API.
 ### UniprotKB = Uniprot Knowledge Base
 ##############################################################################
-import sys,os,re,logging
+import sys,os,re,json,logging
 #
-from ..util import rest
+import requests,tqdm
+#
+#API_HOST='www.uniprot.org'
+#API_BASE_PATH='/uniprot'
+API_HOST='rest.uniprot.org'
+API_BASE_PATH='/uniprotkb'
 #
 #############################################################################
-def GetData(base_uri, uids, ofmt, fout):
+def GetData(base_uri, uids, fout):
+  n_prot=0; n_err=0;
+  for uid in uids:
+    response = requests.get(f"{base_uri}/{uid}", headers={"Content-Type":"application/json"})
+
+    logging.debug(response.text)
+    result = response.json()
+    logging.debug(json.dumps(result, sort_keys=True, indent=2))
+    if response.status_code != 200:
+      logging.error(f"status_code: {response.status_code}")
+      n_err+=1
+      continue
+
+    n_prot+=1
+  logging.info(f"n_in: {len(uids)}; n_prot: {n_prot}; n_err: {n_err}")
+
+#############################################################################
+def GetData_old(base_uri, uids, ofmt, fout):
   """Need to handle xml, rdf better (merge)."""
+  from ..util import rest
   n_prot=0; n_err=0;
   for uid in uids:
     rval=rest.GetURL(base_uri+'/%s.%s'%(uid, ofmt))

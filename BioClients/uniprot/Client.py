@@ -10,9 +10,6 @@ import sys,os,re,argparse,time,logging
 #
 from .. import uniprot
 #
-API_HOST='www.uniprot.org'
-API_BASE_PATH='/uniprot'
-#
 ##############################################################################
 if __name__=='__main__':
   parser = argparse.ArgumentParser(description='Uniprot query client; get data for specified IDs')
@@ -23,8 +20,8 @@ if __name__=='__main__':
   parser.add_argument("--i", dest="ifile", help="input file, UniProt IDs")
   parser.add_argument("--o", dest="ofile", help="output (CSV)")
   parser.add_argument("--ofmt", default='txt')
-  parser.add_argument("--api_host", default=API_HOST)
-  parser.add_argument("--api_base_path", default=API_BASE_PATH)
+  parser.add_argument("--api_host", default=uniprot.API_HOST)
+  parser.add_argument("--api_base_path", default=uniprot.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
   args = parser.parse_args()
 
@@ -32,10 +29,7 @@ if __name__=='__main__':
 
   BASE_URI='https://'+args.api_host+args.api_base_path
 
-  if args.ofile:
-    fout = open(args.ofile, 'w')
-  else:
-    fout = sys.stdout
+  fout = open(args.ofile, 'w') if args.ofile else sys.stdout
 
   t0=time.time()
 
@@ -52,10 +46,10 @@ if __name__=='__main__':
     parser.error('--i or --uids required.')
 
   if args.op == 'getData':
-    uniprot.GetData(BASE_URI, uids, args.ofmt, fout)
+    uniprot.GetData(BASE_URI, uids, fout)
 
   else:
-    parser.error('Unknown operation: %s'%args.op)
+    parser.error(f"Unknown operation: {args.op}")
 
   logging.info('elapsed time: %s'%(time.strftime('%Hh:%Mm:%Ss', time.gmtime(time.time()-t0))))
 
