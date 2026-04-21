@@ -9,8 +9,12 @@ from .. import uniprot
 #
 ##############################################################################
 if __name__=='__main__':
-  parser = argparse.ArgumentParser(description='Uniprot query client; get data for specified IDs')
-  ops = ['getData', 'listData']
+  epilog = 'Example IDs: Q14790,P01116,P01118,A8K8Z5,B0LPF9,Q96D10'
+  parser = argparse.ArgumentParser(description='Uniprot query client; get data for specified IDs', epilog=epilog)
+  ops = ['getData',
+         'getNames',
+         'getFunctions',
+         'listData']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", dest="ids", help="UniProt IDs, comma-separated (ex: Q14790)")
   parser.add_argument("--i", dest="ifile", help="input file, UniProt IDs")
@@ -42,6 +46,12 @@ if __name__=='__main__':
 
   if args.op == 'getData':
     uniprot.GetData(BASE_URI, ids, fout)
+
+  elif args.op == 'getNames':
+    uniprot.GetNames(BASE_URI, ids, fout)
+
+  elif args.op == 'getFunctions':
+    uniprot.GetFunctions(BASE_URI, ids, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")
