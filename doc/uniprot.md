@@ -8,7 +8,7 @@ UniprotKB = Uniprot Knowledge Base
 
 * <https://www.uniprot.org>
 * <https://www.uniprot.org/help/api>
-* <https://www.uniprot.org/uniprot>
+* <https://www.uniprot.org/api-documentation/uniprotkb>
 
 ```
 $ python -m BioClients.uniprot.Client -h

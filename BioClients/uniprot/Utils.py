@@ -11,6 +11,7 @@ import pandas as pd
 #
 API_HOST='rest.uniprot.org'
 API_BASE_PATH='/uniprotkb'
+SEARCH_FIELDS_DEFAULT='accession,protein_name,organism_name_field,cc_function,reviewed'
 #
 #############################################################################
 def GetNames(base_uri, ids, fout):
@@ -117,6 +118,21 @@ def GetFunctions(base_uri, ids, fout):
   return df
 
 #############################################################################
+def Search(base_uri, query, fout):
+  n_out=0; n_err=0; df = None;
+  n_page=100;
+  tags_pro = ["entryType", "primaryAccession"]
+  params = { "query": query,
+            "size": f"{n_page}",
+            "sort": "accession desc",
+          "fields": [ "accession", "protein_name", "cc_funtion", "ft_binding" ] }
+  headers = { "accept": "application/json" }
+
+  response = requests.get(f"{base_uri}/search", headers=headers, params=params)
+
+
+#############################################################################
+# Probably should discontinue this function.
 def GetData(base_uri, ids, fout):
   n_prot=0; n_err=0;
   params = {

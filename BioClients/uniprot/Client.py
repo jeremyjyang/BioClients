@@ -14,11 +14,14 @@ if __name__=='__main__':
   ops = ['getData',
          'getNames',
          'getFunctions',
-         'listData']
+         'search',
+         'listSearchFields']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--ids", dest="ids", help="UniProt IDs, comma-separated (ex: Q14790)")
   parser.add_argument("--i", dest="ifile", help="input file, UniProt IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
+  parser.add_argument("--query", dest="search_query", help="search query")
+  parser.add_argument("--search_fields", default=uniprot.DEFAULT_SEARCH_FIELDS, help="search fields, comma-separated")
   parser.add_argument("--api_host", default=uniprot.API_HOST)
   parser.add_argument("--api_base_path", default=uniprot.API_BASE_PATH)
   parser.add_argument("-v", "--verbose", default=0, action="count")
@@ -52,6 +55,12 @@ if __name__=='__main__':
 
   elif args.op == 'getFunctions':
     uniprot.GetFunctions(BASE_URI, ids, fout)
+
+  elif args.op == 'search':
+    uniprot.Search(BASE_URI, search_query, fout)
+
+  elif args.op == 'listSearchFields':
+    uniprot.ListSearchFields(BASE_URI, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")
