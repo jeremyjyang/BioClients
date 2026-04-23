@@ -11,15 +11,14 @@ UniprotKB = Uniprot Knowledge Base
 * <https://www.uniprot.org/uniprot>
 
 ```
-$ python3 -m BioClients.uniprot.Client -h
-usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE]
-                 [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]
-                 {getData,listData}
+$ python -m BioClients.uniprot.Client -h
+usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE] [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v] {getData,getNames,getFunctions,listData}
 
 Uniprot query client; get data for specified IDs
 
 positional arguments:
-  {getData,listData}    operation
+  {getData,getNames,getFunctions,listData}
+                        operation
 
 options:
   -h, --help            show this help message and exit
@@ -29,8 +28,15 @@ options:
   --api_host API_HOST
   --api_base_path API_BASE_PATH
   -v, --verbose
+
+Example IDs: Q14790,P01116,P01118,A8K8Z5,B0LPF9,Q96D10
+
 ```
 
 ```
-python3 -m BioClients.uniprot.Client getData --ids Q14790
+python3 -m BioClients.uniprot.Client getNames --ids Q14790,P01116
+```
+
+```
+python3 -m BioClients.uniprot.Client getFunctions --ids Q14790,P01116
 ```

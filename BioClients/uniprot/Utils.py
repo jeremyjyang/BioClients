@@ -14,7 +14,7 @@ API_BASE_PATH='/uniprotkb'
 #
 #############################################################################
 def GetNames(base_uri, ids, fout):
-  n_out=0; n_err=0;
+  n_out=0; n_err=0; df = None;
   tags_pro = ["entryType", "primaryAccession"]
   params = { "fields": [ "accession", "protein_name" ] }
   headers = { "accept": "application/json" }
@@ -55,10 +55,12 @@ def GetNames(base_uri, ids, fout):
     if fout is None: df = pd.concat([df, df_this])
 
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
+  return df
 
 #############################################################################
 def GetFunctions(base_uri, ids, fout):
-  n_out=0; n_err=0;
+  n_out=0; n_err=0; df = None;
+  n_comment=0; n_text=0; n_evidence=0;
   tags_pro = ["entryType", "primaryAccession"]
   params = { "fields": [ "accession", "cc_function" ] }
   headers = { "accept": "application/json" }
@@ -74,14 +76,45 @@ def GetFunctions(base_uri, ids, fout):
       n_err+=1
       continue
 
-    comments = result['comments'] if 'comments' in result else []
-    cType = comments['commentType'] if 'commentType' in comments else None
-    texts = comments['texts'] if 'texts' in comments else []
-
-
     df_this_base = pd.DataFrame({tag:([str(result[tag])] if tag in result else ['']) for tag in tags_pro})
 
+    df_this_0 = pd.DataFrame({ 'queryId':[id_this] })
 
+    comments = result['comments'] if 'comments' in result else []
+    n_out_this=0
+    for comment in comments:
+      n_comment += 1
+      cType = comment['commentType'] if 'commentType' in comment else None
+      molecule = comment['molecule'] if 'molecule' in comment else None
+      texts = comment['texts'] if 'texts' in comment else []
+      for text in texts:
+        value = text['value'] if 'value' in text else None
+        if not value: continue
+        n_text += 1
+        evidences = text['evidences'] if 'evidences' in text else []
+        for evidence in evidences:
+          n_evidence += 1
+          evC = evidence['evidenceCode'] if 'evidenceCode' in evidence else None
+          evSource = evidence['source'] if 'source' in evidence else None
+          evId = evidence['id'] if 'id' in evidence else None
+          df_this_ev = pd.DataFrame({
+              'commentType':[cType],
+              'molecule':[molecule],
+              'value':[value],
+              'evidenceCode':[evC],
+              'evidenceSource':[evSource],
+              'evidenceId':[evId]
+              })
+
+          df_this = pd.concat([df_this_0, df_this_base, df_this_ev], axis=1)
+          if fout is not None:
+            df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+            n_out_this+=1
+          if fout is None: df = pd.concat([df, df_this])
+    if n_out_this>0: n_out+=1
+
+  logging.info(f"n_in: {len(ids)}; n_out: {n_out}; n_comment: {n_comment}; n_text: {n_text}; n_evidence: {n_evidence}; n_err: {n_err}")
+  return df
 
 #############################################################################
 def GetData(base_uri, ids, fout):
