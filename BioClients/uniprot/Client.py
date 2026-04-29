@@ -44,20 +44,21 @@ if __name__=='__main__':
       ids.append(line.strip())
   elif args.ids:
     ids = re.split(r'[\s,]+', args.ids.strip())
-  else:
-    parser.error('--i or --ids required.')
 
   if args.op == 'getData':
+    if not ids: parser.error('--i or --ids required.')
     uniprot.GetData(BASE_URI, ids, fout)
 
   elif args.op == 'getNames':
+    if not ids: parser.error('--i or --ids required.')
     uniprot.GetNames(BASE_URI, ids, fout)
 
   elif args.op == 'getFunctions':
+    if not ids: parser.error('--i or --ids required.')
     uniprot.GetFunctions(BASE_URI, ids, fout)
 
   elif args.op == 'search':
-    uniprot.Search(BASE_URI, search_query, fout)
+    uniprot.Search(BASE_URI, search_query, search_fields, fout)
 
   elif args.op == 'listSearchFields':
     uniprot.ListSearchFields(BASE_URI, fout)

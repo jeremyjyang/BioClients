@@ -11,7 +11,7 @@ import pandas as pd
 #
 API_HOST='rest.uniprot.org'
 API_BASE_PATH='/uniprotkb'
-SEARCH_FIELDS_DEFAULT='accession,protein_name,organism_name_field,cc_function,reviewed'
+DEFAULT_SEARCH_FIELDS='accession,protein_name,organism_name_field,cc_function,reviewed'
 #
 #############################################################################
 def GetNames(base_uri, ids, fout):
@@ -118,7 +118,36 @@ def GetFunctions(base_uri, ids, fout):
   return df
 
 #############################################################################
-def Search(base_uri, query, fout):
+def ListSearchFields(base_uri, fout):
+  df=None; n_out=0;
+  tags_base=["id", "groupName", "isDataBaseGroup"];
+  tags_field=["id", "label", "name", "isMultiValueCrossReference"];
+  headers = { "accept": "application/json" }
+  response = requests.get(f"https://{API_HOST}/configure/uniprotkb/result-fields", headers=headers)
+  result = response.json()
+  logging.debug(json.dumps(result, sort_keys=True, indent=2))
+  if not response.ok or response.status_code != 200:
+    response.raise_for_status()
+    logging.error(f"status_code: {response.status_code}")
+  sfs = result
+  for sf in sfs:
+    #if not tags: tags = [key if type(sf[key]) not in (list, dict) else None for key in sf.keys()]
+    df_this_base = pd.DataFrame({tag:[sf[tag]] if tag in sf else None for tag in tags_base})
+    df_this_base.columns = ["group_id", "groupName", "isDataBaseGroup"]
+    fields = sf['fields'] if 'fields' in sf else []
+    for field in fields:
+      df_this_field = pd.DataFrame({tag:[field[tag]] if tag in field else None for tag in tags_field})
+      df_this_field.columns = ["field_id", "label", "name", "isMultiValueCrossReference"]
+      df_this = pd.concat([df_this_base, df_this_field], axis=1)
+      if fout is not None:
+        df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+        n_out+=1
+    if fout is None: df = pd.concat([df, df_this])
+  logging.info(f"n_out: {n_out}")
+  return df
+
+#############################################################################
+def Search(base_uri, query, search_fields, fout):
   n_out=0; n_err=0; df = None;
   n_page=100;
   tags_pro = ["entryType", "primaryAccession"]
