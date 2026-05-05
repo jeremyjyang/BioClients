@@ -2,39 +2,32 @@
 """
 OpenFDA Adverse Event Reports REST API client.
 https://open.fda.gov/apis/
+https://open.fda.gov/apis/drug/event/how-to-use-the-endpoint/
 """
 ### 
-import sys,os,re,json,argparse,time,yaml,logging
+import sys,os,re,json,argparse,time,logging
 
 from ... import fda
+from ...util import yaml as util_yaml
 #
 #############################################################################
-def ReadParamFile(fparam):
-  params={};
-  with open(fparam, 'r') as fh:
-    for param in yaml.load_all(fh, Loader=yaml.BaseLoader):
-      for k,v in param.items():
-        params[k] = v
-  return params
-
-##############################################################################
 if __name__=='__main__':
   NMAX=100;
   epilog='''\
 Example UNII: 786Z46389E
 '''
   parser = argparse.ArgumentParser(description='OpenFDA Adverse Event Reports client', epilog=epilog)
-  ops = ['search', 'counts', 'info', 'showfields']
+  ops = ['search', 'get_counts', 'info', 'list_fields']
   parser.add_argument("op", choices=ops, help='operation')
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
-  parser.add_argument("--drug_class", help="EPC pharmacologic class")
-  parser.add_argument("--drug_ind", help="drug indication")
-  parser.add_argument("--drug_unii", help="drug ID UNII")
-  parser.add_argument("--drug_ndc", help="drug ID NDC")
-  parser.add_argument("--drug_spl", help="drug ID SPL")
-  parser.add_argument("--serious", type=bool, help="serious adverse events")
-  parser.add_argument("--fatal", type=bool, help="fatal adverse events (seriousnessdeath)")
-  parser.add_argument("--tfrom", help="time-from (received by FDA) (YYYYMMDD)")
+  parser.add_argument("--drug_class", help="search: EPC pharmacologic class")
+  parser.add_argument("--drug_ind", help="search: drug indication")
+  parser.add_argument("--drug_unii", help="search: drug ID UNII")
+  parser.add_argument("--drug_ndc", help="search: drug ID NDC")
+  parser.add_argument("--drug_spl", help="search: drug ID SPL")
+  parser.add_argument("--serious", type=bool, help="search: serious adverse events")
+  parser.add_argument("--fatal", type=bool, help="search: fatal adverse events (seriousnessdeath)")
+  parser.add_argument("--tfrom", default="19000101", help="time-from (received by FDA) (YYYYMMDD)")
   parser.add_argument("--tto", default=time.strftime('%Y%m%d',time.localtime()), help="time-to (received by FDA) (YYYYMMDD)")
   parser.add_argument("--rawquery")
   parser.add_argument("--nmax", type=int, default=NMAX, help="max returned records")
@@ -47,33 +40,28 @@ Example UNII: 786Z46389E
 
   logging.basicConfig(format='%(levelname)s:%(message)s', level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  api_base_url = 'https://'+args.api_host+args.api_base_path
+  base_url = 'https://'+args.api_host+args.api_base_path
 
   fout = open(args.ofile, "w+") if args.ofile else sys.stdout
 
-  params = ReadParamFile(args.param_file)
+  params = util_yaml.ReadParamFile(args.param_file) if os.path.isfile(args.param_file) else {}
   if args.api_key: params['API_KEY'] = args.api_key
   if not params['API_KEY']:
     parser.error('Please specify valid API_KEY via --api_key or --param_file')
 
   t0=time.time()
 
-  if args.op == "search":
-    fda.aer.Utils.Search(args.drug_class, args.drug_ind, args.drug_unii, args.drug_ndc, args.drug_spl, args.tfrom, args.tto, args.serious, args.fatal, args.rawquery, args.nmax, params['API_KEY'], api_base_url, fout)
+  if args.op == "info":
+    fda.aer.Utils.Info(base_url, fout)
 
-  elif args.op == "info":
-    rval = fda.aer.Utils.Info(api_base_url)
-    for field in rval.keys():
-      if field=='results': continue
-      print(f"{field:16s}: {rval[field]}")
+  elif args.op == "list_fields":
+    fda.aer.Utils.ListFields(base_url, fout)
 
-  elif args.op == "counts":
-    print(fda.aer.Utils.GetCounts(args.tfrom, args.tto, api_base_url))
+  elif args.op == "get_counts":
+    fda.aer.Utils.GetCounts(base_url, args.tfrom, args.tto, fout)
 
-  elif args.op == "showfields":
-    fields = fda.aer.Utils.GetFields(api_base_url)
-    for field in fields:
-      print(f"\t{field}")
+  elif args.op == "search":
+    fda.aer.Utils.Search(base_url, args.drug_class, args.drug_ind, args.drug_unii, args.drug_ndc, args.drug_spl, args.tfrom, args.tto, args.serious, args.fatal, args.rawquery, args.nmax, params['API_KEY'], fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

@@ -29,59 +29,78 @@ OpenFDA Adverse Events Reports REST API utility functions.
 	5 = fatal
 	6 = unknown
 """
-import sys,os,re,time,json,logging
+import sys,os,re,time,json,logging,requests,tqdm
 import pandas as pd
-#
-from ...util import rest
 #
 REST_RETRY_NMAX=10
 REST_RETRY_WAIT=5
-
+#
 DRUG_ID_FIELDS = ['unii','rxcui','nui','spl_id','product_ndc','package_ndc']
 DRUG_NAME_FIELDS = ['generic_name','brand_name','substance_name']
-
+#
 API_HOST='api.fda.gov'
 API_BASE_PATH='/drug/event.json'
 API_BASE_URL='https://'+API_HOST+API_BASE_PATH
-
+#
 ##############################################################################
-def GetCounts(tfrom, tto, base_url=API_BASE_URL):
-  txt=''
-  try:
-    rval=rest.Utils.GetURL(base_url+f"?search=receivedate:[{tfrom}+TO+{tto}]&count=receivedate")
-    txt+=(f"{rval}\n")
-  except Exception as e:
-    logging.error(str(e))
-  return txt
+def GetCounts(base_url, tfrom, tto, fout):
+  n_count=0; n_out=0; df=None;
+  response = requests.get(base_url+f"?search=receivedate:[{tfrom}+TO+{tto}]&count=receivedate")
+  if not response.ok or response.status_code != 200:
+    response.raise_for_status()
+    logging.error(f"status_code: {response.status_code}")
+    return
+  result = response.json()
+  logging.debug(json.dumps(result, sort_keys=True, indent=2))
+  meta = result['meta'] if 'meta' in result else {}
+  disclaimer = meta['disclaimer'] if 'disclaimer' in meta else None
+  last_updated = meta['last_updated'] if 'last_updated' in meta else None
+  lic = meta['license'] if 'license' in meta else None
+  counts = result['results'] if 'results' in result else []
+  for c in counts:
+    count_this = c['count'] if 'count' in c else 0
+    n_count += count_this
+    df_this = pd.DataFrame({'time':[c['time'] if 'time' in c else None], 'count':[count_this]})
+    if fout is not None:
+      df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
+      n_out += 1
+    if fout is None: df = pd.concat([df, df_this])
+  logging.info(f"n_out: {n_out}; n_count: {n_count}")
+  return df
 
 #############################################################################
-def Info(base_url=API_BASE_URL):
-  url=(base_url+'?search=(serious:1)&limit=1')
-  try:
-    rval=rest.Utils.GetURL(url, parse_json=True)
-  except Exception as e:
-    logging.error(str(e))
-    return None
-  meta = rval['meta']
-  return meta
+def Info(base_url, fout):
+  response = requests.get(f"{base_url}?search=(serious:1)&limit=1")
+  if not response.ok or response.status_code != 200:
+    response.raise_for_status()
+    logging.error(f"status_code: {response.status_code}")
+    return
+  result = response.json()
+  logging.debug(json.dumps(result, sort_keys=True, indent=2))
+  meta = result['meta'] if 'meta' in result else {}
 
 #############################################################################
-def GetFields(base_url=API_BASE_URL):
+def ListFields(base_url, fout):
   '''Show fields where value is either (1) string, or (2) list of strings.
 Sample first n records.  However no guarantee sampling contains all fields.
 '''
   n=100
-  url = (base_url+f"?search=(serious:1)&limit={n}")
-  try:
-    rval=rest.Utils.GetURL(url,parse_json=True)
-  except Exception as e:
-    logging.error(str(e))
-    return None
+  response = requests.get(f"{base_url}?search=(serious:1)&limit={n}")
+  if not response.ok or response.status_code != 200:
+    response.raise_for_status()
+    logging.error(f"status_code: {response.status_code}")
+    return
+  result = response.json()
+  logging.debug(json.dumps(result, sort_keys=True, indent=2))
+  meta = result['meta'] if 'meta' in result else {}
+  
   logging.info(f"Fields from sampled records, N = {n}")
   fields=set()
-  for result in rval['results']:
-    fields |= GetFieldsIn(result,'')
-  return sorted(list(fields))
+  for r in result['results']:
+    fields |= GetFieldsIn(r,'')
+  df = pd.DataFrame({0:sorted(list(fields))})
+  if fout is not None:
+    df.to_csv(fout, sep="\t", index=False, header=True)
 
 #############################################################################
 def GetFieldsIn(obj, path):
@@ -136,11 +155,11 @@ def DrugID(drug, id_field):
   return ''
 
 #############################################################################
-def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, api_key, base_url=API_BASE_URL, fout=None):
+def Search(base_url, drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious, fatal, rawquery, nmax, api_key, fout):
   '''The API seems to disallow limit exceeding 100.  So we need to iterate using skip.'''
-  rval=None; qrys=[]; df=None; tags=[]; n_out=0;
+  qrys=[]; df=None; tags=[]; n_out=0;
   tags_result=[]; tags_patient=[]; tags_drug=[]; tags_reaction=[];
-  url = (base_url+f"?api_key={api_key}&search=")
+  url = f"{base_url}?api_key={api_key}&search="
   if drug_cl:	qrys.append(f"(patient.drug.openfda.pharm_class_epc:{drug_cl.replace(' ','+')})")
   if drug_ind:	qrys.append(f"(patient.drug.drugindication:{drug_ind.replace(' ','+')})")
   if drug_unii:	qrys.append(f"(patient.drug.openfda.unii:{drug_unii})")
@@ -152,7 +171,7 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
   if rawquery:	qrys.append(f"({rawquery.replace(' ','+')})")
   if len(qrys)==0:
     logging.error('No query specified.')
-    return rval
+    return
   url+=('+AND+'.join(qrys))
   drugnames_all = set(); uniis_all = set(); rxns_all = set()
   ser_counts =  {s:0 for s in ('F','H','S','')}
@@ -162,25 +181,31 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
   while nmax==0 or ndone<nmax:
     if nmax>ndone: nchunk = min(nchunk, nmax-ndone)
     url_this = url+(f"&limit={nchunk}")+(f"&skip={ndone}" if ndone>0 else '')
-    rval = rest.Utils.GetURL(url_this, parse_json=True)
-    if not rval: break
-    results = rval['results']
+    response = requests.get(url_this)
+    if not response.ok or response.status_code != 200:
+      response.raise_for_status()
+      logging.error(f"status_code: {response.status_code}")
+      continue
+    result = response.json()
+    logging.debug(json.dumps(result, sort_keys=True, indent=2))
+
+    results = result['results']
     logging.debug(f"N_results_this: {len(results)}")
-    for result in results:
-      if not 'drug' in result['patient']:
-        logging.warning(f"Report [ID={result['safetyreportid']}] missing drug[s].")
+    for r in results:
+      if not 'drug' in r['patient']:
+        logging.warning(f"Report [ID={r['safetyreportid']}] missing drug[s].")
         continue
       n_report+=1
       if not tags_result:
-        for tag in result.keys():
-          if type(result[tag]) not in (list, dict):
+        for tag in r.keys():
+          if type(r[tag]) not in (list, dict):
             tags_result.append(tag) #Only simple metadata.
-      df_result = pd.DataFrame({tags_result[j]:[result[tags_result[j]]] if tags_result[j] in result else [None] for j in range(len(tags_result))})
-      ser = ('F' if 'seriousnessdeath' in result else ('H' if 'seriousnesshospitalization' in result else ('S' if 'serious' in result else '')))
+      df_result = pd.DataFrame({tags_result[j]:[r[tags_result[j]]] if tags_result[j] in r else [None] for j in range(len(tags_result))})
+      ser = ('F' if 'seriousnessdeath' in r else ('H' if 'seriousnesshospitalization' in r else ('S' if 'serious' in r else '')))
       ser_counts[ser]+=1
-      fromtime = min(fromtime, time.strptime(result['receiptdate'],'%Y%m%d'))
-      totime = max(totime, time.strptime(result['receiptdate'],'%Y%m%d'))
-      patient = result['patient']
+      fromtime = min(fromtime, time.strptime(r['receiptdate'],'%Y%m%d'))
+      totime = max(totime, time.strptime(r['receiptdate'],'%Y%m%d'))
+      patient = r['patient']
       logging.debug(json.dumps(patient, indent=2))
       if not tags_patient:
         for tag in patient.keys():
@@ -208,8 +233,8 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
           df_reaction = pd.DataFrame({tags_reaction[j]:[reaction[tags_reaction[j]]] if tags_reaction[j] in reaction else [None] for j in range(len(tags_reaction))})
 
 #          df_this = pd.DataFrame(
-#		{"ReportID":[result['safetyreportid']],
-#		"ReceiptDate":[result['receiptdate']],
+#		{"ReportID":[r['safetyreportid']],
+#		"ReceiptDate":[r['receiptdate']],
 #		"Drugname":[DrugName(drug)],
 #		"UNII":[DrugID(drug, 'unii')],
 #		"ProductNDC":[DrugID(drug, 'product_ndc')],
@@ -222,13 +247,12 @@ def Search(drug_cl, drug_ind, drug_unii, drug_ndc, drug_spl, tfrom, tto, serious
 		"ProductNDC":[DrugID(drug, 'product_ndc')]})
 
           df_this = pd.concat([df_result, df_patient, df_drug_extra, df_drug, df_reaction], axis=1)
-          #df_this = df_this.dropna(how="all")
 
           rxns.add(reaction['reactionmeddrapt'])
           if fout is None: df = pd.concat([df, df_this])
           else: df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
           n_out += df_this.shape[0]
-      logging.debug(f"{n_report}. Report: {result['safetyreportid']} [{result['receiptdate']}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
+      logging.debug(f"{n_report}. Report: {r['safetyreportid']} [{r['receiptdate']}] seriousness: {ser}; reactions: {(', '.join(list(rxns)))}; drugs: {(', '.join(list(drugnames)))}")
       uniis_all |= uniis
       drugnames_all |= drugnames
       rxns_all |= rxns
