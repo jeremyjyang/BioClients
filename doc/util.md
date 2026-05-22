@@ -179,7 +179,7 @@ optional arguments:
 
 ##  `rdf`
 
-RDF utilities using rdflib and owlready2.
+RDF utilities using rdflib.
 
 * <https://github.com/RDFLib/rdflib>
 * <https://rdflib.readthedocs.io/>
@@ -193,7 +193,7 @@ usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}
 RDF utility
 
 positional arguments:
-  {describe_rdf,validate_rdf,convert_rdf}
+  {describe_rdf,validate_rdf,convert_rdf,describe_owl}
                         OPERATION
 
 options:

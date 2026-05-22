@@ -22,10 +22,10 @@ if __name__=="__main__":
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.op == "describe_owl":
-    util_owl.DescribeOwl(args.ifile)
+    util_owl.DescribeOwl(fin)
 
   elif args.op == "validate_owl":
-    util_owl.ValidateOwl(args.ifile)
+    util_owl.ValidateOwl(fin)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

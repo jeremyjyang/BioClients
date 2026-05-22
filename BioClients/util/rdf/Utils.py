@@ -6,12 +6,11 @@ https://owlready2.readthedocs.io/
 """
 import sys,os,re,gzip,argparse,logging
 
-import rdflib
-import owlready2
+import rdflib as rl
 
 #############################################################################
 def LoadRdfFile(fin, ifmt):
-  g = rdflib.Graph()
+  g = rl.Graph()
   try:
     g.parse(fin, format=ifmt)
     logging.info(f"RDF graph from {fin.name} ({ifmt}) contains {len(g)} triples.")
