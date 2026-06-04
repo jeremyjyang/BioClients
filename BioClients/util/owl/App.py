@@ -9,7 +9,11 @@ from .. import owl as util_owl
 #############################################################################
 if __name__=="__main__":
   parser = argparse.ArgumentParser(description="OWL utility", epilog="")
-  ops = [ "describe_owl", "validate_owl", ]
+  ops = [ "describe_owl", "validate_owl",
+         "list_classes",
+         "list_subclasses",
+         "list_individuals",
+         ]
   parser.add_argument("op", choices=ops, help="OPERATION")
   parser.add_argument("--i", dest="ifile", help="input file (OWL)")
   parser.add_argument("--o", dest="ofile", help="output file")
@@ -26,6 +30,18 @@ if __name__=="__main__":
 
   elif args.op == "validate_owl":
     util_owl.ValidateOwl(fin)
+
+  elif args.op == "list_classes":
+    onto = util_owl.LoadOwlFile(fin)
+    util_owl.ListClasses(onto)
+
+  elif args.op == "list_subclasses":
+    onto = util_owl.LoadOwlFile(fin)
+    util_owl.ListSubclasses(onto)
+
+  elif args.op == "list_individuals":
+    onto = util_owl.LoadOwlFile(fin)
+    util_owl.ListIndividuals(onto)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
