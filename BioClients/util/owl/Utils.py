@@ -44,17 +44,43 @@ def ValidateOwl(fin):
 def ListClasses(onto):
   n_class=0;
   for c in onto.classes():
-    logging.debug(f"{str(c)}\t{c.iri}")
+    logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
     n_class+=1
   logging.info(f"n_class: {n_class}")
 
 #############################################################################
-def ListSubclasses(onto):
+def ListDiseases(onto):
+  n_class=0;
+  d1 = onto.search_one(iri = "http://purl.obolibrary.org/obo/MONDO_0000001")
+  n_class += ListDiseaseSubclasses(onto, d1)
+  logging.info(f"n_class: {n_class}")
+
+#############################################################################
+def FindIri(onto, iri):
+  c = onto.search_one(iri = iri)
+  logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
+  return c
+
+#############################################################################
+def ListSubclasses(onto, c):
+  n_subclass=0;
+  for sc in onto.search(subclass_of = c):
+    if sc == c: continue
+    n_subclass+=1
+    logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{sc.label}\t{sc.iri}")
+    n_subclass += ListSubclasses(onto, sc)
+  logging.info(f"Subclasses-of: {c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
+  logging.info(f"n_subclass: {n_subclass}")
+  return n_subclass
+
+#############################################################################
+def ListAllSubclasses(onto):
   n_class=0; n_subclass=0;
   for c in onto.classes():
     n_class+=1
     logging.debug(f"{str(c)}\t{c.iri}")
     for sc in onto.search(subclass_of = c):
+      if sc == c: continue
       n_subclass+=1
       logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{sc.label}\t{sc.iri}")
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")

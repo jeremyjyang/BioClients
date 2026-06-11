@@ -193,7 +193,7 @@ usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}
 RDF utility
 
 positional arguments:
-  {describe_rdf,validate_rdf,convert_rdf,describe_owl}
+  {describe_rdf,validate_rdf,convert_rdf}
                         OPERATION
 
 options:
@@ -214,20 +214,24 @@ OWL utilities using owlready2.
 * <https://owlready2.readthedocs.io/>
 
 ```
-$ python3 -m BioClients.util.owl.App -h
-usage: App.py [-h] [--i IFILE] [--o OFILE] [-v] {describe_owl,validate_owl}
+$ python -m BioClients.util.owl.App -h
+usage: App.py [-h] [--iri IRI] [--i IFILE] [--o OFILE] [-v]
+              {describe_owl,validate_owl,list_classes,list_all_subclasses,list_subclasses,list_individuals,find_iri,show_root}
 
 OWL utility
 
 positional arguments:
-  {describe_owl,validate_owl}
+  {describe_owl,validate_owl,list_classes,list_all_subclasses,list_subclasses,list_individuals,find_iri,show_root}
                         OPERATION
 
 options:
   -h, --help            show this help message and exit
+  --iri IRI             node specification
   --i IFILE             input file (OWL)
   --o OFILE             output file
   -v, --verbose
+
+Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 ```
 
 ##  `sparql`
