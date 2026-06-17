@@ -2,7 +2,7 @@
 """
 OWL utility functions.
 """
-import sys,os,re,gzip,argparse,logging
+import sys,os,time,re,gzip,argparse,logging
 
 from .. import owl as util_owl
 
@@ -31,6 +31,8 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 
   fin = open(args.ifile, "r") if args.ifile else sys.stdin
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
+
+  t0 = time.time()
 
   if args.op == "describe_owl":
     util_owl.DescribeOwl(fin)
@@ -67,3 +69,6 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 
   else:
     parser.error(f"Invalid operation: {args.op}")
+
+  logging.info(f"Elapsed time: {time.strftime('%Hh:%Mm:%Ss',time.gmtime(time.time()-t0))}")
+
