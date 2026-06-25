@@ -42,11 +42,11 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 
   elif args.op == "list_classes":
     onto = util_owl.LoadOwlFile(fin)
-    util_owl.ListClasses(onto)
+    util_owl.ListClasses(onto, fout)
 
   elif args.op == "list_all_subclasses":
     onto = util_owl.LoadOwlFile(fin)
-    util_owl.ListAllSubclasses(onto)
+    util_owl.ListAllSubclasses(onto, fout)
 
   elif args.op == "list_subclasses":
     if not args.iri:
@@ -59,7 +59,7 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 
   elif args.op == "list_individuals":
     onto = util_owl.LoadOwlFile(fin)
-    util_owl.ListIndividuals(onto)
+    util_owl.ListIndividuals(onto, fout)
 
   elif args.op == "show_root":
     onto = util_owl.LoadOwlFile(fin)

@@ -41,24 +41,23 @@ def ValidateOwl(fin):
     return False
 
 #############################################################################
-def ListClasses(onto):
+def ListClasses(onto, fout):
   n_class=0;
+  tq = tqdm.tqdm(total=len(list(onto.classes())))
   for c in onto.classes():
-    logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
+    tq.update(1)
+    fout.write(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\n")
     n_class+=1
-  logging.info(f"n_class: {n_class}")
-
-#############################################################################
-def ListDiseases(onto):
-  n_class=0;
-  d1 = onto.search_one(iri = "http://purl.obolibrary.org/obo/MONDO_0000001")
-  n_class += ListDiseaseSubclasses(onto, d1)
+  tq.close()
   logging.info(f"n_class: {n_class}")
 
 #############################################################################
 def FindIri(onto, iri):
   c = onto.search_one(iri = iri)
-  logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
+  if c is not None:
+    logging.info(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
+  else:
+    logging.error(f"NOT FOUND: {iri}")
   return c
 
 #############################################################################
@@ -76,22 +75,24 @@ def ListSubclasses(onto, c, tq, fout):
   return n_subclass
 
 #############################################################################
-def ListAllSubclasses(onto):
+def ListAllSubclasses(onto, fout):
   n_class=0; n_subclass=0;
+  tq = tqdm.tqdm(total=len(list(onto.classes())))
   for c in onto.classes():
+    tq.update(1)
     n_class+=1
-    logging.debug(f"{str(c)}\t{c.iri}")
     for sc in onto.search(subclass_of = c):
       if sc == c: continue
       n_subclass+=1
-      logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}")
+      fout.write(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}\n")
+  tq.close()
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")
 
 #############################################################################
-def ListIndividuals(onto):
+def ListIndividuals(onto, fout):
   n_ind=0;
   for ind in onto.individuals():
-    logging.debug(f"{ind.name}\t{ind.iri}")
+    fout.write(f"{ind.namespace.name}\t{ind.namespace.base_iri}\t{ind.name}\t{';'.join(ind.label)}\t{ind.iri}\n")
     n_ind+=1
   logging.info(f"n_ind: {n_ind}")
 
