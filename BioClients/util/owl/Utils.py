@@ -3,7 +3,7 @@
 OWL utility functions.
 https://owlready2.readthedocs.io/
 """
-import sys,os,re,gzip,argparse,logging
+import sys,os,re,gzip,argparse,logging,tqdm
 
 import owlready2 as or2
 
@@ -44,7 +44,7 @@ def ValidateOwl(fin):
 def ListClasses(onto):
   n_class=0;
   for c in onto.classes():
-    logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
+    logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
     n_class+=1
   logging.info(f"n_class: {n_class}")
 
@@ -58,19 +58,21 @@ def ListDiseases(onto):
 #############################################################################
 def FindIri(onto, iri):
   c = onto.search_one(iri = iri)
-  logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
+  logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
   return c
 
 #############################################################################
-def ListSubclasses(onto, c):
+def ListSubclasses(onto, c, tq, fout):
   n_subclass=0;
   for sc in onto.search(subclass_of = c):
     if sc == c: continue
     n_subclass+=1
-    logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{sc.label}\t{sc.iri}")
-    n_subclass += ListSubclasses(onto, sc)
-  logging.info(f"Subclasses-of: {c.namespace}\t{c.name}\t{c.label}\t{c.iri}")
-  logging.info(f"n_subclass: {n_subclass}")
+    tq.update(1)
+    logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}")
+    fout.write(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}\n")
+    n_subclass += ListSubclasses(onto, sc, tq, fout)
+  if n_subclass>0:
+    logging.debug(f"Subclasses-of: {c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}, n_subclass: {n_subclass}")
   return n_subclass
 
 #############################################################################
@@ -82,7 +84,7 @@ def ListAllSubclasses(onto):
     for sc in onto.search(subclass_of = c):
       if sc == c: continue
       n_subclass+=1
-      logging.debug(f"{c.namespace}\t{c.name}\t{c.label}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{sc.label}\t{sc.iri}")
+      logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}")
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")
 
 #############################################################################

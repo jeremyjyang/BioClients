@@ -2,7 +2,7 @@
 """
 OWL utility functions.
 """
-import sys,os,time,re,gzip,argparse,logging
+import sys,os,time,re,gzip,argparse,logging,tqdm
 
 from .. import owl as util_owl
 
@@ -53,7 +53,9 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
       parser.error(f"--iri required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
     c = util_owl.FindIri(onto, args.iri)
-    util_owl.ListSubclasses(onto, c)
+    tq = tqdm.tqdm(total=len(list(onto.classes())))
+    util_owl.ListSubclasses(onto, c, tq, fout)
+    tq.close()
 
   elif args.op == "list_individuals":
     onto = util_owl.LoadOwlFile(fin)
