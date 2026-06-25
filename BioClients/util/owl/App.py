@@ -54,7 +54,8 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
     onto = util_owl.LoadOwlFile(fin)
     c = util_owl.FindIri(onto, args.iri)
     tq = tqdm.tqdm(total=len(list(onto.classes())))
-    util_owl.ListSubclasses(onto, c, tq, fout)
+    triples = set()
+    util_owl.ListSubclasses(onto, c, triples, tq, fout)
     tq.close()
 
   elif args.op == "list_individuals":

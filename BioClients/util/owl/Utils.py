@@ -61,15 +61,18 @@ def FindIri(onto, iri):
   return c
 
 #############################################################################
-def ListSubclasses(onto, c, tq, fout):
+def ListSubclasses(onto, c, triples, tq, fout):
   n_subclass=0;
   for sc in onto.search(subclass_of = c):
     if sc == c: continue
+    key = f"{c.name}\t{sc.name}"
+    if key in triples: continue
+    else: triples.add(key)
     n_subclass+=1
     tq.update(1)
     logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}")
     fout.write(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}\n")
-    n_subclass += ListSubclasses(onto, sc, tq, fout)
+    n_subclass += ListSubclasses(onto, sc, triples, tq, fout)
   if n_subclass>0:
     logging.debug(f"Subclasses-of: {c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}, n_subclass: {n_subclass}")
   return n_subclass
