@@ -23,7 +23,8 @@ if __name__=='__main__':
   parser.add_argument("--o", dest="ofile", help="output (CSV|TSV)")
   parser.add_argument("--coltags", help="cols specified by tag (comma-separated)")
   parser.add_argument("--cols", help="cols specified by idx (1+) (comma-separated)")
-  parser.add_argument("--noheader", action="store_true", help="default: line-one is header")
+  parser.add_argument("--noheader_out", action="store_true", help="default: line-one is header")
+  parser.add_argument("--noheader_in", action="store_true", help="default: line-one is header")
   parser.add_argument("--search_qrys", help="qrys (comma-separated, NA|NaN handled specially)")
   parser.add_argument("--search_rels", default="=", help="relationships (=|>|<) (comma-separated)")
   parser.add_argument("--search_typs", default="str", help="types (str|int|float) (comma-separated)")
@@ -59,15 +60,15 @@ if __name__=='__main__':
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
   if args.compression: compression=args.compression
-  elif re.search('\.gz$', args.ifile, re.I): compression='gzip'
-  elif re.search('\.bz2$', args.ifile, re.I): compression='bz2'
-  elif re.search('\.zip$', args.ifile, re.I): compression='zip'
+  elif re.search(r'\.gz$', args.ifile, re.I): compression='gzip'
+  elif re.search(r'\.bz2$', args.ifile, re.I): compression='bz2'
+  elif re.search(r'\.zip$', args.ifile, re.I): compression='zip'
   else: compression=None
 
   if args.csv or args.op=='csv2tsv': delim=','
   elif args.tsv or args.op=='tsv2csv': delim='\t'
-  elif re.search('\.csv', args.ifile, re.I): delim=','
-  elif re.search('\.tsv', args.ifile, re.I) or re.search('\.tab', args.ifile, re.I): delim='\t'
+  elif re.search(r'\.csv', args.ifile, re.I): delim=','
+  elif re.search(r'\.tsv', args.ifile, re.I) or re.search(r'\.tab', args.ifile, re.I): delim='\t'
   else: delim='\t'
 
   cols=None; coltags=None;
@@ -82,7 +83,7 @@ if __name__=='__main__':
   search_rels = [rel.strip() for rel in re.split(r',', args.search_rels.strip())] if (args.search_rels is not None) else None
   search_typs = [typ.strip() for typ in re.split(r',', args.search_typs.strip())] if (args.search_typs is not None) else None
 
-  df = pd.read_csv(args.ifile, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
+  df = pd.read_csv(args.ifile, sep=delim, header=(None if args.noheader_in else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=(1 if args.op in ('showcols', 'list_columns') else args.nrows), skiprows=args.skiprows)
 
   if args.clean_coltags: util_pandas.CleanColtags(df)
     
@@ -101,19 +102,25 @@ if __name__=='__main__':
     fout.write("coltags: {}\n".format(', '.join([f'"{tag}"' for tag in df.columns])))
 
   elif args.op=='csv2tsv':
-    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader_out))
 
   elif args.op=='tsv2csv':
-    df.to_csv(fout, sep=',', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep=',', index=False, header=(not args.noheader_out))
 
   elif args.op=='to_html':
     util_pandas.ToHtml(df, args.html_title, args.html_prettify, fout)
+
+  elif args.op == 'deduplicate':
+    logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
+    df.drop_duplicates(inplace=True)
+    logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader_out))
 
   elif args.op == 'selectcols':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
     df = df[coltags] if coltags else df.iloc[:, cols]
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader_out))
 
   elif args.op == 'selectcols_deduplicate':
     logging.info(f"Input: rows: {df.shape[0]}; cols: {df.shape[1]}")
@@ -121,7 +128,7 @@ if __name__=='__main__':
     df.drop_duplicates(subset=subset, inplace=True)
     df = df[coltags] if coltags else df.iloc[:, cols]
     logging.info(f"Output: rows: {df.shape[0]}; cols: {df.shape[1]}")
-    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
+    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader_out))
 
   elif args.op == 'uvalcounts':
     for j,tag in enumerate(df.columns):
@@ -150,10 +157,6 @@ if __name__=='__main__':
       fout.write(f'\tmedian: {df[tag].median():.2f}\n')
       fout.write(f'\tstd: {df[tag].std():.2f}\n')
 
-  elif args.op == 'deduplicate':
-    df.drop_duplicates(inplace=True)
-    df.to_csv(fout, sep='\t', index=False, header=(not args.noheader))
-
   elif args.op == 'searchrows':
     if args.search_qrys is None: 
       parser.error(f'{args.op} requires --search_qrys.')
@@ -180,13 +183,13 @@ if __name__=='__main__':
 
   elif args.op == 'concat':
     if not args.ifileB: parser.error(f'{args.op} requires --iB.')
-    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
+    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader_in else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
     util_pandas.Concat(df, dfB, args.concat_axis, delim, fout)
 
   elif args.op == 'merge':
     if not args.ifileB: parser.error(f'{args.op} requires --iB.')
     if not args.coltags: parser.error(f'{args.op} requires --coltags.')
-    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
+    dfB = pd.read_csv(args.ifileB, sep=delim, header=(None if args.noheader_in else 0), compression=compression, on_bad_lines=args.on_bad_lines, nrows=args.nrows, skiprows=args.skiprows)
     if args.clean_coltags: util_pandas.CleanColtags(dfB)
     coltags = [coltag.strip() for coltag in re.split(r',', args.coltags.strip())]
     util_pandas.Merge(df, dfB, args.merge_how, args.merge_type, coltags, delim, fout)
