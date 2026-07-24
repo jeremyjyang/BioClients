@@ -4,7 +4,7 @@ OWL utility functions.
 https://owlready2.readthedocs.io/
 """
 import sys,os,re,gzip,argparse,logging,tqdm
-
+import pandas as pd
 import owlready2 as or2
 
 #############################################################################
@@ -28,6 +28,10 @@ def DescribeOwl(fin):
   for annot_prop in onto.metadata:
     if annot_prop is not None:
       logging.info(f"{annot_prop}:{annot_prop[onto.metadata]}")
+  props = list(onto.properties())
+  props.sort()
+  for prop in props:
+    logging.info(f"property:{prop}")
   logging.info(f"n_classes: {len(list(onto.classes()))}")
 
 #############################################################################
@@ -52,12 +56,15 @@ def ListClasses(onto, fout):
   logging.info(f"n_class: {n_class}")
 
 #############################################################################
-def FindIri(onto, iri):
-  c = onto.search_one(iri = iri)
+def FindClass(onto, name, iri):
+  if name:
+    c = onto.search_one(name = name)
+  else:
+    c = onto.search_one(iri = iri)
   if c is not None:
     logging.info(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
   else:
-    logging.error(f"NOT FOUND: {iri}")
+    logging.error(f"NOT FOUND: name={name}, iri={iri}")
   return c
 
 #############################################################################
@@ -90,6 +97,29 @@ def ListAllSubclasses(onto, fout):
       fout.write(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}\t{sc.namespace.name}\t{sc.namespace.base_iri}\t{sc.name}\t{';'.join(sc.label)}\t{sc.iri}\n")
   tq.close()
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")
+
+#############################################################################
+def ListProperties(onto, c, fout):
+#  props = [
+#    prop for prop in onto.properties() 
+#    if any(c_this in c.ancestors() for c_this in prop.domain)]
+#  for prop in props:
+#    logging.info(f"{c}:{prop}")
+
+  sabs=[]; vals=[];
+  props = c.get_class_properties()
+  for xref in c.hasDbXref:
+    sab,val = re.split(':', xref)
+    logging.info(f"{xref}\tsab:{sab}\tvalue:{val}")
+    sabs.append(sab)
+    vals.append(val)
+
+  df = pd.DataFrame({
+	'name':[c.name for i in range(len(vals))],
+	'iri':[c.iri for i in range(len(vals))],
+	'sab':sabs,
+	'value':vals})
+  df.to_csv(fout, sep='\t', index=False, header=True)
 
 #############################################################################
 def ListIndividuals(onto, fout):

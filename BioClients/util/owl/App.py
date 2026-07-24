@@ -9,7 +9,9 @@ from .. import owl as util_owl
 #############################################################################
 if __name__=="__main__":
   epilog="""\
-Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
+Example IRIs: (from MONDO):
+http://purl.obolibrary.org/obo/MONDO_0000001,
+http://purl.obolibrary.org/obo/MONDO_0005146
   """
   parser = argparse.ArgumentParser(description="OWL utility", epilog=epilog)
   ops = [ "describe_owl", "validate_owl",
@@ -17,11 +19,13 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
          "list_all_subclasses",
          "list_subclasses",
          "list_individuals",
-         "find_iri",
+         "find_class",
+         "list_properties",
          "show_root",
          ]
   parser.add_argument("op", choices=ops, help="OPERATION")
   parser.add_argument("--iri", help="node specification")
+  parser.add_argument("--name", help="node specification")
   parser.add_argument("--i", dest="ifile", help="input file (OWL)")
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -49,10 +53,10 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
     util_owl.ListAllSubclasses(onto, fout)
 
   elif args.op == "list_subclasses":
-    if not args.iri:
-      parser.error(f"--iri required for {args.op}")
+    if not (args.iri or args.name):
+      parser.error(f"--name or --iri required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
-    c = util_owl.FindIri(onto, args.iri)
+    c = util_owl.FindClass(onto, args.name, args.iri)
     tq = tqdm.tqdm(total=len(list(onto.classes())))
     triples = set()
     util_owl.ListSubclasses(onto, c, triples, tq, fout)
@@ -66,9 +70,18 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
     onto = util_owl.LoadOwlFile(fin)
     util_owl.ShowRoot(onto)
 
-  elif args.op == "find_iri":
+  elif args.op == "find_class":
+    if not (args.iri or args.name):
+      parser.error(f"--name or --iri required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
-    c = util_owl.FindIri(onto, args.iri)
+    c = util_owl.FindClass(onto, args.name, args.iri)
+
+  elif args.op == "list_properties":
+    if not (args.iri or args.name):
+      parser.error(f"--name or --iri required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin)
+    c = util_owl.FindClass(onto, args.name, args.iri)
+    util_owl.ListProperties(onto, c, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")
