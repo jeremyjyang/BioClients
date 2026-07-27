@@ -20,12 +20,12 @@ http://purl.obolibrary.org/obo/MONDO_0005146
          "list_subclasses",
          "list_individuals",
          "find_class",
-         "list_properties",
+         "get_xrefs",
+         "get_synonyms",
          "show_root",
          ]
   parser.add_argument("op", choices=ops, help="OPERATION")
-  parser.add_argument("--iri", help="node specification")
-  parser.add_argument("--name", help="node specification")
+  parser.add_argument("--iris", help="node specification[s], comma-separated")
   parser.add_argument("--i", dest="ifile", help="input file (OWL)")
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
@@ -35,6 +35,10 @@ http://purl.obolibrary.org/obo/MONDO_0005146
 
   fin = open(args.ifile, "r") if args.ifile else sys.stdin
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
+
+  if args.iris:
+    iris = re.split(r'[,\s]+', args.iris)
+  logging.info(f"Input IRIs: {len(iris)}")
 
   t0 = time.time()
 
@@ -53,14 +57,15 @@ http://purl.obolibrary.org/obo/MONDO_0005146
     util_owl.ListAllSubclasses(onto, fout)
 
   elif args.op == "list_subclasses":
-    if not (args.iri or args.name):
-      parser.error(f"--name or --iri required for {args.op}")
+    if not args.iris:
+      parser.error(f"--iris required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
-    c = util_owl.FindClass(onto, args.name, args.iri)
-    tq = tqdm.tqdm(total=len(list(onto.classes())))
-    triples = set()
-    util_owl.ListSubclasses(onto, c, triples, tq, fout)
-    tq.close()
+    for iri in iris:
+      c = util_owl.FindClass(onto, None, iri)
+      tq = tqdm.tqdm(total=len(list(onto.classes())))
+      triples = set()
+      util_owl.ListSubclasses(onto, c, triples, tq, fout)
+      tq.close()
 
   elif args.op == "list_individuals":
     onto = util_owl.LoadOwlFile(fin)
@@ -71,17 +76,27 @@ http://purl.obolibrary.org/obo/MONDO_0005146
     util_owl.ShowRoot(onto)
 
   elif args.op == "find_class":
-    if not (args.iri or args.name):
-      parser.error(f"--name or --iri required for {args.op}")
+    if not args.iris:
+      parser.error(f"--iris required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
-    c = util_owl.FindClass(onto, args.name, args.iri)
+    for iri in iris:
+      c = util_owl.FindClass(onto, None, iri)
 
-  elif args.op == "list_properties":
-    if not (args.iri or args.name):
-      parser.error(f"--name or --iri required for {args.op}")
+  elif args.op == "get_xrefs":
+    if not args.iris:
+      parser.error(f"--iris required for {args.op}")
     onto = util_owl.LoadOwlFile(fin)
-    c = util_owl.FindClass(onto, args.name, args.iri)
-    util_owl.ListProperties(onto, c, fout)
+    for iri in iris:
+      c = util_owl.FindClass(onto, None, iri)
+      util_owl.GetClassXrefs(c, fout)
+
+  elif args.op == "get_synonyms":
+    if not args.iris:
+      parser.error(f"--iris required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin)
+    for iri in iris:
+      c = util_owl.FindClass(onto, None, iri)
+      util_owl.GetClassSynonyms(c, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

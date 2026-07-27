@@ -99,27 +99,38 @@ def ListAllSubclasses(onto, fout):
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")
 
 #############################################################################
-def ListProperties(onto, c, fout):
-#  props = [
-#    prop for prop in onto.properties() 
-#    if any(c_this in c.ancestors() for c_this in prop.domain)]
-#  for prop in props:
-#    logging.info(f"{c}:{prop}")
-
+def GetClassXrefs(c, fout):
   sabs=[]; vals=[];
-  props = c.get_class_properties()
+
   for xref in c.hasDbXref:
     sab,val = re.split(':', xref)
-    logging.info(f"{xref}\tsab:{sab}\tvalue:{val}")
+    logging.debug(f"{xref}\tsab:{sab}\tvalue:{val}")
     sabs.append(sab)
     vals.append(val)
 
   df = pd.DataFrame({
-	'name':[c.name for i in range(len(vals))],
-	'iri':[c.iri for i in range(len(vals))],
-	'sab':sabs,
-	'value':vals})
+	'class_name':[c.name for i in range(len(vals))],
+	'class_iri':[c.iri for i in range(len(vals))],
+	'xref_sab':sabs,
+	'xref_value':vals})
   df.to_csv(fout, sep='\t', index=False, header=True)
+  return df
+
+#############################################################################
+def GetClassSynonyms(c, fout):
+  vals = list(c.hasExactSynonym)
+  vals.sort()
+  df = pd.DataFrame({
+	'class_name':[c.name for i in range(len(vals))],
+	'class_iri':[c.iri for i in range(len(vals))],
+	'exact_synonym':vals})
+  df.to_csv(fout, sep='\t', index=False, header=True)
+  return df
+
+#############################################################################
+# Should this get a function?
+# props = c.get_class_properties()
+#
 
 #############################################################################
 def ListIndividuals(onto, fout):
