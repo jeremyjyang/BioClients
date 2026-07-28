@@ -3,7 +3,7 @@
 OWL utility functions.
 """
 import sys,os,time,re,gzip,argparse,logging,tqdm
-
+import pandas as pd
 from .. import owl as util_owl
 
 #############################################################################
@@ -25,41 +25,50 @@ http://purl.obolibrary.org/obo/MONDO_0005146
          "show_root",
          ]
   parser.add_argument("op", choices=ops, help="OPERATION")
-  parser.add_argument("--iris", help="node specification[s], comma-separated")
-  parser.add_argument("--i", dest="ifile", help="input file (OWL)")
+  parser.add_argument("--iris", help="node IRIs, comma-separated")
+  parser.add_argument("--i_owl", dest="ifile_owl", help="input file, OWL")
+  parser.add_argument("--i_iri", dest="ifile_iri", help="input file, IRIs")
+  parser.add_argument("--i_iri_col", type=int, default=0, help="input file column with IRIs, from 0")
+  parser.add_argument("--i_iri_sep", default='\t', help="input file column delimiter (default=<tab>)")
+  parser.add_argument("--i_iri_noheader", action="store_true", help="input file, IRIs, no-header")
   parser.add_argument("--o", dest="ofile", help="output file")
   parser.add_argument("-v", "--verbose", action="count", default=0)
   args = parser.parse_args()
 
   logging.basicConfig(format="%(levelname)s:%(message)s", level=(logging.DEBUG if args.verbose>1 else logging.INFO))
 
-  fin = open(args.ifile, "r") if args.ifile else sys.stdin
+  fin_owl = open(args.ifile_owl, "r") if args.ifile_owl else sys.stdin
   fout = open(args.ofile, "w") if args.ofile else sys.stdout
 
-  if args.iris:
+  iris=[];
+  if args.ifile_iri:
+    df = pd.read_csv(args.ifile_iri, delimiter=args.i_iri_sep, header=(None if args.i_iri_noheader else 0))
+    iris = df.iloc[:, args.i_iri_col].tolist()
+    logging.info(f"From {args.ifile_iri}, IRIs read: {len(iris)}")
+  elif args.iris:
     iris = re.split(r'[,\s]+', args.iris)
   logging.info(f"Input IRIs: {len(iris)}")
 
   t0 = time.time()
 
   if args.op == "describe_owl":
-    util_owl.DescribeOwl(fin)
+    util_owl.DescribeOwl(fin_owl)
 
   elif args.op == "validate_owl":
-    util_owl.ValidateOwl(fin)
+    util_owl.ValidateOwl(fin_owl)
 
   elif args.op == "list_classes":
-    onto = util_owl.LoadOwlFile(fin)
+    onto = util_owl.LoadOwlFile(fin_owl)
     util_owl.ListClasses(onto, fout)
 
   elif args.op == "list_all_subclasses":
-    onto = util_owl.LoadOwlFile(fin)
+    onto = util_owl.LoadOwlFile(fin_owl)
     util_owl.ListAllSubclasses(onto, fout)
 
   elif args.op == "list_subclasses":
-    if not args.iris:
-      parser.error(f"--iris required for {args.op}")
-    onto = util_owl.LoadOwlFile(fin)
+    if not iris:
+      parser.error(f"--iris or --i_iri required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin_owl)
     for iri in iris:
       c = util_owl.FindClass(onto, None, iri)
       tq = tqdm.tqdm(total=len(list(onto.classes())))
@@ -68,35 +77,31 @@ http://purl.obolibrary.org/obo/MONDO_0005146
       tq.close()
 
   elif args.op == "list_individuals":
-    onto = util_owl.LoadOwlFile(fin)
+    onto = util_owl.LoadOwlFile(fin_owl)
     util_owl.ListIndividuals(onto, fout)
 
   elif args.op == "show_root":
-    onto = util_owl.LoadOwlFile(fin)
+    onto = util_owl.LoadOwlFile(fin_owl)
     util_owl.ShowRoot(onto)
 
   elif args.op == "find_class":
-    if not args.iris:
-      parser.error(f"--iris required for {args.op}")
-    onto = util_owl.LoadOwlFile(fin)
+    if not iris:
+      parser.error(f"--iris or --i_iri required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin_owl)
     for iri in iris:
       c = util_owl.FindClass(onto, None, iri)
 
   elif args.op == "get_xrefs":
-    if not args.iris:
-      parser.error(f"--iris required for {args.op}")
-    onto = util_owl.LoadOwlFile(fin)
-    for iri in iris:
-      c = util_owl.FindClass(onto, None, iri)
-      util_owl.GetClassXrefs(c, fout)
+    if not iris:
+      parser.error(f"--iris or --i_iri required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin_owl)
+    util_owl.GetClassXrefs(iris, onto, fout)
 
   elif args.op == "get_synonyms":
-    if not args.iris:
-      parser.error(f"--iris required for {args.op}")
-    onto = util_owl.LoadOwlFile(fin)
-    for iri in iris:
-      c = util_owl.FindClass(onto, None, iri)
-      util_owl.GetClassSynonyms(c, fout)
+    if not iris:
+      parser.error(f"--iris or --i_iri required for {args.op}")
+    onto = util_owl.LoadOwlFile(fin_owl)
+    util_owl.GetClassSynonyms(iris, onto, fout)
 
   else:
     parser.error(f"Invalid operation: {args.op}")

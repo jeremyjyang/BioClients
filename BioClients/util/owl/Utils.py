@@ -56,15 +56,15 @@ def ListClasses(onto, fout):
   logging.info(f"n_class: {n_class}")
 
 #############################################################################
-def FindClass(onto, name, iri):
-  if name:
-    c = onto.search_one(name = name)
+def FindClass(onto, label, iri):
+  if label:
+    c = onto.search_one(label = label)
   else:
     c = onto.search_one(iri = iri)
   if c is not None:
-    logging.info(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
+    logging.debug(f"{c.namespace.name}\t{c.namespace.base_iri}\t{c.name}\t{';'.join(c.label)}\t{c.iri}")
   else:
-    logging.error(f"NOT FOUND: name={name}, iri={iri}")
+    logging.error(f"NOT FOUND: label={label}, iri={iri}")
   return c
 
 #############################################################################
@@ -99,33 +99,54 @@ def ListAllSubclasses(onto, fout):
   logging.info(f"n_class: {n_class}; n_subclass: {n_subclass}")
 
 #############################################################################
-def GetClassXrefs(c, fout):
-  sabs=[]; vals=[];
+def GetClassXrefs(iris, onto, fout):
+  df=None; n_xref_out=0; n_err=0;
+  tq = tqdm.tqdm(total=len(iris))
+  for iri in iris:
+    c = FindClass(onto, None, iri)
+    if not c:
+      n_err+=1
+      continue
 
-  for xref in c.hasDbXref:
-    sab,val = re.split(':', xref)
-    logging.debug(f"{xref}\tsab:{sab}\tvalue:{val}")
-    sabs.append(sab)
-    vals.append(val)
+    sabs_this=[]; vals_this=[];
+    for xref in c.hasDbXref:
+      sab,val = re.split(':', xref)
+      logging.debug(f"{xref}\tsab:{sab}\tvalue:{val}")
+      sabs_this.append(sab)
+      vals_this.append(val)
 
-  df = pd.DataFrame({
-	'class_name':[c.name for i in range(len(vals))],
-	'class_iri':[c.iri for i in range(len(vals))],
-	'xref_sab':sabs,
-	'xref_value':vals})
-  df.to_csv(fout, sep='\t', index=False, header=True)
-  return df
+    df_this = pd.DataFrame({
+      'class_name':[c.name for i in range(len(vals_this))],
+      'class_iri':[c.iri for i in range(len(vals_this))],
+      'xref_sab':sabs_this,
+      'xref_value':vals_this})
+    df_this.to_csv(fout, sep='\t', index=False, header=bool(n_xref_out==0))
+    n_xref_out+=df_this.shape[0]
+    tq.update(1)
+  tq.close()
+  logging.info(f"n_iri: {len(iris)}; n_xref_out: {n_xref_out}; n_err: {n_err}")
 
 #############################################################################
-def GetClassSynonyms(c, fout):
-  vals = list(c.hasExactSynonym)
-  vals.sort()
-  df = pd.DataFrame({
-	'class_name':[c.name for i in range(len(vals))],
-	'class_iri':[c.iri for i in range(len(vals))],
-	'exact_synonym':vals})
-  df.to_csv(fout, sep='\t', index=False, header=True)
-  return df
+def GetClassSynonyms(iris, onto, fout):
+  df=None; n_syn_out=0; n_err=0;
+  tq = tqdm.tqdm(total=len(iris))
+  for iri in iris:
+    c = FindClass(onto, None, iri)
+    if not c:
+      n_err+=1
+      continue
+
+    vals_this = list(c.hasExactSynonym)
+    vals_this.sort()
+    df_this = pd.DataFrame({
+      'class_name':[c.name for i in range(len(vals_this))],
+      'class_iri':[c.iri for i in range(len(vals_this))],
+      'exact_synonym':vals_this})
+    df_this.to_csv(fout, sep='\t', index=False, header=bool(n_syn_out==0))
+    n_syn_out+=df_this.shape[0]
+    tq.update(1)
+  tq.close()
+  logging.info(f"n_iri: {len(iris)}; n_syn_out: {n_syn_out}; n_err: {n_err}")
 
 #############################################################################
 # Should this get a function?
