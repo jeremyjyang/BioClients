@@ -107,14 +107,13 @@ def GetClassXrefs(iris, onto, fout):
     if not c:
       n_err+=1
       continue
-
     sabs_this=[]; vals_this=[];
     for xref in c.hasDbXref:
       sab,val = re.split(':', xref)
       logging.debug(f"{xref}\tsab:{sab}\tvalue:{val}")
       sabs_this.append(sab)
       vals_this.append(val)
-
+    if not vals_this: continue
     df_this = pd.DataFrame({
       'class_name':[c.name for i in range(len(vals_this))],
       'class_iri':[c.iri for i in range(len(vals_this))],
@@ -135,8 +134,8 @@ def GetClassSynonyms(iris, onto, fout):
     if not c:
       n_err+=1
       continue
-
     vals_this = list(c.hasExactSynonym)
+    if not vals_this: continue
     vals_this.sort()
     df_this = pd.DataFrame({
       'class_name':[c.name for i in range(len(vals_this))],
