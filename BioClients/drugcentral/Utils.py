@@ -717,6 +717,45 @@ ORDER BY
   return df
 
 #############################################################################
+def ListTargets(dbcon, fout=None):
+  df=None; n_out=0; tq=None;
+  quiet = bool(logging.getLogger().getEffectiveLevel()>15)
+  N_row = pd.read_sql("SELECT COUNT(*) FROM target_component", dbcon).iloc[0,0]
+  sql="""\
+SELECT
+	tdict.id AS target_id,
+	tdict.name AS target_name,
+	tdict.target_class,
+	tdict.protein_type,
+	tdict.protein_components,
+	tcomp.id AS component_id,
+	tcomp.accession AS target_uniprot,
+	tcomp.swissprot,
+	tcomp.organism AS target_organism,
+	tcomp.name AS component_name,
+	tcomp.gene AS gene_symbol,
+	tcomp.geneid,
+	tcomp.tdl
+FROM
+	target_component tcomp
+	JOIN td2tc ON td2tc.component_id = tcomp.id
+	JOIN target_dictionary tdict ON tdict.id = td2tc.target_id
+ORDER BY
+	target_id, component_id
+	;
+"""
+  df_itr = pd.read_sql(sql, dbcon, chunksize=NCHUNK)
+  for df_this in df_itr:
+    if not quiet and tq is None: tq = tqdm.tqdm(total=N_row)
+    if fout is not None: df_this.to_csv(fout, sep="\t", header=bool(n_out==0), index=False)
+    else: df = pd.concat([df, df_this])
+    if tq is not None: tq.update(df_this.shape[0])
+    n_out += df_this.shape[0]
+  if tq is not None: tq.close()
+  logging.info(f"rows: {n_out}")
+  return df
+
+#############################################################################
 def GetStructureSynonyms(dbcon, ids, fout=None):
   df=None;
   sql="""\

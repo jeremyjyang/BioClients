@@ -44,6 +44,7 @@ if __name__=='__main__':
 	"list_atcs",
 	"list_xrefs",
 	"list_xref_types",
+	"list_targets",
 	"search_indications",
 	"search_products",
 	"meta_listdbs"
@@ -151,6 +152,9 @@ if __name__=='__main__':
 
   elif args.op=='list_xrefs':
     drugcentral.ListXrefs(dbcon, fout)
+
+  elif args.op=='list_targets':
+    drugcentral.ListTargets(dbcon, fout)
 
   elif args.op=='get_structure':
     drugcentral.GetStructure(dbcon, ids, fout)
