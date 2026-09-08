@@ -23,9 +23,10 @@ if __name__=='__main__':
     'search_targets',
          ]
   parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", dest="ids", help="UniProt IDs, comma-separated (ex: Q14790)")
+  parser.add_argument("--ids", dest="ids", help="IDs, comma-separated (DOIDs for diseases, TINX_IDs for targets)")
   parser.add_argument("--i", dest="ifile", help="input file, UniProt IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
+  parser.add_argument("--n_max_hit", type=int, default=tinx.N_MAX_HIT, help="max hits per query ID")
   parser.add_argument("--query", dest="search_query", help="search query")
   parser.add_argument("--api_host", default=tinx.API_HOST)
   parser.add_argument("--api_base_path", default=tinx.API_BASE_PATH)
@@ -52,14 +53,14 @@ if __name__=='__main__':
 
   if args.op == 'get_disease_targets':
     if not ids: parser.error('--i or --ids required.')
-    tinx.GetDiseaseTargets(ids, base_url, fout)
+    tinx.GetDiseaseTargets(ids, args.n_max_hit, base_url, fout)
 
   elif args.op == 'get_target_diseases':
     if not ids: parser.error('--i or --ids required.')
-    tinx.GetTargetDiseases(ids, base_url, fout)
+    tinx.GetTargetDiseases(ids, args.n_max_hit, base_url, fout)
 
   elif args.op == 'search_diseases':
-    tinx.SearchDiseases(search_query, base_url, fout)
+    tinx.SearchDiseases(search_query, args.n_max_hit, base_url, fout)
 
   else:
     parser.error(f"Unknown operation: {args.op}")

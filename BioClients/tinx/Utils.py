@@ -12,15 +12,16 @@ import pandas as pd
 API_HOST='tinx-api.shishito.health.unm.edu'
 API_BASE_PATH='/'
 #
-NCHUNK=50
-N_OUT_MAX=500
+NCHUNK=25
+N_MAX_HIT=100
 #
 #############################################################################
-def GetDiseaseTargets(ids, base_url, fout):
+def GetDiseaseTargets(ids, n_max_hit, base_url, fout):
   n_out=0; n_err=0; df=None; tags=None; tags_tgt=None;
   headers = { "accept": "application/json" }
 
   for id_this in ids:
+    tq=None;
     offset=0; n_total=None; url_next=None;
     while True:
       if n_total and offset>n_total:
@@ -33,10 +34,12 @@ def GetDiseaseTargets(ids, base_url, fout):
         response.raise_for_status()
         logging.error(f"status_code: {response.status_code}")
         n_err+=1
-        continue
+        break
       n_total = result['count'] if 'count' in result else None
+      if not n_total: break
+      if tq is None: tq = tqdm.tqdm(total=min(n_total, n_max_hit))
+
       url_next = result['next'] if 'next' in result else None
-      #logging.debug(f"n_total: {n_total}; url_next: {url_next}")
 
       things = result['results'] if 'results' in result else []
 
@@ -45,7 +48,6 @@ def GetDiseaseTargets(ids, base_url, fout):
           tags = list(thing.keys())
           for tag in tags[:]:
             if type(thing[tag]) in (list, dict):
-              logging.info(f"Ignoring field: {tag}")
               tags.remove(tag)
         df_this = pd.DataFrame({tag:[thing[tag] if tag in thing else ''] for tag in tags})
         target = thing['target'] if 'target' in thing else {}
@@ -53,25 +55,26 @@ def GetDiseaseTargets(ids, base_url, fout):
           tags_tgt = list(target.keys())
           for tag in tags_tgt[:]:
             if type(target[tag]) in (list, dict):
-              logging.info(f"Ignoring field: {tag}")
               tags_tgt.remove(tag)
         df_this_tgt = pd.DataFrame({tag:[target[tag] if tag in target else ''] for tag in tags_tgt})
         df_this = pd.concat([df_this, df_this_tgt], axis=1)
 
         if fout is not None:
           df_this.to_csv(fout, sep="\t", index=False, header=bool(n_out==0))
-        if fout is None: df = pd.concat([df, df_this])
+        else:
+          df = pd.concat([df, df_this])
         n_out += df_this.shape[0]
-        if n_out>=N_OUT_MAX:
-          break
-
+        tq.update(df_this.shape[0])
+        if n_out>=n_max_hit: break
+      if n_out>=n_max_hit: break
       offset += NCHUNK
+    tq.close()
 
   logging.info(f"n_in: {len(ids)}; n_out: {n_out}; n_err: {n_err}")
   return df
 
 #############################################################################
-def GetTargetDiseases(ids, base_url, fout):
+def GetTargetDiseases(ids, n_max_hit, base_url, fout):
   n_out=0; n_err=0; df=None; tags=None; tags_dis=None;
   headers = { "accept": "application/json" }
 

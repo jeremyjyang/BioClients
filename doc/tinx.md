@@ -13,4 +13,27 @@ Knowledge Management Center (KMC).
 ### Usage
 
 ```
+python3 -m BioClients.tinx.Client -h
+usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE]
+                 [--query SEARCH_QUERY] [--api_host API_HOST]
+                 [--api_base_path API_BASE_PATH] [-v]
+                 {get_disease_targets,get_disease_publications,get_target_diseases,get_target_publications,search_diseases,search_targets}
+
+TINX REST API query client
+
+positional arguments:
+  {get_disease_targets,get_disease_publications,get_target_diseases,get_target_publications,search_diseases,search_targets}
+                        operation
+
+options:
+  -h, --help            show this help message and exit
+  --ids IDS             UniProt IDs, comma-separated (ex: Q14790)
+  --i IFILE             input file, UniProt IDs
+  --o OFILE             output (TSV)
+  --query SEARCH_QUERY  search query
+  --api_host API_HOST
+  --api_base_path API_BASE_PATH
+  -v, --verbose
+
+Example IDs: Diseases: DOID:0014667 Targets: 488
 ```
