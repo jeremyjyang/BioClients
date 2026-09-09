@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="BioClients",
-    version="0.2.32",
+    version="0.2.33",
     author="Jeremy Yang",
     author_email="jeremyjyang@gmail.com",
-    description="Clients for online biomedical resources, usually via REST APIs.",
+    description="Clients and tools for online biomedical resources, usually via REST APIs.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/jeremyjyang/BioClients",
