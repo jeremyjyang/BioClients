@@ -16,15 +16,16 @@ if __name__=='__main__':
   parser = argparse.ArgumentParser(description='TINX REST API query client', epilog=epilog)
   ops = [
     'get_disease_targets',
-    'get_disease_publications',
     'get_target_diseases',
-    'get_target_publications',
+    'get_disease_target_publications',
     'search_diseases',
     'search_targets',
          ]
   parser.add_argument("op", choices=ops, help='operation')
-  parser.add_argument("--ids", dest="ids", help="IDs, comma-separated (DOIDs for diseases, TINX_IDs for targets)")
-  parser.add_argument("--i", dest="ifile", help="input file, UniProt IDs")
+  parser.add_argument("--ids_disease", help="IDs, comma-separated (DOIDs for diseases)")
+  parser.add_argument("--ids_target", help="IDs, comma-separated (TINX_IDs for targets)")
+  parser.add_argument("--ifile_disease", help="input file, DOIDs")
+  parser.add_argument("--ifile_target", help="input file, TINX_IDs")
   parser.add_argument("--o", dest="ofile", help="output (TSV)")
   parser.add_argument("--n_max_hit", type=int, default=tinx.N_MAX_HIT, help="max hits per query ID")
   parser.add_argument("--query", dest="search_query", help="search query")
@@ -41,25 +42,40 @@ if __name__=='__main__':
 
   t0=time.time()
 
-  ids=[]
-  if args.ifile:
-    fin = open(args.ifile)
+  ids_disease=[];
+  if args.ifile_disease:
+    fin = open(args.ifile_disease)
     while True:
       line = fin.readline()
       if not line: break
-      ids.append(line.strip())
-  elif args.ids:
-    ids = re.split(r'[\s,]+', args.ids.strip())
+      ids_disease.append(line.strip())
+  elif args.ids_disease:
+    ids_disease = re.split(r'[\s,]+', args.ids_disease.strip())
 
-  if args.op == 'get_disease_targets':
-    if not ids: parser.error('--i or --ids required.')
-    tinx.GetDiseaseTargets(ids, args.n_max_hit, base_url, fout)
+  ids_target=[];
+  if args.ifile_target:
+    fin = open(args.ifile_target)
+    while True:
+      line = fin.readline()
+      if not line: break
+      ids_target.append(line.strip())
+  elif args.ids_target:
+    ids_target = re.split(r'[\s,]+', args.ids_target.strip())
 
-  elif args.op == 'get_target_diseases':
-    if not ids: parser.error('--i or --ids required.')
-    tinx.GetTargetDiseases(ids, args.n_max_hit, base_url, fout)
+  if args.op == "get_disease_targets":
+    if not ids_disease: parser.error(f"--ifile_disease or --ids_disease required for: {args.op}")
+    tinx.GetDiseaseTargets(ids_disease, args.n_max_hit, base_url, fout)
 
-  elif args.op == 'search_diseases':
+  elif args.op == "get_target_diseases":
+    if not ids_target: parser.error(f"--ifile_target or --ids_target required for: {args.op}")
+    tinx.GetTargetDiseases(ids_target, args.n_max_hit, base_url, fout)
+
+  elif args.op == "get_disease_target_publications":
+    if not ids_disease: parser.error(f"--ifile_disease or --ids_disease required for: {args.op}")
+    if not ids_target: parser.error(f"--ifile_target or --ids_target required for: {args.op}")
+    tinx.GetDiseaseTargetPublications(ids_disease, ids_target, args.n_max_hit, base_url, fout)
+
+  elif args.op == "search_diseases":
     tinx.SearchDiseases(search_query, args.n_max_hit, base_url, fout)
 
   else:
