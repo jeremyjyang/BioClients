@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="BioClients",
+    name="bioclients",
     version="0.2.33",
     author="Jeremy Yang",
     author_email="jeremyjyang@gmail.com",
     description="Clients and tools for online biomedical resources, usually via REST APIs.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/jeremyjyang/BioClients",
+    url="https://github.com/jeremyjyang/bioclients",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

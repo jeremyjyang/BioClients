@@ -1,4 +1,4 @@
-# `BioClients.panther`
+# `bioclients.panther`
 
 ## Panther
 

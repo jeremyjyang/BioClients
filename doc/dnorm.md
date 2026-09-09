@@ -1,4 +1,4 @@
-# `BioClients.dnorm`
+# `bioclients.dnorm`
 
 ## DNorm
 

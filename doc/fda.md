@@ -1,4 +1,4 @@
-# `BioClients.fda`
+# `bioclients.fda`
 
 ## FDA
 
@@ -10,7 +10,7 @@ OpenFDA Adverse Event Reports (FAERS) REST API client.
 * <https://api.fda.gov/drug/event.json?search=patient.drug.openfda.pharm_class_epc:"nonsteroidal+anti-inflammatory+drug"&count=patient.reaction.reactionmeddrapt.exact>
 
 ```
-$ python -m BioClients.fda.aer.Client -h
+$ python -m bioclients.fda.aer.Client -h
 usage: Client.py [-h] [--o OFILE] [--drug_class DRUG_CLASS]
                  [--drug_ind DRUG_IND] [--drug_unii DRUG_UNII]
                  [--drug_ndc DRUG_NDC] [--drug_spl DRUG_SPL]

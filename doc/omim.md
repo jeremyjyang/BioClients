@@ -1,4 +1,4 @@
-# `BioClients.omim`
+# `bioclients.omim`
 
 ## OMIM
 

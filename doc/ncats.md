@@ -1,4 +1,4 @@
-# `BioClients.ncats`
+# `bioclients.ncats`
 
 ## NIH NCATS
 
@@ -15,7 +15,7 @@ Tools for obtaining and processing data from NIH NCATS resources.
 Examples:
 
 ```
-$ python -m BioClients.ncats.gsrs.Client -h
+$ python -m bioclients.ncats.gsrs.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS] [--query QUERY]
                  [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]
                  {list_vocabularies,list_substances,search,get_substance,get_substance_names}
@@ -48,7 +48,7 @@ C=1CC=CC=C1C(=O)O
 * <https://academic.oup.com/nar/article/50/D1/D1307/6396888>
 
 ```
-python3 -m BioClients.ncats.stitcher.Client -h
+python3 -m bioclients.ncats.stitcher.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS] [--query QUERY]
                  [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]
                  {get_drug,get_drug_targets,search}

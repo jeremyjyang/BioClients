@@ -1,4 +1,4 @@
-# `BioClients.clinicaltrials`
+# `bioclients.clinicaltrials`
 
 ##  ClinicalTrials.gov
 
@@ -10,7 +10,7 @@ NIH NLM ClinicalTrials.gov REST API v2 client
   * <https://clinicaltrials.gov/find-studies/constructing-complex-search-queries>
 
 ```
-$ python3 -m BioClients.clinicaltrials.Client -h
+$ python3 -m bioclients.clinicaltrials.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS]
                  [--query_cond QUERY_COND] [--query_term QUERY_TERM]
                  [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]

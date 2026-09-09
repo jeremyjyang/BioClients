@@ -1,4 +1,4 @@
-# `BioClients.drugcentral`
+# `bioclients.drugcentral`
 
 ## DrugCentral (`drugcentral.org`)
 
@@ -12,7 +12,7 @@ Druggable Genome (IDG) project.
 DrugCentral employs a backend PostgreSql db, freely available at
 <https://drugcentral.org/download>, and containerized via
 [DockerHub](https://hub.docker.com/repository/docker/unmtransinfo/drugcentral_db).
-The BioClients API provides
+The bioclients API provides
 programmatic access to an available db instance, which may be deployed
 locally, or may be available publicly with configuration details
 at <https://drugcentral.org> (at time of writing:
@@ -49,7 +49,7 @@ All results are TSV format except as noted.
 ### Usage
 
 ```
-$ python3 -m BioClients.drugcentral.Client -h
+$ python3 -m bioclients.drugcentral.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--xref_type XREF_TYPE] [--o OFILE]
                  [--dbhost DBHOST] [--dbport DBPORT] [--dbname DBNAME] [--dbusr DBUSR]
                  [--dbpw DBPW] [--param_file PARAM_FILE] [--dbschema DBSCHEMA] [-v]

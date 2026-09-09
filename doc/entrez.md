@@ -1,4 +1,4 @@
-# `BioClients.entrez`
+# `bioclients.entrez`
 
 ## NIH NCBI Entrez
 

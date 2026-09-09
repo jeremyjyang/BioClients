@@ -1,4 +1,4 @@
-# `BioClients.chebi`
+# `bioclients.chebi`
 
 ## ChEBI
 
@@ -11,7 +11,7 @@ Chemical Entities of Biological Interest (ChEBI) is a freely available dictionar
 * <https://www.ebi.ac.uk/chebi/backend/api/docs/>
 
 ```
- python -m BioClients.chebi.Client -h
+ python -m bioclients.chebi.Client -h
 usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE] [--query QUERY]
                  [--skip SKIP] [--nmax NMAX] [--api_host API_HOST]
                  [--api_base_path API_BASE_PATH] [-v]

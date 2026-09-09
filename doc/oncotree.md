@@ -1,4 +1,4 @@
-# `BioClients.oncotree`
+# `bioclients.oncotree`
 
 ## OncoTree: A Cancer Classification System for Precision Oncology
 

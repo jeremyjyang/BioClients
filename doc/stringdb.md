@@ -1,11 +1,11 @@
-# `BioClients.stringdb`
+# `bioclients.stringdb`
 
 ## STRINGDB
 
 ## Usage
 
 ```
-$ python3 -m BioClients.stringdb.Client -h
+$ python3 -m bioclients.stringdb.Client -h
 
 usage: Client.py [-h] [--id ID] [--ids IDS] [--idfile IDFILE] [--o OFILE]
                  [--species SPECIES] [--minscore MINSCORE]

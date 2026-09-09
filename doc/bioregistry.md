@@ -1,4 +1,4 @@
-# `BioClients.bioregistry`
+# `bioclients.bioregistry`
 
 ## Bioregistry
 
@@ -6,7 +6,7 @@
 * <https://bioregistry.io/apidocs/>
 
 ```
-$ python3 -m BioClients.bioregistry.Client -h
+$ python3 -m bioclients.bioregistry.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE] [--etype ETYPE]
                  [--prefix PREFIX] [--nchunk NCHUNK] [--nmax NMAX] [--skip SKIP]
                  [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]

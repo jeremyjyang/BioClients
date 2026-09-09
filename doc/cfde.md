@@ -1,4 +1,4 @@
-# `BioClients.cfde`
+# `bioclients.cfde`
 
 ##  CFDE
 
@@ -7,7 +7,7 @@ API access for resources of the Common Fund Data Ecosystem (CFDE).
   * <https://nih-cfde.org/>
 
 ```
-$ python3 -m BioClients.cfde.cfchemdb.Client -h
+$ python3 -m bioclients.cfde.cfchemdb.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--xref_type XREF_TYPE] [--o OFILE]
                  [--dbhost DBHOST] [--dbport DBPORT] [--dbname DBNAME] [--dbusr DBUSR]
                  [--dbpw DBPW] [--param_file PARAM_FILE] [--dbschema DBSCHEMA] [-v] [-q]

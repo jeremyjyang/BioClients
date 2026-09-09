@@ -1,4 +1,4 @@
-# `BioClients.uniprot`
+# `bioclients.uniprot`
 
 ## UniProt
 
@@ -11,7 +11,7 @@ UniprotKB = Uniprot Knowledge Base
 * <https://www.uniprot.org/api-documentation/uniprotkb>
 
 ```
-$ python -m BioClients.uniprot.Client -h
+$ python -m bioclients.uniprot.Client -h
 usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE] [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v] {getData,getNames,getFunctions,listData}
 
 Uniprot query client; get data for specified IDs
@@ -34,9 +34,9 @@ Example IDs: Q14790,P01116,P01118,A8K8Z5,B0LPF9,Q96D10
 ```
 
 ```
-python3 -m BioClients.uniprot.Client getNames --ids Q14790,P01116
+python3 -m bioclients.uniprot.Client getNames --ids Q14790,P01116
 ```
 
 ```
-python3 -m BioClients.uniprot.Client getFunctions --ids Q14790,P01116
+python3 -m bioclients.uniprot.Client getFunctions --ids Q14790,P01116
 ```

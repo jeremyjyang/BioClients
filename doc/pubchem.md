@@ -1,4 +1,4 @@
-# `BioClients.pubchem`
+# `bioclients.pubchem`
 
 Tools for obtaining and processing PubChem data (REST, SOAP, FTP).
 
@@ -10,8 +10,8 @@ Tools for obtaining and processing PubChem data (REST, SOAP, FTP).
 * <https://pubchem.ncbi.nlm.nih.gov/rest/pug>
 
 ```
-python3 -m BioClients.pubchem.Client --name remdesivir name2sid
-python3 -m BioClients.pubchem.Client --name remdesivir name2cid
+python3 -m bioclients.pubchem.Client --name remdesivir name2sid
+python3 -m bioclients.pubchem.Client --name remdesivir name2cid
 ```
 
 ## PUG-SOAP
@@ -31,7 +31,7 @@ PUG SOAP services include:
 
 
 ```
-python3 -m BioClients.pubchem.soap.Client -h
+python3 -m bioclients.pubchem.soap.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--operator {same,parent,samepar}]
                  [--ids IDS] [--query_id QUERY_ID]
                  [--ifmt {smiles,smarts,inchi,inchikey,cid,sid,sdf}]
@@ -82,26 +82,26 @@ InChI. IDExchange accepts CID, SID, SMILES, InChI, InChIKey, Synonym, and Regist
 ### Standardize
 
 ```
-python3 -m BioClients.pubchem.soap.Client standardize --ids "CCN(=O)=O" --ifmt "smiles"
+python3 -m bioclients.pubchem.soap.Client standardize --ids "CCN(=O)=O" --ifmt "smiles"
 ```
 
 ### IDExchange
 
 ```
-python3 -m BioClients.pubchem.soap.Client idexchange --ids "CCN(=O)=O" --ifmt "smiles" --operator "same" --ofmt "cid"
-python3 -m BioClients.pubchem.soap.Client idexchange --i foo.smiles --ifmt "smiles" --operator "same" --ofmt "cid"
-python3 -m BioClients.pubchem.soap.Client idexchange --ids "6587" --ifmt "cid" --operator "same" --ofmt "sid"
-python3 -m BioClients.pubchem.soap.Client idexchange --ids "374894925" --ifmt "sid" --operator "parent" --ofmt "cid"
-python3 -m BioClients.pubchem.soap.Client idexchange --i foo.cid --ifmt "cid" --operator "same" --ofmt "inchi"
-python3 -m BioClients.pubchem.soap.Client idexchange --i foo.cid --ifmt "cid" --operator "same" --ofmt "smiles"
-python3 -m BioClients.pubchem.soap.Client idexchange --i foo.sid --ifmt "sid" --operator "same" --ofmt "smiles"
+python3 -m bioclients.pubchem.soap.Client idexchange --ids "CCN(=O)=O" --ifmt "smiles" --operator "same" --ofmt "cid"
+python3 -m bioclients.pubchem.soap.Client idexchange --i foo.smiles --ifmt "smiles" --operator "same" --ofmt "cid"
+python3 -m bioclients.pubchem.soap.Client idexchange --ids "6587" --ifmt "cid" --operator "same" --ofmt "sid"
+python3 -m bioclients.pubchem.soap.Client idexchange --ids "374894925" --ifmt "sid" --operator "parent" --ofmt "cid"
+python3 -m bioclients.pubchem.soap.Client idexchange --i foo.cid --ifmt "cid" --operator "same" --ofmt "inchi"
+python3 -m bioclients.pubchem.soap.Client idexchange --i foo.cid --ifmt "cid" --operator "same" --ofmt "smiles"
+python3 -m bioclients.pubchem.soap.Client idexchange --i foo.sid --ifmt "sid" --operator "same" --ofmt "smiles"
 ```
 
 ### Structural search
 
 ```
-python3 -m BioClients.pubchem.soap.Client search_substructure --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles"
-python3 -m BioClients.pubchem.soap.Client search_exact --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles" 
-python3 -m BioClients.pubchem.soap.Client search_similarity --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles" 
-python3 -m BioClients.pubchem.soap.Client search_exact --query_id "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3" --ifmt "inchi" --ofmt "smiles" 
+python3 -m bioclients.pubchem.soap.Client search_substructure --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles"
+python3 -m bioclients.pubchem.soap.Client search_exact --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles" 
+python3 -m bioclients.pubchem.soap.Client search_similarity --query_id "NCCC1=CC=C(O)C(O)=C1" --ifmt "smiles" --ofmt "smiles" 
+python3 -m bioclients.pubchem.soap.Client search_exact --query_id "InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3" --ifmt "inchi" --ofmt "smiles" 
 ```

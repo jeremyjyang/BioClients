@@ -1,4 +1,4 @@
-# `BioClients.ensembl`
+# `bioclients.ensembl`
 
 ## EnsEMBL
 
@@ -11,14 +11,14 @@ Including Variant Effect Predictor (VEP):
  * <https://useast.ensembl.org/info/docs/tools/vep/index.html>
  * <https://rest.ensembl.org/#VEP>
 
-## `BioClients.ensembl.biomart`
+## `bioclients.ensembl.biomart`
 
 Also, the BIOMART ID mapping service.
 
  * <https://m.ensembl.org/info/data/biomart/biomart_restful.html>
 
 ```
-$ python3 -m BioClients.ensembl.Client -h
+$ python3 -m bioclients.ensembl.Client -h
 usage: Client.py [-h] [--ids IDS]
        [--i IFILE]
        [--api_host API_HOST]

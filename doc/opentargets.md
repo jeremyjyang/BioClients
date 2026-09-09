@@ -1,4 +1,4 @@
-# `BioClients.opentargets`
+# `bioclients.opentargets`
 
 ## Open Targets
 

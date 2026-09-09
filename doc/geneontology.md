@@ -1,4 +1,4 @@
-# `BioClients.geneontology`
+# `bioclients.geneontology`
 
 ## Gene Ontology
 

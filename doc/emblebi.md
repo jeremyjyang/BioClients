@@ -1,9 +1,9 @@
-# `BioClients.emblebi`
+# `bioclients.emblebi`
 
 ## EMBL-EBI
 
 Tools for obtaining and processing data from EMBL-EBI resources.
-Some EMBL-EBI resources have separate BioClients modules.
+Some EMBL-EBI resources have separate bioclients modules.
 
 * <https://www.ebi.ac.uk/>
 
@@ -15,7 +15,7 @@ Some EMBL-EBI resources have separate BioClients modules.
 Examples:
 
 ```
-$ python3 -m BioClients.emblebi.identifiers.Client -h
+$ python3 -m bioclients.emblebi.identifiers.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS] [--query QUERY]
                  [--resolver_api_host RESOLVER_API_HOST]
                  [--resolver_api_base_path RESOLVER_API_BASE_PATH]
@@ -51,7 +51,7 @@ Example IDs: taxonomy:9606
 * <https://chembl.gitbook.io/unichem/webservices>
 
 ```
-$ python3 -m BioClients.emblebi.unichem.Client -h
+$ python3 -m bioclients.emblebi.unichem.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS] [--src_id_in SRC_ID_IN]
                  [--src_id_out SRC_ID_OUT] [--api_host API_HOST]
                  [--api_base_path API_BASE_PATH] [-v]

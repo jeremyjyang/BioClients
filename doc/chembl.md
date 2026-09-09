@@ -1,4 +1,4 @@
-# `BioClients.chembl`
+# `bioclients.chembl`
 
 ## ChEMBL
 
@@ -9,7 +9,7 @@ Tools for obtaining and processing ChEMBL data.
 * <https://chembl.gitbook.io/chembl-interface-documentation/downloads>
 
 ```
-$ python3 -m BioClients.chembl.Client get_drug_indications -h
+$ python3 -m bioclients.chembl.Client get_drug_indications -h
 usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE] [--skip SKIP] [--nmax NMAX]
                  [--dev_phase {0,1,2,3,4}] [--assay_source ASSAY_SOURCE]
                  [--assay_type ASSAY_TYPE] [--pmin PMIN] [--include_phenotypic]

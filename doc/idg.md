@@ -1,11 +1,11 @@
-# `BioClients.idg`
+# `bioclients.idg`
 
 ## IDG - Illuminating the Druggable Genome
 
 * <https://pharos.nih.gov/api>
 * <https://druggablegenome.net/>
 
-# `BioClients.idg.pharos`
+# `bioclients.idg.pharos`
 
 Access the Pharos GraphQL API.
 
@@ -14,7 +14,7 @@ Access the Pharos GraphQL API.
   * Python packages `gql`, `python-graphql-client`
 
 ```
-python3 -m BioClients.idg.pharos.Client -h
+python3 -m bioclients.idg.pharos.Client -h
 usage: Client.py [-h] [--i IFILE] [--i_gql IFILE_GQL] [--graphql GRAPHQL] [--ids IDS]
                  [--o OFILE] [--idtype_target {tcrdid,uniprot,sym}]
                  [--idtype_disease {cui,doid,name}] [--nmax NMAX] [--api_host API_HOST]
@@ -44,7 +44,7 @@ options:
   -v, --verbose
 ```
 
-# `BioClients.idg.tcrd`
+# `bioclients.idg.tcrd`
 
 Provides access to the TCRD MySql db.
 
@@ -63,7 +63,7 @@ DBPW: ""
 ```
 
 ```
-python3 -m BioClients.idg.tcrd.Client -h
+python3 -m bioclients.idg.tcrd.Client -h
 usage: Client.py [-h] [--o OFILE] [--i IFILE] [--ids IDS]
                  [--idtype {TID,GENEID,UNIPROT,GENESYMB,ENSP}] [--xreftypes XREFTYPES]
                  [--tdls TDLS] [--tfams TFAMS] [--param_file PARAM_FILE]
@@ -98,7 +98,7 @@ optional arguments:
   -q, --quiet           Suppress progress notification.
 ```
 
-# `BioClients.idg.tinx`
+# `bioclients.idg.tinx`
 
 TIN-X (Target Importance and Novelty Explorer)
 
@@ -106,7 +106,7 @@ TIN-X (Target Importance and Novelty Explorer)
 * <https://api.newdrugtargets.org/docs>
 
 ```
-$ python3 -m BioClients.idg.tinx.Client -h
+$ python3 -m bioclients.idg.tinx.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--disease_ids DISEASE_IDS] [--o OFILE]
                  [--query QUERY] [--api_host API_HOST] [--api_base_path API_BASE_PATH]
                  [-v]
@@ -136,14 +136,14 @@ Example IDs: 5391 (disease); DOID:9297 (DOID); 12203 (target); Q9H4B4 (UniProt);
 get_disease_target_articles.
 ```
 
-# `BioClients.idg.tiga`
+# `bioclients.idg.tiga`
 
 TIGA (Target Illumination GWAS Analytics)
 
 * <https://unmtid-shinyapps.net/shiny/tiga/>
 
 ```
-$ python3 -m BioClients.idg.tiga.Client -h
+$ python3 -m bioclients.idg.tiga.Client -h
 usage: Client.py [-h] [--o OFILE] [--igene IFILEGENE] [--itrait IFILETRAIT]
                  [--geneIds GENEIDS] [--traitIds TRAITIDS] [--param_file PARAM_FILE]
                  [--dbhost DBHOST] [--dbport DBPORT] [--dbusr DBUSR] [--dbpw DBPW]

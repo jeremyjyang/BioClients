@@ -1,4 +1,4 @@
-# `BioClients.humanbase`
+# `bioclients.humanbase`
 
 ## HumanBase
 

@@ -1,4 +1,4 @@
-# `BioClients.util`
+# `bioclients.util`
 
 Miscellaneous utilities for web service clients.
 
@@ -7,8 +7,8 @@ Miscellaneous utilities for web service clients.
 Processing CSV/TSV files.
 
 ```
-$ python3 -m BioClients.util.pandas.App -h
-usage: BioClients.util.pandas.Utils [-h] --i IFILE [--o OFILE] [--coltags COLTAGS]
+$ python3 -m bioclients.util.pandas.App -h
+usage: bioclients.util.pandas.Utils [-h] --i IFILE [--o OFILE] [--coltags COLTAGS]
                                     [--cols COLS] [--search_qrys SEARCH_QRYS]
                                     [--search_rels SEARCH_RELS]
                                     [--search_typs SEARCH_TYPS]
@@ -80,7 +80,7 @@ file processing, using [h5py, HDF5 for Python](https://docs.h5py.org/).
 Graph analytics with igraph, and with GraphML and CyJS formats.
 
 ```
-$ python3 -m BioClients.util.igraph.App -h
+$ python3 -m bioclients.util.igraph.App -h
 usage: App.py [-h] --i IFILE [--o OFILE] [--selectfield SELECTFIELD]
               [--selectquery SELECTQUERY] [--selectval SELECTVAL]
               [--select_exact SELECT_EXACT] [--select_equal] [--select_lt]
@@ -132,7 +132,7 @@ outputs vertex indices with node IDs. simMatrix with --nidA to compute one row.
 ```
 
 ```
-$ python3 -m BioClients.util.igraph.InfoContent -h
+$ python3 -m bioclients.util.igraph.InfoContent -h
 usage: InfoContent.py [-h] --i IFILE [--o OFILE] [--nidA NIDA] [--nidB NIDB]
                       [--nmax NMAX] [--skip SKIP] [-v]
                       {computeIC,findMICA,simMatrix,simMatrixNodelist,test}
@@ -165,7 +165,7 @@ The Open Biological and Biomedical Ontology (OBO) Foundry
 * <https://obofoundry.org/>
 
 ```
-$ python3 -m BioClients.util.obo.App -h
+$ python3 -m bioclients.util.obo.App -h
 usage: App.py [-h] --i IFILE [--o OFILE] [-v]
 
 OBO to TSV converter
@@ -185,7 +185,7 @@ RDF utilities using rdflib.
 * <https://rdflib.readthedocs.io/>
 
 ```
-$ python3 -m BioClients.util.rdf.App -h
+$ python3 -m bioclients.util.rdf.App -h
 usage: App.py [-h] [--i IFILE] [--ifmt {text/turtle,application/rdf+xml,text/n3}]
               [--ofmt {text/turtle,application/rdf+xml,text/n3}] [--o OFILE] [-v]
               {describe_rdf,validate_rdf,convert_rdf}
@@ -214,7 +214,7 @@ OWL utilities using owlready2.
 * <https://owlready2.readthedocs.io/>
 
 ```
-$ python -m BioClients.util.owl.App -h
+$ python -m bioclients.util.owl.App -h
 usage: App.py [-h] [--iri IRI] [--i IFILE] [--o OFILE] [-v]
               {describe_owl,validate_owl,list_classes,list_all_subclasses,list_subclasses,list_individuals,find_iri,show_root}
 
@@ -239,7 +239,7 @@ Example IRI (from MONDO): http://purl.obolibrary.org/obo/MONDO_0000001
 For Sparql endpoints.
 
 ```
-$ python3 -m BioClients.util.sparql.Client -h
+$ python3 -m bioclients.util.sparql.Client -h
 usage: Client.py [-h] [--rqfile RQFILE] [--rq RQ] [--o OFILE] [--endpoint ENDPOINT]
                  [--defgraph DEFGRAPH] [--nmax NMAX]
                  [--fmt {JSON,JSONLD,XML,RDF,RDFXML,N3,TTL,CSV,TSV}]
@@ -269,7 +269,7 @@ optional arguments:
 ## neo4j
 
 ```
-$ python3 -m BioClients.util.neo4j.App -h
+$ python3 -m bioclients.util.neo4j.App -h
 usage: App.py [-h] [--i IFILE] [--cql CQL] [--o OFILE] [--ofmt {TSV,JSON}]
               [--dbhost DBHOST] [--dbport DBPORT] [--dbscheme DBSCHEME] [--dbusr DBUSR]
               [--dbpw DBPW] [--secure] [-v]
@@ -301,7 +301,7 @@ See https://neo4j.com/docs/cypher-manual, https://py2neo.org.
 Example using [KGAP LINCS+IDG](https://github.com/IUIDSL/kgap_lincs-idg):
 
 ```
-$ python3 -m BioClients.util.neo4j.App --dbhost localhost --dbport 11006  query --cql "MATCH (d:Drug)--(s:Signature)--(g:Gene) WHERE d.name = 'tamoxifen' RETURN d.name,g.name" 
+$ python3 -m bioclients.util.neo4j.App --dbhost localhost --dbport 11006  query --cql "MATCH (d:Drug)--(s:Signature)--(g:Gene) WHERE d.name = 'tamoxifen' RETURN d.name,g.name" 
 ```
 
 ##  `PDF`
@@ -309,8 +309,8 @@ $ python3 -m BioClients.util.neo4j.App --dbhost localhost --dbport 11006  query 
 Processing PDF files, using the [PyMuPDF](https://pymupdf.readthedocs.io/) package.
 
 ```
-$ python3 -m BioClients.util.pdf.PDF2Txt --help
-Usage: python -m BioClients.util.pdf.PDF2Txt [OPTIONS]
+$ python3 -m bioclients.util.pdf.PDF2Txt --help
+Usage: python -m bioclients.util.pdf.PDF2Txt [OPTIONS]
 
 Options:
   --input_file FILE               Input PDF file.  [required]

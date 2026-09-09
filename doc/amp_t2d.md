@@ -1,4 +1,4 @@
-# `BioClients.amp_t2d`
+# `bioclients.amp_t2d`
 
 AMP T2D: Accelerating Medicines Partnership Type-2 Diabetes project.
 
@@ -8,5 +8,5 @@ AMP T2D: Accelerating Medicines Partnership Type-2 Diabetes project.
 ## Usage
 
 ```
-$ python3 -m BioClients.amp_t2d.Client -h
+$ python3 -m bioclients.amp_t2d.Client -h
 ```

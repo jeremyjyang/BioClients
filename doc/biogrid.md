@@ -1,4 +1,4 @@
-# `BioClients.biogrid`
+# `bioclients.biogrid`
 
 ## BioGrid
 

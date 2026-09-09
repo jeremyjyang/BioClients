@@ -1,4 +1,4 @@
-# `BioClients.iuphar`
+# `bioclients.iuphar`
 
 ## IUPHAR, a.k.a, Guide to Pharmacology
 

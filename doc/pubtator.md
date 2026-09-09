@@ -1,4 +1,4 @@
-# `BioClients.pubtator`
+# `bioclients.pubtator`
 
 # PubTator
 

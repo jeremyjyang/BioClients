@@ -1,4 +1,4 @@
-# `BioClients.tinx`
+# `bioclients.tinx`
 
 ## TINX
 
@@ -14,7 +14,7 @@ Knowledge Management Center (KMC).
 ### Usage
 
 ```
-python3 -m BioClients.tinx.Client -h
+python3 -m bioclients.tinx.Client -h
 usage: Client.py [-h] [--ids_disease IDS_DISEASE] [--ids_target IDS_TARGET]
                  [--ifile_disease IFILE_DISEASE] [--ifile_target IFILE_TARGET]
                  [--o OFILE] [--n_max_hit N_MAX_HIT] [--query SEARCH_QUERY]

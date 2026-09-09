@@ -1,4 +1,4 @@
-# `BioClients.ubkg`
+# `bioclients.ubkg`
 
 ## UBKG - Unified Biomedical Knowledge Graph
 
@@ -18,7 +18,7 @@ by the Common Fund Data Ecosystem (CFDE) Data Distillery Partnership Project tea
 including the IDG DCC team at UNM.
 
 ```
-python -m BioClients.ubkg.Client -h
+python -m bioclients.ubkg.Client -h
 usage: Client.py [-h] [--o OFILE] [--i IFILE] [--ids IDS] [--term TERM] [--sab SAB]
                  [--relationship RELATIONSHIP]
                  [--context {base_context,data_distillery_context,hubmap_sennet_context}]

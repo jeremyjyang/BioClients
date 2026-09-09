@@ -1,4 +1,4 @@
-# `BioClients.wikidata`
+# `bioclients.wikidata`
 
 ## Wikidata
 
@@ -28,7 +28,7 @@ biomedical entities and particularly GeneWiki.
 ### Usage
 
 ```
-$ python3 -m BioClients.wikidata.Client -h
+$ python3 -m bioclients.wikidata.Client -h
 usage: Client.py [-h] [--o OFILE] [--rqfile RQFILE] [--rq RQ] [-v]
                  {query,list_drugTargetPairs,list_geneDiseasePairs}
 
@@ -47,5 +47,5 @@ options:
 ```
 
 ```
-$ python3 -m BioClients.wikidata.Client list_geneDiseasePairs
+$ python3 -m bioclients.wikidata.Client list_geneDiseasePairs
 ```

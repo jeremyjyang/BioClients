@@ -1,4 +1,4 @@
-# `BioClients.chemidplus`
+# `bioclients.chemidplus`
 
 ##  ChemIdPlus
 

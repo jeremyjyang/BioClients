@@ -1,4 +1,4 @@
-# `BioClients.chem2bio2rdf`
+# `bioclients.chem2bio2rdf`
 
 ## Chem2Bio2RDF
 
@@ -6,7 +6,7 @@
 * <http://slapfordrugtargetprediction.wikispaces.com/API>
 
 Chem2Bio2RDF employs a backend PostgreSql db. This
-BioClients API provides
+bioclients API provides
 programmatic access to an available db instance, which available
 locally (e.g. within IU intranet), or may be available via download
 and mirror instance.

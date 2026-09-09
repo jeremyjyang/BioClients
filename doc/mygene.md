@@ -1,4 +1,4 @@
-# `BioClients.mygene`
+# `bioclients.mygene`
 
 ## MyGene
 
@@ -8,5 +8,5 @@ Access to MyGene REST API.
 * <https://pypi.org/project/mygene/>
 
 ```
-python3 -m BioClients.mygene.Client -h
+python3 -m bioclients.mygene.Client -h
 ```

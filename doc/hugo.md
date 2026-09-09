@@ -1,4 +1,4 @@
-# `BioClients.hugo`
+# `bioclients.hugo`
 
 ## HUGO
 

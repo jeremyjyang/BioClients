@@ -1,4 +1,4 @@
-# `BioClients.gwascatalog`
+# `bioclients.gwascatalog`
 
 ## GWAS Catalog
 
@@ -19,19 +19,19 @@ __Version 2:__
 ## Example commands
 
 ```
-python3 -m BioClients.gwascatalog.Client list_studies_v2 --o gwascatalog_studies.tsv
+python3 -m bioclients.gwascatalog.Client list_studies_v2 --o gwascatalog_studies.tsv
 ```
 
 ```
-python3 -m BioClients.gwascatalog.Client get_studyAssociations_v2 --ids "GCST004364,GCST000227"
+python3 -m bioclients.gwascatalog.Client get_studyAssociations_v2 --ids "GCST004364,GCST000227"
 ```
 
 ```
-python3 -m BioClients.gwascatalog.Client get_snps_v2 --ids "rs6085920,rs2273833,rs6684514,rs144991356"
+python3 -m bioclients.gwascatalog.Client get_snps_v2 --ids "rs6085920,rs2273833,rs6684514,rs144991356"
 ```
 
 ```
-python -m BioClients.gwascatalog.Client -h
+python -m bioclients.gwascatalog.Client -h
 usage: Client.py [-h] [--ids IDS]
                  [--searchtype {pubmedmid,gcst,efotrait,efouri,accessionid,rs}]
                  [--i IFILE] [--o OFILE] [--skip SKIP] [--nmax NMAX] [--api_host API_HOST]

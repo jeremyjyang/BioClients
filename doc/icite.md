@@ -1,4 +1,4 @@
-# `BioClients.icite`
+# `bioclients.icite`
 
 # iCite
 

@@ -1,4 +1,4 @@
-# `BioClients.bindingdb`
+# `bioclients.bindingdb`
 
 ##  BindingDb
 

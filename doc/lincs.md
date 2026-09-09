@@ -1,4 +1,4 @@
-# `BioClients.lincs`
+# `bioclients.lincs`
 
 ## LINCS
 

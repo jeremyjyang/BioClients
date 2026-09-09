@@ -1,4 +1,4 @@
-# `BioClients.glygen`
+# `bioclients.glygen`
 
 ## GlyGen
 
@@ -11,5 +11,5 @@ GlyGen REST API client.
 ## Example commands
 
 ```
-python3 -m BioClients.glygen.Client -h
+python3 -m bioclients.glygen.Client -h
 ```

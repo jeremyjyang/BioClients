@@ -1,4 +1,4 @@
-# `BioClients.umls`
+# `bioclients.umls`
 
 ##  UMLS
 
@@ -13,7 +13,7 @@ From the NIH National Library of Medicine (NLM).
 
 * Registration is required for both browser and API access.  See
 <https://www.nlm.nih.gov/research/umls/>. To use
-[BioClients.umls.Client](BioClients/umls/Client.py), create `~/.umls.yaml` with
+[bioclients.umls.Client](bioclients/umls/Client.py), create `~/.umls.yaml` with
 format:
 
 ```
@@ -115,7 +115,7 @@ API_KEY: "===REPLACE-WITH-KEY-HERE==="
 ## Example commands
 
 ```
-python3 -m BioClients.umls.Client -h
+python3 -m bioclients.umls.Client -h
 usage: Client.py [-h] [--id ID] [--idfile IDFILE] [--o OFILE] [--idsrc IDSRC]
                  [--searchType {exact,words,leftTruncation,rightTruncation,approximate,normalizedString}]
                  [--inputType {atom,code,sourceConcept,sourceDescriptor,sourceUi,tty}]
@@ -171,7 +171,7 @@ Identifier.
 Lookup concept terms and sources by UMLS CUI:
 
 ```
-python3 -m BioClients.umls.Client getCodes --id C0018787
+python3 -m bioclients.umls.Client getCodes --id C0018787
 CUI	src	atom_code	atom_name
 C0018787	MSH	D006321	Heart
 C0018787	MSH	D006321	Hearts
@@ -189,18 +189,18 @@ INFO:n_out: 11
 ```
 
 ```
-python3 -m BioClients.umls.Client getAtoms --id C0018787
+python3 -m bioclients.umls.Client getAtoms --id C0018787
 ```
 
 Search by text query:
 
 ```
-python3 -m BioClients.umls.Client search --searchType words --searchQuery "Parkinson"
-python3 -m BioClients.umls.Client search --searchType leftTruncation --searchQuery "Alzheimer"
+python3 -m bioclients.umls.Client search --searchType words --searchQuery "Parkinson"
+python3 -m bioclients.umls.Client search --searchType leftTruncation --searchQuery "Alzheimer"
 ```
 
 Lookup concepts by Xref source and ID:
 
 ```
-python3 -m BioClients.umls.Client xrefConcept --idsrc CPT --ids "0032U,0291U"
+python3 -m bioclients.umls.Client xrefConcept --idsrc CPT --ids "0032U,0291U"
 ```

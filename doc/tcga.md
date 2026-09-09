@@ -1,4 +1,4 @@
-# `BioClients.tcga`
+# `bioclients.tcga`
 
 ## TCGA (The Cancer Gene Atlas)
 

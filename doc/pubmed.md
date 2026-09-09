@@ -1,4 +1,4 @@
-# `BioClients.pubmed`
+# `bioclients.pubmed`
 
 ## PubMed
 
@@ -11,7 +11,7 @@
 `get_record` returns selected fields: title, abstract, firstAuthorLastName, journal, and year.
 
 ```
-$ python3 -m BioClients.pubmed.Client -h
+$ python3 -m bioclients.pubmed.Client -h
 usage: Client.py [-h] [--i IFILE] [--ids IDS] [--o OFILE] [--api_host API_HOST]
                  [--api_base_path API_BASE_PATH] [--skip SKIP] [--nmax NMAX] [-q] [-v]
                  {get_esummary,get_record}
@@ -43,7 +43,7 @@ Entrez eUtils, eDirect CLI or Perl API.
 Note that other Entrez XML (e.g. PubChem) very similar.
 
 ```
-$ python3 -m BioClients.pubmed.App_XML -h
+$ python3 -m bioclients.pubmed.App_XML -h
 usage: App_XML.py [-h] --i IFILE [--ids IDS] [--idfile IDFILE] [--nmax NMAX] [--o OFILE]
                   [--odir ODIR] [-v]
                   {summary2tsv,summary2abstract,full2tsv,full2abstract,full2authorlist}

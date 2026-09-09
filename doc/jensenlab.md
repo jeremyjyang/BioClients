@@ -1,4 +1,4 @@
-# `BioClients.jensenlab`
+# `bioclients.jensenlab`
 
 ## JensenLab
 
@@ -12,5 +12,5 @@ Three source channels are defined:
 * Textmining
 
 ```
-python3 -m BioClients.jensenlab.Client get_disease_genes --ids "DOID:10652" --channel "Knowledge"
+python3 -m bioclients.jensenlab.Client get_disease_genes --ids "DOID:10652" --channel "Knowledge"
 ```

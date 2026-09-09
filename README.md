@@ -1,4 +1,4 @@
-# `BioClients` <img align="right" src="doc/images/BioClients_logo.png" height="120" alt="BioClients logo">
+# `bioclients` <img align="right" src="doc/images/bioclients.png" height="120" alt="bioclients logo">
 
 Python package for access to online biomedical resources,
 usually via REST APIs. Modules generally include
@@ -12,16 +12,16 @@ and transforms into usable formats, often TSV.
 
 ### Installing from PyPI
 
-Releases at <https://pypi.org/project/BioClients/>.
+Releases at <https://pypi.org/project/bioclients/>.
 
 ```
-pip3 install BioClients
+pip3 install bioclients
 ```
 However, current development snapshot may included additional functionality.
 
 ### Installing from source
 
-Source at <https://github.com/jeremyjyang/BioClients>
+Source at <https://github.com/jeremyjyang/bioclients>
 
 ___(First download or clone.)___
 
@@ -35,7 +35,7 @@ python3 -m pip install --upgrade build
 Install using `build`.  This supercedes the deprecated `setup.py install` and `easy_install` methods.
 
 ```
-cd BioClients
+cd bioclients
 python3 -m build
 ```
 
@@ -53,7 +53,7 @@ Miscellaneous utilities: [__UTIL__](doc/util.md)
 ## Usage Example
 
 ```
-python3 -m BioClients.pubchem.Client -h
+python3 -m bioclients.pubchem.Client -h
 ```
 
 ## Design pattern
@@ -66,7 +66,7 @@ or return a Pandas dataframe (if output file unspecified).
 
 ## Data structures and formats, XML, JSON, and TSV
 
-BioClients is designed to be simple and practical, and XML, JSON
+bioclients is designed to be simple and practical, and XML, JSON
 and TSV are likewise simple in many respects, yet a great deal
 of conceptual and technological progress is reflected. XML and JSON
 can represent arbitrarily complex data objects, comprised of nested lists,
@@ -78,7 +78,7 @@ applications (e.g. machine learning).
 
 ## Conda environment
 
-BioClients depends on numerous Python packages.  (See [conda/environment.yml](conda/environment.yml)).
+bioclients depends on numerous Python packages.  (See [conda/environment.yml](conda/environment.yml)).
 The following commands create and activate a Conda environment `bioclients`:
 
 ```
@@ -91,7 +91,7 @@ $ conda create -n bioclients -c conda-forge pandas readline requests pyyaml tqdm
 then:
 ```
 $ conda activate bioclients
-(bioclients) $ pip install BioClients
+(bioclients) $ pip install bioclients
 ```
 and install additional packages as needed via `pip`, e.g.:
 ```
@@ -105,4 +105,4 @@ and install additional packages as needed via `pip`, e.g.:
 
 ## Venv, etc.
 
-It may not be necessary or advantageous to configure an environment for all of BioClients functionality. Specific modules may be supported with `venv` environments with required dependencies. Module documentation should indicate needed package dependencies.
+It may not be necessary or advantageous to configure an environment for all of bioclients functionality. Specific modules may be supported with `venv` environments with required dependencies. Module documentation should indicate needed package dependencies.

@@ -1,4 +1,4 @@
-# `BioClients.medline`
+# `bioclients.medline`
 
 ## Medline Plus
 
@@ -16,7 +16,7 @@ Genetics Home Reference (GHR).
 ## Example commands
 
 ```
-$ python3 -m BioClients.medline.genetics.Client -h
+$ python3 -m bioclients.medline.genetics.Client -h
 usage: Client.py [-h] [--i IFILE] [--o OFILE] [--ids IDS] [--api_host API_HOST]
                  [--api_base_path API_BASE_PATH]
                  [--download_host DOWNLOAD_HOST]
@@ -47,8 +47,8 @@ rapid-onset-dystonia-parkinsonism, type-1-diabetes, type-2-diabetes
 ```
 
 ```
-python3 -m BioClients.medline.genetics.Client list_conditions
-python3 -m BioClients.medline.genetics.Client search --ids "Asthma"
-python3 -m BioClients.medline.genetics.Client search --ids "Alzheimer"
-python3 -m BioClients.medline.genetics.Client get_condition_genes --ids "parkinson-disease"
+python3 -m bioclients.medline.genetics.Client list_conditions
+python3 -m bioclients.medline.genetics.Client search --ids "Asthma"
+python3 -m bioclients.medline.genetics.Client search --ids "Alzheimer"
+python3 -m bioclients.medline.genetics.Client get_condition_genes --ids "parkinson-disease"
 ```

@@ -1,4 +1,4 @@
-# `BioClients.monarch`
+# `bioclients.monarch`
 
 ## Monarch Initiative
 

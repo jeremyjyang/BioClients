@@ -10,7 +10,7 @@ Client for the Badapple REST API.
 * [Badapple2 API-Docs](https://chiltepin.health.unm.edu/badapple2/apidocs/)
 
 ```
-python -m BioClients.badapple.Client -h
+python -m bioclients.badapple.Client -h
 usage: Client.py [-h] [--smi SMI] [--ids IDS] [--i IFILE]
                  [--db {badapple2,badapple_classic}] [--o OFILE] [--max_rings MAX_RINGS]
                  [--api_host API_HOST] [--api_base_path API_BASE_PATH] [-v]

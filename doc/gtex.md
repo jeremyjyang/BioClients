@@ -1,4 +1,4 @@
-# `BioClients.gtex`
+# `bioclients.gtex`
 
 ## GTEx
 
@@ -11,7 +11,7 @@ GTEx REST API client.
 ## Example commands
 
 ```
-$ python3 -m BioClients.gtex.Client -h
+$ python3 -m bioclients.gtex.Client -h
 usage: Client.py [-h] [--ids IDS] [--i IFILE] [--o OFILE] [--dataset DATASET]
                  [--subject SUBJECT] [--skip SKIP] [--nmax NMAX] [--api_host API_HOST]
                  [--api_base_path API_BASE_PATH] [-v]
