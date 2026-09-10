@@ -1,3 +1,8 @@
+##
+# Should be retired, and modernized according to: 
+# https://packaging.python.org/en/latest/guides/modernize-setup-py-project/
+# https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/
+##
 import setuptools
 
 with open("README.md", "r") as fh:
