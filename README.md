@@ -86,7 +86,7 @@ $ conda env create -f conda/environment.yml
 ```
 If that fails, try:
 ```
-$ conda create -n bioclients -c conda-forge pandas readline requests pyyaml tqdm psycopg2 numpy scipy scikit-learn matplotlib
+$ conda create -n bioclients -c conda-forge pandas requests pyyaml tqdm psycopg2 numpy scipy scikit-learn matplotlib
 ```
 then:
 ```

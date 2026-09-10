@@ -12,15 +12,14 @@ version = "0.2.34"
 requires-python = ">= 3.10"
 dependencies = [
 	"pandas",
-	"readline",
 	"requests",
 	"pyyaml",
+	"click",
+	"tqdm",
 	"numpy",
 	"pyquery",
 	"sqlalchemy",
 	"psycopg2",
-	"click",
-	"tqdm",
 ]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = "MIT AND (Apache-2.0 OR BSD-2-Clause)"
